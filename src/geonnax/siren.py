@@ -229,14 +229,17 @@ class SIREN(eqx.Module):
 
     Topology:
 
-    .. math::
+    $$
+    \begin{aligned}
+    z_1 &= \sin(\omega_0 (W_0 x + b_0)), \\
+    z_{i+1} &= \sin(\omega (W_i z_i + b_i)), \quad i = 1 \ldots L-1, \\
+    y &= W_L z_L + b_L.
+    \end{aligned}
+    $$
 
-        z_1 &= \sin(\omega_0 (W_0 x + b_0)), \\
-        z_{i+1} &= \sin(\omega (W_i z_i + b_i)), \quad i = 1 \ldots L-1, \\
-        y &= W_L z_L + b_L.
 
     Each layer uses the corresponding Sitzmann Theorem 1 init regime
-    (:class:`SirenDense`):  ``"first"`` for layer 0, ``"hidden"`` for
+    (`SirenDense`):  ``"first"`` for layer 0, ``"hidden"`` for
     intermediate layers, and ``"last"`` for the readout.
 
     ``depth`` counts *all* layers including the readout; ``depth=2`` gives

@@ -1,8 +1,8 @@
 """Graph Laplacian eigenpairs for graph/manifold inducing features.
 
-Eigendecomposition is a one-shot setup-time op (uses :mod:`numpy` and
+Eigendecomposition is a one-shot setup-time op (uses `numpy` and
 returns ``jax.numpy`` arrays). For sparse inputs at scale, swap in
-:func:`scipy.sparse.linalg.eigsh` — but stick with dense ``numpy`` here
+`scipy.sparse.linalg.eigsh` — but stick with dense ``numpy`` here
 to keep the dependency surface small.
 """
 
@@ -27,13 +27,13 @@ def graph_laplacian_eigpairs(
             Diagonal is ignored (no self-loops folded into ``D``).
         num_basis: Number of low-frequency eigenpairs to return ``M``.
         normalized: If ``True``, use the symmetric normalized Laplacian
-            :math:`I - D^{-1/2} A D^{-1/2}`; otherwise use the combinatorial
-            Laplacian :math:`D - A`.
+            $I - D^{-1/2} A D^{-1/2}$; otherwise use the combinatorial
+            Laplacian $D - A$.
 
     Returns:
         ``(eigvals, eigvecs)`` with eigvals sorted ascending, ``eigvals``
         of shape ``(M,)`` and ``eigvecs`` of shape ``(V, M)``. Eigenvectors
-        are :math:`\ell^2`-orthonormal.
+        are $\ell^2$-orthonormal.
 
     Raises:
         ValueError: If ``adjacency`` is not square, has negative entries,

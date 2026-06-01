@@ -1,10 +1,10 @@
 """Deterministic coordinate encoders for lon/lat and spherical inputs.
 
 Pure ``equinox.Module`` wrappers around the helpers in
-:mod:`geonnax.geo` and :mod:`geonnax._basis`. No PRNG, no learnable
+`geonnax.geo` and `geonnax._basis`. No PRNG, no learnable
 parameters — they compose into ``eqx.nn.Sequential``.
 
-All encoders take a single example as input; use :func:`jax.vmap` to
+All encoders take a single example as input; use `jax.vmap` to
 batch over leading dimensions.
 """
 
@@ -30,7 +30,7 @@ from geonnax.geo import (
 class Deg2Rad(eqx.Module):
     """Element-wise degrees-to-radians conversion.
 
-    Stateless wrapper around :func:`geonnax.geo.deg2rad` — no learnable
+    Stateless wrapper around `geonnax.geo.deg2rad` — no learnable
     parameters.
 
     Examples:
@@ -100,9 +100,9 @@ class LonLatScale(eqx.Module):
 
 
 class Cartesian3DEncoder(eqx.Module):
-    """Lift a single lon/lat coordinate onto the unit sphere :math:`S^2`.
+    """Lift a single lon/lat coordinate onto the unit sphere $S^2$.
 
-    Stateless wrapper around :func:`geonnax.geo.lonlat_to_cartesian3d`.
+    Stateless wrapper around `geonnax.geo.lonlat_to_cartesian3d`.
 
     Attributes:
         input_unit: Whether the input is in ``"degrees"`` or
@@ -141,7 +141,7 @@ class Cartesian3DEncoder(eqx.Module):
 class CyclicEncoder(eqx.Module):
     """Encode a single periodic input as concatenated cos/sin features.
 
-    Stateless wrapper around :func:`geonnax.geo.cyclic_encode`.
+    Stateless wrapper around `geonnax.geo.cyclic_encode`.
 
     Examples:
         >>> import jax.numpy as jnp
@@ -176,7 +176,7 @@ class SphericalHarmonicEncoder(eqx.Module):
     """Real spherical-harmonic features on the unit 2-sphere for a single point.
 
     Stateless wrapper that evaluates
-    :func:`geonnax._basis.real_spherical_harmonics` on either an already-
+    `geonnax._basis.real_spherical_harmonics` on either an already-
     cartesian input (``input_mode='cartesian'``) or a lon/lat pair
     (``input_mode='lonlat'``, assumed in radians).
 

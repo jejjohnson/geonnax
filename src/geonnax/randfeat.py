@@ -2,7 +2,7 @@
 
 Shared deterministic helpers (``rff_forward``, ``rff_cosine_forward``,
 ``orthogonal_blocks``) and the lone fully-deterministic feature map
-(:class:`OrthogonalRandomFeatures`). The Bayesian feature-map family
+(`OrthogonalRandomFeatures`). The Bayesian feature-map family
 (``RBF/Matern/Laplace {Fourier,Cosine}Features`` etc.) lives in the
 consuming library as thin sample-wrappers built on top of these
 helpers.
@@ -116,14 +116,14 @@ class OrthogonalRandomFeatures(eqx.Module):
     matrix is built once from a ``key`` and stored as a static array.
 
     Attributes:
-        in_features: Input dimension :math:`D`.
+        in_features: Input dimension $D$.
         n_features: Number of feature pairs. Must satisfy
             ``n_features % in_features == 0`` so that ORF blocks tile cleanly.
         lengthscale: Fixed kernel lengthscale (no prior; pass a value).
         W: Pre-built frequency matrix of shape ``(in_features, n_features)``.
 
     The feature map is the shared RFF map
-    :math:`\phi(x) = \sqrt{1/D}\,[\cos(W^\top x/\ell),\,\sin(W^\top x/\ell)]`,
+    $\phi(x) = \sqrt{1/D}\,[\cos(W^\top x/\ell),\,\sin(W^\top x/\ell)]$,
     so calling the module on a ``(in_features,)`` vector yields a
     ``(2 * n_features,)`` feature vector.
 

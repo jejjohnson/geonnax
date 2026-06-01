@@ -9,18 +9,18 @@ sample / param sites.
 
 Submodules:
 
-- :mod:`geonnax.geo` — lon/lat helpers (``deg2rad``, ``lonlat_scale``, …).
-- :mod:`geonnax.basis` — Fourier / seasonal / interaction transforms.
-- :mod:`geonnax._basis` — Dirichlet / spherical-harmonic / Slepian /
+- `geonnax.geo` — lon/lat helpers (``deg2rad``, ``lonlat_scale``, …).
+- `geonnax.basis` — Fourier / seasonal / interaction transforms.
+- `geonnax._basis` — Dirichlet / spherical-harmonic / Slepian /
   graph-Laplacian eigenpairs.
-- :mod:`geonnax.encoders` — coordinate encoders (``Deg2Rad``, …,
+- `geonnax.encoders` — coordinate encoders (``Deg2Rad``, …,
   ``SphericalHarmonicEncoder``).
-- :mod:`geonnax.ncp` — ``NCPContinuousPerturb`` input perturbation.
-- :mod:`geonnax.siren` — ``SirenDense``, ``SIREN`` (Sitzmann et al.,
+- `geonnax.ncp` — ``NCPContinuousPerturb`` input perturbation.
+- `geonnax.siren` — ``SirenDense``, ``SIREN`` (Sitzmann et al.,
   2020).
-- :mod:`geonnax.slepian` — ``SlepianEncoder``,
+- `geonnax.slepian` — ``SlepianEncoder``,
   ``HybridSphericalSlepianEncoder``.
-- :mod:`geonnax.randfeat` — ``OrthogonalRandomFeatures`` +
+- `geonnax.randfeat` — ``OrthogonalRandomFeatures`` +
   ``rff_forward`` / ``rff_cosine_forward`` helpers.
 """
 

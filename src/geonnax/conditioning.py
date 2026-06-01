@@ -4,19 +4,19 @@ A conditioner is a layer ``c(h, z) -> y`` that transforms an inner
 activation ``h`` based on a context / latent code ``z``. Three concrete
 conditioners cover the literature:
 
-* :class:`ConcatConditioner` — ``y = Linear([h ‖ z])``. Cheapest baseline,
+* `ConcatConditioner` — ``y = Linear([h ‖ z])``. Cheapest baseline,
   parameter-heavy in ``cond_dim``.
-* :class:`AffineModulation` (also exported as :data:`FiLM`) — feature-wise
+* `AffineModulation` (also exported as `FiLM`) — feature-wise
   affine ``y = γ(z) ⊙ h + β(z)`` with a single ``eqx.nn.Linear`` generator.
-  The ``gamma_activation="exp"`` mode exposes :meth:`AffineModulation.log_det`
+  The ``gamma_activation="exp"`` mode exposes `AffineModulation.log_det`
   so flowjax-style code can use it as a bijection wrapper.
-* :class:`HyperLinear` — full hypernetwork, ``(W, b) = g(z); y = W x + b``.
+* `HyperLinear` — full hypernetwork, ``(W, b) = g(z); y = W x + b``.
   Generator is a single ``eqx.nn.Linear`` of width
   ``target_out * target_in + target_out``.
 
-The composite :class:`ConditionedINR` wraps any inner network exposing a
-``layers`` sequence (e.g. :class:`geonnax.SIREN`) with a per-layer
-conditioner. The :func:`HyperSIREN` constructor sugar builds the NIF
+The composite `ConditionedINR` wraps any inner network exposing a
+``layers`` sequence (e.g. `geonnax.SIREN`) with a per-layer
+conditioner. The `HyperSIREN` constructor sugar builds the NIF
 ShapeNet/ParameterNet composite (Pan, Brunton, Kutz — JMLR 2023) by
 special-casing per-layer init-scale calibration so the generated weights
 match Sitzmann's variance-preservation property.
@@ -123,7 +123,7 @@ class ConcatConditioner(AbstractConditioner):
         *,
         key: PRNGKeyArray,
     ) -> ConcatConditioner:
-        """Build a :class:`ConcatConditioner` with default ``eqx.nn.Linear`` init.
+        """Build a `ConcatConditioner` with default ``eqx.nn.Linear`` init.
 
         Args:
             num_features: Output channel count.
@@ -131,7 +131,7 @@ class ConcatConditioner(AbstractConditioner):
             key: PRNG key for the projection's init.
 
         Returns:
-            Initialised :class:`ConcatConditioner`.
+            Initialised `ConcatConditioner`.
 
         Raises:
             ValueError: If ``num_features`` or ``cond_dim`` is non-positive.
@@ -178,14 +178,14 @@ class AffineModulation(AbstractConditioner):
     A single ``eqx.nn.Linear`` of output size ``2 * num_features``
     produces the concatenated ``(raw_β, raw_γ)`` from the context vector.
     The two halves are split on the feature axis via
-    :func:`einx.id` (no raw ``jnp.split``), then ``γ`` is passed
+    `einx.id` (no raw ``jnp.split``), then ``γ`` is passed
     through the chosen activation:
 
     * ``"one_plus_tanh"`` (default): ``γ = 1 + tanh(raw_γ)`` — identity at
       init when the generator's bias is zero. The choice that gives FiLM
       its "does nothing until trained" property.
     * ``"exp"``: ``γ = exp(raw_γ)`` — strictly positive, required for
-      bijection use. In this mode :meth:`log_det` returns
+      bijection use. In this mode `log_det` returns
       ``sum(raw_γ, axis=-1)``, the closed-form log-Jacobian of an
       element-wise scale.
     * ``"softplus"``: ``γ = softplus(raw_γ)`` — strictly positive, slower
@@ -218,7 +218,7 @@ class AffineModulation(AbstractConditioner):
         key: PRNGKeyArray,
         gamma_activation: GammaActivation = "one_plus_tanh",
     ) -> AffineModulation:
-        """Build :class:`AffineModulation` with the default 2-output Linear generator.
+        """Build `AffineModulation` with the default 2-output Linear generator.
 
         Args:
             num_features: Output channel count.
@@ -227,7 +227,7 @@ class AffineModulation(AbstractConditioner):
             gamma_activation: Parameterisation of ``γ``; see the class docstring.
 
         Returns:
-            Initialised :class:`AffineModulation`.
+            Initialised `AffineModulation`.
 
         Raises:
             ValueError: If ``num_features`` or ``cond_dim`` is non-positive,
@@ -291,7 +291,7 @@ class AffineModulation(AbstractConditioner):
 
         Only valid when ``gamma_activation="exp"`` — that's the only
         parameterisation for which ``log γ = raw_γ`` exactly. For other
-        modes this raises :class:`NotImplementedError`; callers that need
+        modes this raises `NotImplementedError`; callers that need
         a generic Jacobian must compute it manually.
 
         Args:
@@ -323,7 +323,7 @@ class AffineModulation(AbstractConditioner):
         return einx.sum("[c]", raw_gamma)
 
 
-#: Backwards-compatible alias for :class:`AffineModulation`.
+#: Backwards-compatible alias for `AffineModulation`.
 FiLM = AffineModulation
 
 
@@ -337,7 +337,7 @@ class HyperLinear(AbstractConditioner):
 
     A single ``eqx.nn.Linear`` of output size ``target_out * target_in +
     target_out`` produces the flat parameter vector for an ad-hoc linear
-    layer; ``W`` and ``b`` are split out via :func:`einx.id`. The forward
+    layer; ``W`` and ``b`` are split out via `einx.id`. The forward
     consumes single-example vectors ``x: (C_in,)`` and ``z: (K,)`` and
     returns ``(C_out,)``.
 
@@ -376,7 +376,7 @@ class HyperLinear(AbstractConditioner):
         key: PRNGKeyArray,
         init_scale: float = 0.1,
     ) -> HyperLinear:
-        """Build a :class:`HyperLinear` with a small-magnitude generator init.
+        """Build a `HyperLinear` with a small-magnitude generator init.
 
         Args:
             target_in: Input dimension of the generated ``Linear``.
@@ -387,7 +387,7 @@ class HyperLinear(AbstractConditioner):
                 the generated ``W`` stays small at init. Default ``0.1``.
 
         Returns:
-            Initialised :class:`HyperLinear`.
+            Initialised `HyperLinear`.
 
         Raises:
             ValueError: If any of ``target_in``, ``target_out``,
@@ -458,8 +458,8 @@ class ConditionedINR(eqx.Module):
     """Wrap an inner network's per-layer activations with conditioners.
 
     Given an ``inner`` network exposing a ``layers`` sequence (true for
-    :class:`geonnax.SIREN` and any module that holds a list of callables
-    named ``layers``), :class:`ConditionedINR` runs the inner forward and
+    `geonnax.SIREN` and any module that holds a list of callables
+    named ``layers``), `ConditionedINR` runs the inner forward and
     inserts a conditioner after each non-readout layer:
 
     .. code:: text
@@ -472,9 +472,9 @@ class ConditionedINR(eqx.Module):
         y   = layer_{L-1}(z_{L-2})        # readout, not conditioned
 
     The ``mode="input"`` shortcut applies a single head conditioner to
-    ``x`` (concatenation for :class:`ConcatConditioner`, FiLM-style
-    modulation for :class:`AffineModulation`, or input-generation for
-    :class:`HyperLinear`) *before* running ``inner`` — useful for inner
+    ``x`` (concatenation for `ConcatConditioner`, FiLM-style
+    modulation for `AffineModulation`, or input-generation for
+    `HyperLinear`) *before* running ``inner`` — useful for inner
     networks that don't expose a ``layers`` sequence (e.g. plain
     ``eqx.nn.MLP`` instances).
 
@@ -522,13 +522,13 @@ class ConditionedINR(eqx.Module):
         mode: ConditionedMode = "feature",
         **conditioner_kwargs: object,
     ) -> ConditionedINR:
-        """Build a :class:`ConditionedINR` around ``inner``.
+        """Build a `ConditionedINR` around ``inner``.
 
         Args:
             inner: Inner network. Must have ``layers: Sequence`` for
                 ``mode="feature"``; any callable works for ``mode="input"``.
-            conditioner_cls: One of :class:`ConcatConditioner`,
-                :class:`AffineModulation`, or :class:`HyperLinear`.
+            conditioner_cls: One of `ConcatConditioner`,
+                `AffineModulation`, or `HyperLinear`.
             cond_dim: Context dimension passed to each conditioner.
             key: PRNG key, split internally for each conditioner.
             mode: ``"feature"`` (per-layer modulation, default) or
@@ -537,7 +537,7 @@ class ConditionedINR(eqx.Module):
                 ``conditioner_cls.init``.
 
         Returns:
-            Initialised :class:`ConditionedINR`.
+            Initialised `ConditionedINR`.
 
         Raises:
             ValueError: If ``mode == "feature"`` and ``inner`` lacks a
@@ -677,9 +677,9 @@ def _inner_in_features(inner: object) -> int:
 class GeneratedSiren(eqx.Module):
     """Wrapper around a SIREN whose layers consume generated weights.
 
-    Built by :func:`HyperSIREN`. The ``parameter_net`` runs once on ``mu``
+    Built by `HyperSIREN`. The ``parameter_net`` runs once on ``mu``
     per forward call to produce the latent ``z``; ``z`` then drives every
-    per-layer :class:`HyperLinear`. Single-example forward: ``x: (D_in,)``,
+    per-layer `HyperLinear`. Single-example forward: ``x: (D_in,)``,
     ``mu: (P,)`` → ``(D_out,)``.
 
     Examples:
@@ -743,16 +743,16 @@ def HyperSIREN(
     """NIF-style ShapeNet/ParameterNet composite (Pan, Brunton, Kutz — JMLR 2023).
 
     Builds a SIREN shape-net of the requested topology, then constructs a
-    parallel list of :class:`HyperLinear` generators — one per SIREN layer
+    parallel list of `HyperLinear` generators — one per SIREN layer
     — whose ``init_scale`` is calibrated per Sitzmann regime so the
     *expected magnitude* of each generated ``W`` matches the half-width
-    of Sitzmann's :func:`geonnax.siren.siren_W_limit` at init.
+    of Sitzmann's `geonnax.siren.siren_W_limit` at init.
     Without this calibration the ShapeNet's pre-activation variance is
     wrong and training is unstable.
 
     The user-supplied ``parameter_net`` runs once on ``mu`` per forward
     call to produce the latent ``z``; ``z`` then drives every per-layer
-    :class:`HyperLinear`. ``parameter_net`` must be callable with signature
+    `HyperLinear`. ``parameter_net`` must be callable with signature
     ``(P,) -> (cond_dim,)``.
 
     Args:

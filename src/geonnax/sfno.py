@@ -4,10 +4,10 @@ The SFNO is the FNO with its planar FFT replaced by a Spherical Harmonic
 Transform, so the learned operator acts on functions on the sphere — the
 appropriate geometry for global geoscience fields sampled on a lat/lon grid. It
 shares the FNO's structure: lift to a hidden width, apply spherical Fourier
-blocks (a :class:`~geonnax.layers.SphericalSpectralConv` summed with a pointwise
+blocks (a `SphericalSpectralConv` summed with a pointwise
 skip), then project to the output channels.
 
-A single :class:`~geonnax.layers.SphericalHarmonicTransform` is built for the
+A single `SphericalHarmonicTransform` is built for the
 input grid and shared across all blocks. Inputs are single examples of shape
 ``(channels, n_lat, n_lon)`` matching that grid; ``jax.vmap`` over a batch.
 """
@@ -40,10 +40,10 @@ def _pointwise(in_channels: int, out_channels: int, *, key: Array) -> eqx.nn.Con
 class SphericalFNOBlock(eqx.Module):
     """One spherical Fourier layer: spherical spectral conv + pointwise skip.
 
-    The shared transform is threaded in at call time (see :class:`SFNO`).
+    The shared transform is threaded in at call time (see `SFNO`).
 
     Attributes:
-        spectral: Spherical spectral mixing (:class:`SphericalSpectralConv`).
+        spectral: Spherical spectral mixing (`SphericalSpectralConv`).
         pointwise: Local ``1x1`` channel-mixing skip.
         activation: Pointwise nonlinearity (static).
         use_activation: Whether to apply the activation (static).

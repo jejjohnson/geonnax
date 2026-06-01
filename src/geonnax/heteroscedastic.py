@@ -5,22 +5,23 @@ that promote each weight array to a ``pyrox_param`` site live in the
 consuming probabilistic library and reuse the pure helpers exposed
 here (``hetero_noisy_logits``, ``HeteroscedasticHead``).
 
-* :class:`HeteroscedasticHead` — shared base with the deterministic
+* `HeteroscedasticHead` — shared base with the deterministic
   logit-noise math.
-* :class:`MCSoftmaxDenseFA` — multi-class output with input-dependent
+* `MCSoftmaxDenseFA` — multi-class output with input-dependent
   low-rank-plus-diagonal logit noise, MC-averaged softmax probabilities.
-* :class:`MCSigmoidDenseFA` — same noise model, sigmoid output for
+* `MCSigmoidDenseFA` — same noise model, sigmoid output for
   multi-label / binary classification.
 
 Both share the same heteroscedastic logit-noise model — given an
-input-dependent low-rank factor :math:`V(x) \\in \\mathbb{R}^{C \\times r}`
-and diagonal :math:`\\sigma(x) \\in \\mathbb{R}^C`,
+input-dependent low-rank factor $V(x) \\in \\mathbb{R}^{C \\times r}$
+and diagonal $\\sigma(x) \\in \\mathbb{R}^C$,
 
-.. math::
+$$
+\\eta(x) = W_\\mu x + b_\\mu + \\epsilon, \\qquad
+\\Sigma(x) = V(x) V(x)^\\top + \\mathrm{diag}\\!\\bigl(\\sigma^2(x)\\bigr),
+\\;\\; \\epsilon \\sim \\mathcal{N}(0, \\Sigma(x)).
+$$
 
-    \\eta(x) = W_\\mu x + b_\\mu + \\epsilon, \\qquad
-    \\Sigma(x) = V(x) V(x)^\\top + \\mathrm{diag}\\!\\bigl(\\sigma^2(x)\\bigr),
-    \\;\\; \\epsilon \\sim \\mathcal{N}(0, \\Sigma(x)).
 
 Predictions average a small number of Monte Carlo softmax / sigmoid
 samples.
@@ -64,7 +65,7 @@ def hetero_noisy_logits(
     perturbations using the supplied PRNG ``key``.
 
     Args:
-        layer: A :class:`HeteroscedasticHead` (or subclass) carrying
+        layer: A `HeteroscedasticHead` (or subclass) carrying
             the weight / bias arrays.
         x: Input feature vector of shape ``(D_in,)``.
         key: PRNG key used to draw the Gaussian noise samples.
@@ -113,8 +114,8 @@ class HeteroscedasticHead(eqx.Module):
     Stores the six deterministic linear-factor arrays
     (``W_loc``/``b_loc`` for the mean logits, ``W_scale``/``b_scale``
     for the low-rank covariance factor, ``W_diag``/``b_diag`` for the
-    log-diagonal scale) as real :mod:`equinox` array fields. Subclasses
-    override ``__call__`` to wrap :func:`hetero_noisy_logits` with the
+    log-diagonal scale) as real `equinox` array fields. Subclasses
+    override ``__call__`` to wrap `hetero_noisy_logits` with the
     appropriate link function (softmax / sigmoid).
 
     Attributes:
@@ -124,10 +125,10 @@ class HeteroscedasticHead(eqx.Module):
         b_scale: Low-rank factor bias, shape ``(C * r,)``.
         W_diag: Diagonal log-scale weight matrix, shape ``(D_in, C)``.
         b_diag: Diagonal log-scale bias, shape ``(C,)``.
-        in_features: Input dimension :math:`D_\\mathrm{in}`.
-        num_classes: Number of classes :math:`C`.
-        rank: Rank :math:`r` of the low-rank factor :math:`V(x)`.
-        num_mc_samples: Number of MC samples :math:`S` per forward call.
+        in_features: Input dimension $D_\\mathrm{in}$.
+        num_classes: Number of classes $C$.
+        rank: Rank $r$ of the low-rank factor $V(x)$.
+        num_mc_samples: Number of MC samples $S$ per forward call.
         diag_init_bias: Initial value for the diagonal-scale bias
             ``b_diag`` (a small negative number keeps initial noise
             small).
@@ -221,36 +222,38 @@ class MCSoftmaxDenseFA(HeteroscedasticHead):
     Implements Collier et al. (2021): the logit covariance is
     input-dependent low-rank-plus-diagonal,
 
-    .. math::
+    $$
+    \eta(x) = W_\mu x + b_\mu + \epsilon, \qquad
+    \Sigma(x) = V(x) V(x)^\top + \operatorname{diag}\!\bigl(\sigma^2(x)\bigr),
+    \;\; \epsilon \sim \mathcal{N}(0, \Sigma(x)),
+    $$
 
-        \eta(x) = W_\mu x + b_\mu + \epsilon, \qquad
-        \Sigma(x) = V(x) V(x)^\top + \operatorname{diag}\!\bigl(\sigma^2(x)\bigr),
-        \;\; \epsilon \sim \mathcal{N}(0, \Sigma(x)),
 
-    where :math:`V(x) = \mathrm{reshape}(W_V x + b_V, [C, r])` and
-    :math:`\sigma(x) = \exp(W_\sigma x + b_\sigma)`. Output is the
+    where $V(x) = \mathrm{reshape}(W_V x + b_V, [C, r])$ and
+    $\sigma(x) = \exp(W_\sigma x + b_\sigma)$. Output is the
     Monte Carlo average of softmaxed perturbed logits
 
-    .. math::
+    $$
+    \hat{p}(y = k \mid x) \approx
+    \frac{1}{S}\sum_{s=1}^{S}
+    \mathrm{softmax}_k\!\bigl(\eta(x) + \epsilon_s\bigr).
+    $$
 
-        \hat{p}(y = k \mid x) \approx
-        \frac{1}{S}\sum_{s=1}^{S}
-        \mathrm{softmax}_k\!\bigl(\eta(x) + \epsilon_s\bigr).
 
-    All linear factors are real :mod:`equinox` array fields — the
+    All linear factors are real `equinox` array fields — the
     layer is heteroscedastic but not Bayesian over its weights. Use it
     as a drop-in head for classification when label noise is known to
     be input-dependent (label disagreement, fine-grained categories).
 
     The consuming probabilistic library can promote each array to a
     parameter site without changing the forward math; geonnax exposes
-    :func:`hetero_noisy_logits` as the reusable pure helper.
+    `hetero_noisy_logits` as the reusable pure helper.
 
     Attributes:
-        in_features: Input dimension :math:`D_\mathrm{in}`.
-        num_classes: Number of classes :math:`C`.
-        rank: Rank :math:`r` of the low-rank factor :math:`V(x)`.
-        num_mc_samples: Number of MC softmax samples :math:`S` per
+        in_features: Input dimension $D_\mathrm{in}$.
+        num_classes: Number of classes $C$.
+        rank: Rank $r$ of the low-rank factor $V(x)$.
+        num_mc_samples: Number of MC softmax samples $S$ per
             forward call.
         diag_init_bias: Initial value for the diagonal-scale bias
             ``b_diag`` (a small negative number keeps initial noise
@@ -289,18 +292,19 @@ class MCSigmoidDenseFA(HeteroscedasticHead):
     r"""Heteroscedastic multi-label output layer (FA noise + sigmoid).
 
     Identical low-rank-plus-diagonal logit-noise model as
-    :class:`MCSoftmaxDenseFA`, but the per-class outputs are
+    `MCSoftmaxDenseFA`, but the per-class outputs are
     independent Bernoullis — final probabilities are the MC average of
     *element-wise* sigmoids, not a softmax. Use this for multi-label
     classification or independent binary heads.
 
-    .. math::
+    $$
+    \hat{p}(y_k = 1 \mid x) \approx
+    \frac{1}{S}\sum_{s=1}^{S}
+    \sigma\!\bigl(\eta(x) + \epsilon_s\bigr)_k.
+    $$
 
-        \hat{p}(y_k = 1 \mid x) \approx
-        \frac{1}{S}\sum_{s=1}^{S}
-        \sigma\!\bigl(\eta(x) + \epsilon_s\bigr)_k.
 
-    See :class:`MCSoftmaxDenseFA` for the noise model, init API, and
+    See `MCSoftmaxDenseFA` for the noise model, init API, and
     references.
 
     Examples:

@@ -5,7 +5,7 @@ The learnable weights of a spectral convolution form a large tensor
 axis of size 2 here). Storing it densely dominates an FNO's parameter count,
 so this module provides drop-in low-rank parameterisations — CP, Tucker, and
 Tensor-Train — alongside the dense tensor. Each is a plain ``equinox.Module``
-exposing :meth:`reconstruct`, which rebuilds the full real tensor; the spectral
+exposing `reconstruct`, which rebuilds the full real tensor; the spectral
 layer then views the trailing axis as the real/imaginary parts.
 
 References:

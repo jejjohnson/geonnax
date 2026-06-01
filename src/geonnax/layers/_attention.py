@@ -91,7 +91,7 @@ class Attention(eqx.Module):
 class LinearAttention(eqx.Module):
     """Pre-norm linear attention — ``O(n)`` in the number of spatial positions.
 
-    A memory-frugal alternative to :class:`Attention` for higher-resolution
+    A memory-frugal alternative to `Attention` for higher-resolution
     stages, using the softmax-feature factorisation of Shen et al. (2018,
     "Efficient Attention").
 

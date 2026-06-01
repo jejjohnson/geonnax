@@ -2,12 +2,12 @@
 
 The FNO learns a resolution-invariant mapping between function spaces. It lifts
 the input to a higher channel width, applies a stack of Fourier blocks — each a
-:class:`~geonnax.layers.SpectralConv` (global, spectral) summed with a pointwise
+`SpectralConv` (global, spectral) summed with a pointwise
 linear skip (local) — then projects back to the output channels. With
 factorised spectral weights (CP / Tucker / TT) it becomes the Tensorized FNO
 (Kossaifi et al., 2023).
 
-Optional :class:`DomainPadding` extends a non-periodic input before the FFT and
+Optional `DomainPadding` extends a non-periodic input before the FFT and
 crops afterwards, so the implicit periodicity of the transform does not wrap
 boundary information — useful for the bounded, non-periodic fields common in
 geoscience.
@@ -88,7 +88,7 @@ class FNOBlock(eqx.Module):
     local ``1x1`` channel mix, the standard FNO layer (Li et al., 2021).
 
     Attributes:
-        spectral: Global spectral mixing (:class:`SpectralConv`).
+        spectral: Global spectral mixing (`SpectralConv`).
         pointwise: Local ``1x1`` channel-mixing skip.
         activation: Pointwise nonlinearity (static).
         use_activation: Whether to apply the activation (static; ``False`` for a
@@ -298,7 +298,7 @@ class FNO(eqx.Module):
 
 
 FourierNeuralOperator = FNO
-"""Verbose alias for :class:`FNO`."""
+"""Verbose alias for `FNO`."""
 
 
 __all__ = [

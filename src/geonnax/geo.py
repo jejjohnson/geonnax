@@ -3,8 +3,8 @@
 These helpers are deterministic, pandas-free building blocks for
 longitude/latitude preprocessing and spherical-harmonic feature maps.
 The corresponding stateful encoders expose
-the same transforms as :class:`equinox.Module` instances so they
-compose inside :class:`equinox.nn.Sequential`.
+the same transforms as `equinox.Module` instances so they
+compose inside `equinox.nn.Sequential`.
 """
 
 from __future__ import annotations
@@ -124,11 +124,12 @@ def lonlat_to_cartesian3d(
 
     Uses the standard parameterization
 
-    .. math::
+    $$
+    x = \cos(\phi)\cos(\lambda), \quad
+    y = \cos(\phi)\sin(\lambda), \quad
+    z = \sin(\phi),
+    $$
 
-        x = \cos(\phi)\cos(\lambda), \quad
-        y = \cos(\phi)\sin(\lambda), \quad
-        z = \sin(\phi),
 
     where ``lon = λ`` and ``lat = ϕ``. This matches the axis
     convention expected by
@@ -215,7 +216,7 @@ def spherical_harmonic_encode(
     *,
     input_unit: Literal["degrees", "radians"] = "radians",
 ) -> Float[Array, "N M"]:
-    """Lift lon/lat to :math:`S^2` and evaluate real spherical harmonics.
+    """Lift lon/lat to $S^2$ and evaluate real spherical harmonics.
 
     Args:
         lonlat: Longitude/latitude matrix of shape ``(N, 2)``.

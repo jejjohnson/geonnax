@@ -1,15 +1,15 @@
 r"""Real spherical harmonics on the unit 2-sphere.
 
-For ``l_max``, the basis is :math:`(l_{\max} + 1)^2` real SHs indexed by
-:math:`(l, m)` with :math:`l = 0, 1, \ldots, l_{\max}` and
-:math:`m = -l, \ldots, l`. Inputs are unit Cartesian directions; the
+For ``l_max``, the basis is $(l_{\max} + 1)^2$ real SHs indexed by
+$(l, m)$ with $l = 0, 1, \ldots, l_{\max}$ and
+$m = -l, \ldots, l$. Inputs are unit Cartesian directions; the
 azimuthal singularity at the poles is avoided by computing
-:math:`Q_l^m(z) = P_l^m(z) / (1 - z^2)^{m/2}` (a polynomial in ``z``)
-and pairing it with :math:`(x + iy)^m` directly — no
-``arctan2`` or division by :math:`\sin\theta`.
+$Q_l^m(z) = P_l^m(z) / (1 - z^2)^{m/2}$ (a polynomial in ``z``)
+and pairing it with $(x + iy)^m$ directly — no
+``arctan2`` or division by $\sin\theta$.
 
 Tested via the addition theorem
-:math:`\sum_m Y_{lm}(x) Y_{lm}(x') = \frac{2l+1}{4\pi} P_l(x \cdot x')`.
+$\sum_m Y_{lm}(x) Y_{lm}(x') = \frac{2l+1}{4\pi} P_l(x \cdot x')$.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ from jaxtyping import Array, Float
 def harmonic_degrees(l_max: int) -> tuple[int, ...]:
     """Return the per-harmonic degree ``l`` for the flattened ``(l_max + 1)^2`` block.
 
-    Layout matches :func:`real_spherical_harmonics`: outer loop over ``l``,
+    Layout matches `real_spherical_harmonics`: outer loop over ``l``,
     inner loop over ``m = -l, ..., l``.
 
     Examples:
@@ -40,11 +40,11 @@ def harmonic_degrees(l_max: int) -> tuple[int, ...]:
 def _q_lm_table(
     z: Float[Array, " N"], l_max: int
 ) -> dict[tuple[int, int], Float[Array, " N"]]:
-    r"""Build the table :math:`Q_l^m(z) = P_l^m(z) / (1 - z^2)^{m/2}`.
+    r"""Build the table $Q_l^m(z) = P_l^m(z) / (1 - z^2)^{m/2}$.
 
     Computes one entry per pair ``0 <= m <= l <= l_max`` via the standard
     three-term forward recursion in ``l`` for fixed ``m``, seeded from
-    :math:`Q_m^m = (-1)^m (2m - 1)!!`.
+    $Q_m^m = (-1)^m (2m - 1)!!$.
     """
     Q: dict[tuple[int, int], Float[Array, " N"]] = {}
     one = jnp.ones_like(z)
@@ -70,7 +70,7 @@ def _q_lm_table(
 def _xy_powers(
     x: Float[Array, " N"], y: Float[Array, " N"], m_max: int
 ) -> tuple[list[Float[Array, " N"]], list[Float[Array, " N"]]]:
-    """Real and imaginary parts of :math:`(x + iy)^m` for ``m = 0, 1, ..., m_max``."""
+    """Real and imaginary parts of $(x + iy)^m$ for ``m = 0, 1, ..., m_max``."""
     re = [jnp.ones_like(x)]
     im = [jnp.zeros_like(x)]
     for _m in range(1, m_max + 1):
@@ -90,15 +90,18 @@ def real_spherical_harmonics(
 
     Convention (matches the standard "tesseral" real basis):
 
-    .. math::
+    $$
+    \begin{aligned}
+    Y_l^0    &= N_l^0\, P_l(\cos\theta)                          \\
+    Y_l^m    &= \sqrt{2}\, N_l^m\, P_l^m(\cos\theta) \cos(m\phi)  & m > 0 \\
+    Y_l^{-m} &= \sqrt{2}\, N_l^m\, P_l^m(\cos\theta) \sin(m\phi)  & m > 0
+    \end{aligned}
+    $$
 
-        Y_l^0    &= N_l^0\, P_l(\cos\theta)                          \\
-        Y_l^m    &= \sqrt{2}\, N_l^m\, P_l^m(\cos\theta) \cos(m\phi)  & m > 0 \\
-        Y_l^{-m} &= \sqrt{2}\, N_l^m\, P_l^m(\cos\theta) \sin(m\phi)  & m > 0
 
-    with :math:`N_l^m = \sqrt{\frac{2l+1}{4\pi}\frac{(l-m)!}{(l+m)!}}`. The
+    with $N_l^m = \sqrt{\frac{2l+1}{4\pi}\frac{(l-m)!}{(l+m)!}}$. The
     pole singularity is avoided by evaluating
-    :math:`P_l^m(z) \cos(m\phi) = Q_l^m(z) \cdot \mathrm{Re}[(x + iy)^m]`
+    $P_l^m(z) \cos(m\phi) = Q_l^m(z) \cdot \mathrm{Re}[(x + iy)^m]$
     and similarly for the sine branch.
 
     Args:

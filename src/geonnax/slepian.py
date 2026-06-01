@@ -35,7 +35,7 @@ def _unit_xyz(
 
 
 class SlepianEncoder(eqx.Module):
-    """Deterministic Slepian-cap positional encoder on :math:`S^2`.
+    """Deterministic Slepian-cap positional encoder on $S^2$.
 
     Slepian functions are the band-limited modes maximally concentrated
     inside a spherical cap; each is a weighted sum of spherical harmonics

@@ -2,13 +2,13 @@
 
 A JAX/Equinox port of the design popularised by `lucidrains/x-unet
 <https://github.com/lucidrains/x-unet>`_, assembling the reusable primitives in
-:mod:`geonnax.layers` into a convolutional encoder–decoder that synthesises
+`geonnax.layers` into a convolutional encoder–decoder that synthesises
 several lines of research:
 
 - **U-Net** (Ronneberger et al., 2015) — the encoder/decoder skeleton with
   skip connections.
 - **U²-Net** (Qin et al., 2020) — optional *nested* residual U-Nets used as a
-  per-stage block (:class:`NestedResidualUNet`).
+  per-stage block (`NestedResidualUNet`).
 - **Weight Standardization** (Qiao et al., 2019) + **GroupNorm** (Wu & He,
   2018) — micro-batch-friendly normalisation.
 - **ConvNeXt-V2** (Woo et al., 2023) — depthwise blocks with Global Response
@@ -17,7 +17,7 @@ several lines of research:
 - **Cosine / QK-normalised attention** (Henry et al., 2020) — stable
   self-attention at the bottleneck.
 
-Like the underlying layers, :class:`UNet` operates on a *single* example of
+Like the underlying layers, `UNet` operates on a *single* example of
 shape ``(channels, *spatial)`` with ``num_spatial_dims`` spatial axes
 (``2`` ⇒ ``(C, H, W)`` maps by default, the natural layout for gridded
 geoscience data; ``1`` gives time series / profiles, ``3`` gives volumes).
@@ -176,11 +176,11 @@ class Stage(eqx.Module):
     """One encoder/decoder stage: a leaf block, then an optional nested U-Net.
 
     The leaf block adapts the channel count; the optional channel-preserving
-    :class:`NestedResidualUNet` then refines features at the stage resolution.
+    `NestedResidualUNet` then refines features at the stage resolution.
 
     Attributes:
-        leaf: Channel-adapting block (:class:`ResnetBlock` or
-            :class:`ConvNeXtBlock`).
+        leaf: Channel-adapting block (`ResnetBlock` or
+            `ConvNeXtBlock`).
         nested: Optional nested residual U-Net at the leaf's output width.
     """
 
@@ -259,7 +259,7 @@ class UNet(eqx.Module):
     ``2**len(dim_mults)`` (and, where nested stages are used, by the extra
     ``2**nested_depth`` at that resolution).
 
-    The encoder applies a :class:`Stage` then a factor-2 downsample at each
+    The encoder applies a `Stage` then a factor-2 downsample at each
     level; the bottleneck is ``ResnetBlock → Attention → ResnetBlock``; the
     decoder upsamples, fuses the ``1/√2``-scaled skip, and applies a stage. With
     ``consolidate_upsample_fmaps`` the decoder outputs at every resolution are
@@ -346,7 +346,7 @@ class UNet(eqx.Module):
             num_spatial_dims: Spatial rank (1, 2, or 3).
             dim_mults: Per-stage channel multipliers; its length sets the
                 number of resolution levels.
-            nested_unet_depths: Per-stage :class:`NestedResidualUNet` depth
+            nested_unet_depths: Per-stage `NestedResidualUNet` depth
                 (``0`` disables nesting). An int broadcasts to all stages.
             block_type: Leaf block, ``"resnet"`` or ``"convnext"``.
             attn_heads: Bottleneck attention heads.
@@ -561,7 +561,7 @@ class UNet(eqx.Module):
 
 
 XUNet = UNet
-"""Alias for :class:`UNet`, echoing the ``x-unet`` design this port follows."""
+"""Alias for `UNet`, echoing the ``x-unet`` design this port follows."""
 
 
 __all__ = [

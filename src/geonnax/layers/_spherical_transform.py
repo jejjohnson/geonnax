@@ -6,7 +6,7 @@ lives on the sphere and respects its geometry — the right inductive bias for
 global geoscience fields on a lat/lon grid.
 
 The transform here is a dense, matrix-based SHT built directly from geonnax's
-:func:`~geonnax._basis._spherical.real_spherical_harmonics` together with a
+`real_spherical_harmonics` together with a
 Gauss–Legendre latitude quadrature. It needs no external SHT package and is
 fully differentiable. The (fixed) synthesis/analysis matrices are carried as
 ``stop_gradient`` buffers rather than trained parameters.
@@ -55,7 +55,7 @@ class SphericalHarmonicTransform(eqx.Module):
     """Dense, differentiable spherical harmonic analysis/synthesis on a grid.
 
     Built for a fixed ``(n_lat, n_lon)`` grid and band limit ``l_max``; the
-    coefficient layout matches :func:`real_spherical_harmonics`
+    coefficient layout matches `real_spherical_harmonics`
     (``(l_max + 1)**2`` real coefficients, outer loop over degree ``l``).
 
     Attributes:
@@ -149,8 +149,8 @@ class SphericalSpectralConv(eqx.Module):
     Mixes channels with a separate matrix per spherical-harmonic degree ``l``
     (shared across orders ``m``), which is the rotation-equivariant analogue of
     the FNO's spectral mixing. The (heavyweight, shared) transform is passed in
-    at call time rather than stored, so an :class:`SFNO` can reuse one
-    :class:`SphericalHarmonicTransform` across all of its blocks.
+    at call time rather than stored, so an `SFNO` can reuse one
+    `SphericalHarmonicTransform` across all of its blocks.
 
     Attributes:
         weight: Per-degree mixing of shape ``(l_max + 1, out_channels,
