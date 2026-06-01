@@ -1,19 +1,19 @@
-# pypackage_template
+# geonnax
 
-[![Tests](https://github.com/jejjohnson/pypackage_template/actions/workflows/ci.yml/badge.svg)](https://github.com/jejjohnson/pypackage_template/actions/workflows/ci.yml)
-[![Lint](https://github.com/jejjohnson/pypackage_template/actions/workflows/lint.yml/badge.svg)](https://github.com/jejjohnson/pypackage_template/actions/workflows/lint.yml)
-[![Type Check](https://github.com/jejjohnson/pypackage_template/actions/workflows/typecheck.yml/badge.svg)](https://github.com/jejjohnson/pypackage_template/actions/workflows/typecheck.yml)
-[![Deploy Docs](https://github.com/jejjohnson/pypackage_template/actions/workflows/pages.yml/badge.svg)](https://github.com/jejjohnson/pypackage_template/actions/workflows/pages.yml)
-[![codecov](https://codecov.io/gh/jejjohnson/pypackage_template/branch/main/graph/badge.svg)](https://codecov.io/gh/jejjohnson/pypackage_template)
-[![PyPI version](https://img.shields.io/pypi/v/mypackage.svg)](https://pypi.org/project/mypackage/)
-[![Python versions](https://img.shields.io/pypi/pyversions/mypackage.svg)](https://pypi.org/project/mypackage/)
+[![Tests](https://github.com/jejjohnson/geonnax/actions/workflows/ci.yml/badge.svg)](https://github.com/jejjohnson/geonnax/actions/workflows/ci.yml)
+[![Lint](https://github.com/jejjohnson/geonnax/actions/workflows/lint.yml/badge.svg)](https://github.com/jejjohnson/geonnax/actions/workflows/lint.yml)
+[![Type Check](https://github.com/jejjohnson/geonnax/actions/workflows/typecheck.yml/badge.svg)](https://github.com/jejjohnson/geonnax/actions/workflows/typecheck.yml)
+[![Deploy Docs](https://github.com/jejjohnson/geonnax/actions/workflows/pages.yml/badge.svg)](https://github.com/jejjohnson/geonnax/actions/workflows/pages.yml)
+[![codecov](https://codecov.io/gh/jejjohnson/geonnax/branch/main/graph/badge.svg)](https://codecov.io/gh/jejjohnson/geonnax)
+[![PyPI version](https://img.shields.io/pypi/v/geonnax.svg)](https://pypi.org/project/geonnax/)
+[![Python versions](https://img.shields.io/pypi/pyversions/geonnax.svg)](https://pypi.org/project/geonnax/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
 
 Author: J. Emmanuel Johnson
-Repo: [https://github.com/jejjohnson/pypackage_template](https://github.com/jejjohnson/pypackage_template)
+Repo: [https://github.com/jejjohnson/geonnax](https://github.com/jejjohnson/geonnax)
 Website: [jejjohnson.netlify.com](https://jejjohnson.netlify.com)
 
 An opinionated, modern Python package template with best-practice tooling already wired up. When you use this template, you get linting, formatting, type checking, testing with coverage gates, auto-generated documentation, automated releases, security scanning, and AI agent instructions — all configured and integrated from day one. No boilerplate to write; just rename the package and start coding.
@@ -23,8 +23,8 @@ An opinionated, modern Python package template with best-practice tooling alread
 ## 📂 Repository Layout
 
 ```
-pypackage_template/
-├── src/mypackage/                    # Main package code (src layout)
+geonnax/
+├── src/geonnax/                    # Main package code (src layout)
 ├── tests/                            # pytest test suite
 ├── docs/                             # MkDocs documentation source
 ├── notebooks/                        # Jupyter notebooks
@@ -53,8 +53,8 @@ pypackage_template/
 
 ```bash
 # Prerequisites: uv (https://github.com/astral-sh/uv)
-git clone https://github.com/jejjohnson/pypackage_template.git
-cd pypackage_template
+git clone https://github.com/jejjohnson/geonnax.git
+cd geonnax
 make install      # install all dependency groups
 make test         # run tests
 make docs-serve   # preview docs locally
@@ -98,14 +98,14 @@ make docs-serve   # preview docs locally
 
 ### 📁 `src/` Layout
 
-**Directory:** `src/mypackage/`
+**Directory:** `src/geonnax/`
 
-Source code lives under `src/mypackage/` rather than at the repo root. This forces the package to be properly installed before it can be imported, which means:
+Source code lives under `src/geonnax/` rather than at the repo root. This forces the package to be properly installed before it can be imported, which means:
 
 - Packaging bugs (missing files, incorrect paths) are caught early rather than hidden by the flat-layout import shortcut.
 - Tests always exercise the installed package, not an accidentally-importable source directory.
 
-> **What:** All source code lives under `src/mypackage/` instead of at the repo root, so the package must be installed before it can be imported.
+> **What:** All source code lives under `src/geonnax/` instead of at the repo root, so the package must be installed before it can be imported.
 
 > **Why `src/` layout?** Industry best practice. See writings by Brett Cannon and Hynek Schlawack on why flat layouts silently mask packaging errors.
 
@@ -121,7 +121,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mypackage"]
+packages = ["src/geonnax"]
 ```
 
 Zero-config, PEP 517 compliant. No `MANIFEST.in`, no surprises. Integrates cleanly with uv.
@@ -181,7 +181,7 @@ python-version = "3.12"
 ```toml
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=src/mypackage --cov-report=term-missing --cov-report=xml:coverage.xml"
+addopts = "--cov=src/geonnax --cov-report=term-missing --cov-report=xml:coverage.xml"
 
 [tool.coverage.report]
 fail_under = 80
@@ -440,7 +440,7 @@ Documented variables:
 
 | Variable | Purpose |
 |----------|---------|
-| `PKGROOT` | Path to package source (default: `src/mypackage`) |
+| `PKGROOT` | Path to package source (default: `src/geonnax`) |
 | `PYPI_TOKEN` | PyPI token for publishing |
 | `GITHUB_TOKEN` | GitHub personal access token |
 
@@ -499,10 +499,10 @@ Defines the review checklist (style, idioms, packaging, docs, error handling, te
 
 Follow this checklist when using this repo as a base for a new project:
 
-1. **Search-and-replace** `mypackage` with your package name everywhere (source, config, docs)
+1. **Search-and-replace** `geonnax` with your package name everywhere (source, config, docs)
 2. **Update `[project]` in `pyproject.toml`**: name, description, authors, keywords, classifiers, `requires-python`
 3. **Update `mkdocs.yml`**: `site_name`, `site_description`, `repo_url`, `repo_name`
-4. **Rename `src/mypackage/`** to `src/<yourpackage>/`
+4. **Rename `src/geonnax/`** to `src/<yourpackage>/`
 5. **Copy `.env.example` to `.env`** (`make init`) and fill in values
 6. **Run `make install`** then **`make test`** to verify the baseline works
 7. **Set up Codecov** and add `CODECOV_TOKEN` to GitHub Secrets if you want coverage tracking
