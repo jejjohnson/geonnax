@@ -96,7 +96,7 @@ from geonnax.sngp import LaplaceRandomFeatureCovariance, RandomFeatureGaussianPr
 from geonnax.vssgp import DeepVSSGPCore
 
 
-__version__ = "0.1.0"
+__version__ = "0.0.0"  # x-release-please-version
 
 __all__ = [
     "SIREN",

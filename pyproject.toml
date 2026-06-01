@@ -1,6 +1,6 @@
 [project]
 name = "geonnax"
-version = "0.1.0"
+version = "0.0.0"
 description = "Pure-Equinox neural-network zoo: SIREN, MFN, random features, SNGP, VSSGP, conditioning, geo encoders, Slepian, and shared eigenfunction bases."
 authors = [
     {name="J. Emmanuel Johnson", email="jemanjohnson34@gmail.com"},
