@@ -1,23 +1,23 @@
-# mypackage
+# geonnax
 
 > My short description for my project.
 
 ## Installation
 
 ```bash
-pip install mypackage
+pip install geonnax
 ```
 
 Or with `uv`:
 
 ```bash
-uv add mypackage
+uv add geonnax
 ```
 
 ## Quickstart
 
 ```python
-import mypackage
+import geonnax
 ```
 
 ## Links
