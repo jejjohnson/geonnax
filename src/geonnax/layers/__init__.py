@@ -20,6 +20,8 @@ leading channel axis and ``num_spatial_dims`` trailing spatial axes — shape
   / `TuckerTensor` / `TTTensor` low-rank weight parameterisations.
 - `geonnax.layers._spherical_transform` —
   `SphericalHarmonicTransform`, `SphericalSpectralConv`.
+- `geonnax.layers._wavelet` — `WaveletConv` plus the `dwt` / `idwt`
+  discrete wavelet transforms.
 """
 
 from geonnax.layers._attention import Attention, LinearAttention
@@ -44,6 +46,7 @@ from geonnax.layers._spherical_transform import (
     SphericalHarmonicTransform,
     SphericalSpectralConv,
 )
+from geonnax.layers._wavelet import Wavelet, WaveletConv, dwt, idwt
 
 
 __all__ = [
@@ -65,5 +68,9 @@ __all__ = [
     "TTTensor",
     "TuckerTensor",
     "Upsample",
+    "Wavelet",
+    "WaveletConv",
+    "dwt",
+    "idwt",
     "init_factorized_tensor",
 ]
