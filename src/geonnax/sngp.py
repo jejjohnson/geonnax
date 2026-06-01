@@ -4,11 +4,11 @@ Deterministic ``equinox.Module`` cores. The probabilistic wrapper
 that promotes each weight array to a ``pyrox_param`` site lives in
 the consuming probabilistic library.
 
-* :class:`LaplaceRandomFeatureCovariance` — pure-functional container
+* `LaplaceRandomFeatureCovariance` — pure-functional container
   for the Laplace-approximation precision matrix used at SNGP test
   time. Updated via the EMA of feature outer products during training.
-* :class:`RandomFeatureGaussianProcess` — SNGP output head (Liu et al.,
-  2020). RFF feature map :math:`\\phi(x)` plus a linear mean head and
+* `RandomFeatureGaussianProcess` — SNGP output head (Liu et al.,
+  2020). RFF feature map $\\phi(x)$ plus a linear mean head and
   a Laplace covariance over the linear weights.
 
 This module implements *just the SNGP head* — spectral normalisation
@@ -42,44 +42,46 @@ def _glorot_normal(
 class LaplaceRandomFeatureCovariance(eqx.Module):
     r"""Laplace-approximation precision for an SNGP output head.
 
-    Stores the precision matrix :math:`\hat{\Lambda} \in \mathbb{R}^{D \times D}`
+    Stores the precision matrix $\hat{\Lambda} \in \mathbb{R}^{D \times D}$
     over the linear weights of the output layer. Updated as an
     exponential moving average of feature outer products during
     training:
 
-    .. math::
+    $$
+    \hat{\Lambda}_{t+1} \leftarrow m\,\hat{\Lambda}_t
+    + (1 - m)\,\frac{1}{B} \sum_{b=1}^{B} \phi(x_b)\,\phi(x_b)^\top.
+    $$
 
-        \hat{\Lambda}_{t+1} \leftarrow m\,\hat{\Lambda}_t
-        + (1 - m)\,\frac{1}{B} \sum_{b=1}^{B} \phi(x_b)\,\phi(x_b)^\top.
 
     At test time the predictive variance for a feature vector
-    :math:`\phi(x_*)` is
+    $\phi(x_*)$ is
 
-    .. math::
+    $$
+    \sigma^2(x_*) = \phi(x_*)^\top \hat{\Sigma}\, \phi(x_*),
+    \qquad \hat{\Sigma} = \hat{\Lambda}^{-1},
+    $$
 
-        \sigma^2(x_*) = \phi(x_*)^\top \hat{\Sigma}\, \phi(x_*),
-        \qquad \hat{\Sigma} = \hat{\Lambda}^{-1},
 
     computed stably via a Cholesky solve.
 
-    The container is *pure-functional*: :meth:`update` returns a new
+    The container is *pure-functional*: `update` returns a new
     instance with an updated precision rather than mutating ``self``,
     matching how Equinox composes immutable PyTrees with optimisers.
-    A small ridge :math:`\lambda` initialises the precision at
-    :math:`\lambda I` and is *also* added at solve-time inside
-    :meth:`covariance` and :meth:`variance_at` so the Cholesky stays
+    A small ridge $\lambda$ initialises the precision at
+    $\lambda I$ and is *also* added at solve-time inside
+    `covariance` and `variance_at` so the Cholesky stays
     numerically well-conditioned even after many EMA steps with low
     momentum (which would otherwise let the ridge contribution decay
     geometrically and the precision approach singularity).
-    Equivalently :math:`\hat\Sigma = (\hat\Lambda + \lambda I)^{-1}` —
+    Equivalently $\hat\Sigma = (\hat\Lambda + \lambda I)^{-1}$ —
     the Bayesian-linear-regression interpretation of SNGP, where
-    :math:`\lambda I` is a Gaussian prior precision on the head weights.
+    $\lambda I$ is a Gaussian prior precision on the head weights.
 
     Attributes:
-        precision: Current precision matrix :math:`\hat{\Lambda}`.
-        momentum: EMA momentum :math:`m \in [0, 1]`. Higher values give
+        precision: Current precision matrix $\hat{\Lambda}$.
+        momentum: EMA momentum $m \in [0, 1]$. Higher values give
             slower updates; ``0.999`` works well for most settings.
-        ridge: Diagonal ridge :math:`\lambda`. Used both as the init
+        ridge: Diagonal ridge $\lambda$. Used both as the init
             value of ``precision`` and as a solve-time jitter to keep
             the Cholesky well-defined.
 
@@ -128,7 +130,7 @@ class LaplaceRandomFeatureCovariance(eqx.Module):
     def update(self, features: Float[Array, "B D"]) -> LaplaceRandomFeatureCovariance:
         r"""Return a new container with EMA-updated precision.
 
-        :math:`\hat\Lambda \leftarrow m\,\hat\Lambda + (1-m)\,\Phi^\top\Phi/B`.
+        $\hat\Lambda \leftarrow m\,\hat\Lambda + (1-m)\,\Phi^\top\Phi/B$.
 
         Examples:
             >>> import jax.numpy as jnp
@@ -155,7 +157,7 @@ class LaplaceRandomFeatureCovariance(eqx.Module):
     def covariance(self) -> Float[Array, "D D"]:
         r"""Inverse of the precision matrix (one-shot Cholesky inversion).
 
-        :math:`\hat\Sigma = (\hat\Lambda + \lambda I)^{-1}`, shape ``(D, D)``.
+        $\hat\Sigma = (\hat\Lambda + \lambda I)^{-1}$, shape ``(D, D)``.
 
         Examples:
             >>> from geonnax.sngp import LaplaceRandomFeatureCovariance
@@ -168,16 +170,17 @@ class LaplaceRandomFeatureCovariance(eqx.Module):
         return jax.scipy.linalg.cho_solve((L, True), jnp.eye(D))
 
     def variance_at(self, features: Float[Array, "N D"]) -> Float[Array, " N"]:
-        r"""Per-row predictive variance :math:`\phi(x_n)^\top \hat{\Sigma}\,\phi(x_n)`.
+        r"""Per-row predictive variance $\phi(x_n)^\top \hat{\Sigma}\,\phi(x_n)$.
 
         Computed via a triangular solve to avoid materialising the full
-        :math:`D \times D` covariance:
+        $D \times D$ covariance:
 
-        .. math::
+        $$
+        y = L^{-1} \phi(x_n)^\top, \qquad
+        \sigma^2(x_n) = \lVert y \rVert_2^2
+        = \phi(x_n)^\top (L L^\top)^{-1} \phi(x_n).
+        $$
 
-            y = L^{-1} \phi(x_n)^\top, \qquad
-            \sigma^2(x_n) = \lVert y \rVert_2^2
-            = \phi(x_n)^\top (L L^\top)^{-1} \phi(x_n).
 
         Examples:
             >>> import jax.numpy as jnp
@@ -206,25 +209,27 @@ class RandomFeatureGaussianProcess(eqx.Module):
 
     Forward (mean):
 
-    .. math::
+    $$
+    \phi(x) = \sqrt{\tfrac{2}{D}}\,\cos\!\bigl(W\, x / \ell + b\bigr),
+    \qquad \mu(x) = \phi(x)\, H + b_H.
+    $$
 
-        \phi(x) = \sqrt{\tfrac{2}{D}}\,\cos\!\bigl(W\, x / \ell + b\bigr),
-        \qquad \mu(x) = \phi(x)\, H + b_H.
 
-    The frequencies :math:`W` and bias :math:`b` of the RFF map are
+    The frequencies $W$ and bias $b$ of the RFF map are
     *frozen* (they implicitly define the kernel approximation): they
     are stored as real array fields then guarded with
-    :func:`jax.lax.stop_gradient` inside :meth:`feature_map` so
+    `jax.lax.stop_gradient` inside `feature_map` so
     SGD-style optimisers leave them untouched. The lengthscale
-    :math:`\ell`, the linear head :math:`H, b_H`, and the Laplace
+    $\ell$, the linear head $H, b_H$, and the Laplace
     precision are the trainable / updated quantities.
 
-    Predictive variance — when :math:`\hat{\Lambda}` is the current
+    Predictive variance — when $\hat{\Lambda}$ is the current
     precision matrix:
 
-    .. math::
+    $$
+    \sigma^2(x_*) = \phi(x_*)^\top \hat{\Lambda}^{-1}\, \phi(x_*).
+    $$
 
-        \sigma^2(x_*) = \phi(x_*)^\top \hat{\Lambda}^{-1}\, \phi(x_*).
 
     Training pattern (one minibatch):
 
@@ -232,7 +237,7 @@ class RandomFeatureGaussianProcess(eqx.Module):
        loss, take a gradient step on the trainable arrays as usual.
     2. After the gradient step, call
        ``new_layer = layer.update_precision(features)`` where
-       ``features`` is the result of :meth:`feature_map` evaluated on
+       ``features`` is the result of `feature_map` evaluated on
        the same minibatch using the *updated* parameters. This returns
        a new layer with the LRFC's precision EMA-updated.
 
@@ -248,13 +253,13 @@ class RandomFeatureGaussianProcess(eqx.Module):
             standard Normal (the RBF spectral density).
         bias: Frozen RFF biases, shape ``(D,)``, drawn from
             ``Uniform(0, 2 pi)``.
-        lengthscale: RFF lengthscale :math:`\ell`. Scalar, trainable.
+        lengthscale: RFF lengthscale $\ell$. Scalar, trainable.
         output_linear: Linear head, shape ``(D, D_out)``.
         output_bias: Output bias, shape ``(D_out,)``.
-        covariance: The :class:`LaplaceRandomFeatureCovariance` instance.
-        in_features: Input dimension :math:`D_\mathrm{in}`.
-        num_features: Number of random Fourier features :math:`D`.
-        out_features: Output dimension :math:`D_\mathrm{out}`.
+        covariance: The `LaplaceRandomFeatureCovariance` instance.
+        in_features: Input dimension $D_\mathrm{in}$.
+        num_features: Number of random Fourier features $D$.
+        out_features: Output dimension $D_\mathrm{out}$.
 
     References:
         Liu, J. Z., et al. (2020). *Simple and Principled Uncertainty
@@ -299,8 +304,8 @@ class RandomFeatureGaussianProcess(eqx.Module):
     ) -> Self:
         r"""Construct an SNGP head with frozen RFF freqs and an empty precision.
 
-        Frequencies ``W`` are drawn from :math:`\mathcal N(0, 1)` (the RBF
-        spectral density) and biases ``b`` from :math:`\mathrm{Uniform}(0, 2\pi)`;
+        Frequencies ``W`` are drawn from $\mathcal N(0, 1)$ (the RBF
+        spectral density) and biases ``b`` from $\mathrm{Uniform}(0, 2\pi)$;
         both are frozen. The linear head is Glorot-scaled and the Laplace
         precision starts at ``ridge * I``.
 
@@ -341,10 +346,10 @@ class RandomFeatureGaussianProcess(eqx.Module):
         )
 
     def feature_map(self, x: Float[Array, " D_in"]) -> Float[Array, " D"]:
-        r"""Random Fourier feature map: :math:`\phi(x) = \sqrt{2/D}\,\cos(Wx/\ell + b)`.
+        r"""Random Fourier feature map: $\phi(x) = \sqrt{2/D}\,\cos(Wx/\ell + b)$.
 
         Single-example: ``x: (D_in,)`` → ``(D,)``. Frequencies and bias
-        are guarded with :func:`jax.lax.stop_gradient` so gradient-based
+        are guarded with `jax.lax.stop_gradient` so gradient-based
         optimisers leave them frozen at their init values. The
         lengthscale is the active bandwidth control.
 

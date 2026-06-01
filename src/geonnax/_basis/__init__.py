@@ -8,12 +8,12 @@ Public surface (kernel-free pieces only — kernel-dependent helpers such as
 ``spectral_density`` and the RFF cosine path draws live with the consuming
 library, since they ``isinstance``-dispatch on kernel classes):
 
-- :func:`fourier_basis_1d` / :func:`fourier_eigenvalues_1d` — 1D Dirichlet
-  eigenpairs of :math:`-d^2/dx^2` on :math:`[-L, L]`.
-- :func:`fourier_basis` — tensor-product extension to :math:`[-L, L]^D`.
-- :func:`real_spherical_harmonics` — real SHs on the unit 2-sphere.
-- :func:`graph_laplacian_eigpairs` — smallest eigenpairs of a graph Laplacian.
-- :class:`SlepianCapBasis` / :func:`slepian_cap_basis` — Slepian eigenfunctions
+- `fourier_basis_1d` / `fourier_eigenvalues_1d` — 1D Dirichlet
+  eigenpairs of $-d^2/dx^2$ on $[-L, L]$.
+- `fourier_basis` — tensor-product extension to $[-L, L]^D$.
+- `real_spherical_harmonics` — real SHs on the unit 2-sphere.
+- `graph_laplacian_eigpairs` — smallest eigenpairs of a graph Laplacian.
+- `SlepianCapBasis` / `slepian_cap_basis` — Slepian eigenfunctions
   on a spherical cap.
 """
 

@@ -28,16 +28,16 @@ def _require_positive(**values: float) -> None:
 
 
 class FourierFilter(eqx.Module):
-    r"""Single Fourier filter: :math:`g(x) = \sin(\Omega x + \varphi)`.
+    r"""Single Fourier filter: $g(x) = \sin(\Omega x + \varphi)$.
 
     One multiplicative filter primitive for use inside a
-    :class:`FourierNet`.
+    `FourierNet`.
 
     Init follows Fathony et al. (2021) §4.1: frequencies are drawn as
-    :math:`\Omega_{ij} \sim \mathcal{N}(0,\,\sigma_f^2/D)` where
-    :math:`D` is ``in_features`` and :math:`\sigma_f` is
+    $\Omega_{ij} \sim \mathcal{N}(0,\,\sigma_f^2/D)$ where
+    $D$ is ``in_features`` and $\sigma_f$ is
     ``freq_scale``; phases are drawn as
-    :math:`\varphi_i \sim \mathrm{Uniform}(-\pi, \pi)`.
+    $\varphi_i \sim \mathrm{Uniform}(-\pi, \pi)$.
 
     Attributes:
         Omega: Frequency matrix of shape ``(out_features, in_features)``.
@@ -108,15 +108,15 @@ class FourierFilter(eqx.Module):
 
 class GaborFilter(eqx.Module):
     r"""Single Gabor filter:
-    :math:`g(x) = \sin(\Omega x + \varphi) \odot \exp(-\tfrac{\gamma}{2}\|x - \mu\|^2)`.
+    $g(x) = \sin(\Omega x + \varphi) \odot \exp(-\tfrac{\gamma}{2}\|x - \mu\|^2)$.
 
     Init follows Fathony et al. (2021) §4.2: per-filter
-    :math:`\gamma_i \sim \mathrm{Gamma}(\alpha, \beta)`,
-    :math:`\mu_i \sim \mathrm{Uniform}(\text{domain})`,
-    :math:`\Omega_{i,:} \sim \mathcal{N}(0, \gamma_i\,I_D)` (the
+    $\gamma_i \sim \mathrm{Gamma}(\alpha, \beta)$,
+    $\mu_i \sim \mathrm{Uniform}(\text{domain})$,
+    $\Omega_{i,:} \sim \mathcal{N}(0, \gamma_i\,I_D)$ (the
     load-bearing tied initialization).
 
-    :math:`\gamma` is stored in log space so positivity is preserved
+    $\gamma$ is stored in log space so positivity is preserved
     without optimizer constraints.
 
     Attributes:
@@ -126,7 +126,7 @@ class GaborFilter(eqx.Module):
         log_gamma: Log-bandwidth ``(out_features,)``.
         in_features: Input dimension.
         out_features: Output (filter) dimension.
-        domain: ``(low, high)`` used for :math:`\mu` initialization (static).
+        domain: ``(low, high)`` used for $\mu$ initialization (static).
     """
 
     Omega: Float[Array, "out in"]
@@ -224,19 +224,20 @@ def mfn_forward(
 
     Implements the Fathony et al. (2021) multiplicative chaining:
 
-    .. math::
+    $$
+    z_1 = g_1(x), \\quad
+    z_{i+1} = g_{i+1}(x) \\odot (W_i z_i + b_i), \\quad
+    y = W_L z_L + b_L.
+    $$
 
-        z_1 = g_1(x), \\quad
-        z_{i+1} = g_{i+1}(x) \\odot (W_i z_i + b_i), \\quad
-        y = W_L z_L + b_L.
 
     Exists as an escape hatch so users can plug custom filter families
-    into the MFN topology without subclassing :class:`FourierNet` or
-    :class:`GaborNet`.
+    into the MFN topology without subclassing `FourierNet` or
+    `GaborNet`.
 
-    ``filters`` and ``linears`` must have the same length :math:`L`.
+    ``filters`` and ``linears`` must have the same length $L$.
     ``x`` is a single example of shape ``(in_features,)``; use
-    :func:`jax.vmap` for batched application.
+    `jax.vmap` for batched application.
 
     Examples:
         >>> import jax.numpy as jnp, jax.random as jr
@@ -265,25 +266,26 @@ def mfn_forward(
 class FourierNet(eqx.Module):
     r"""Multiplicative Fourier Filter Network (Fathony et al., ICLR 2021).
 
-    Chains :class:`FourierFilter` primitives multiplicatively:
+    Chains `FourierFilter` primitives multiplicatively:
 
-    .. math::
+    $$
+    z_1 = g_1(x), \quad
+    z_{i+1} = g_{i+1}(x) \odot (W_i z_i + b_i), \quad
+    y = W_L z_L + b_L.
+    $$
 
-        z_1 = g_1(x), \quad
-        z_{i+1} = g_{i+1}(x) \odot (W_i z_i + b_i), \quad
-        y = W_L z_L + b_L.
 
-    Each :math:`g_i` is a :class:`FourierFilter` of width
+    Each $g_i$ is a `FourierFilter` of width
     ``hidden_features``; the last linear is the readout projecting to
     ``out_features``.
 
     Attributes:
-        filters: Length-``depth`` list of :class:`FourierFilter`.
-        linears: Length-``depth`` list of :class:`equinox.nn.Linear`.
+        filters: Length-``depth`` list of `FourierFilter`.
+        linears: Length-``depth`` list of `equinox.nn.Linear`.
         in_features: Input dimension.
         hidden_features: Filter / hidden width.
         out_features: Output dimension.
-        depth: Number of filter layers :math:`L`.
+        depth: Number of filter layers $L$.
     """
 
     filters: list[FourierFilter]
@@ -364,25 +366,26 @@ class FourierNet(eqx.Module):
 class GaborNet(eqx.Module):
     r"""Multiplicative Gabor Filter Network (Fathony et al., ICLR 2021).
 
-    Same MFN topology as :class:`FourierNet` but each :math:`g_i` is a
-    :class:`GaborFilter` — a sinusoidal oscillation modulated by a
+    Same MFN topology as `FourierNet` but each $g_i$ is a
+    `GaborFilter` — a sinusoidal oscillation modulated by a
     Gaussian envelope:
 
-    .. math::
+    $$
+    g_i(x) = \sin(\Omega_i x + \varphi_i)
+    \odot \exp\!\bigl(-\tfrac{\gamma_i}{2}\|x - \mu_i\|^2\bigr).
+    $$
 
-        g_i(x) = \sin(\Omega_i x + \varphi_i)
-                  \odot \exp\!\bigl(-\tfrac{\gamma_i}{2}\|x - \mu_i\|^2\bigr).
 
     Attributes:
-        filters: Length-``depth`` list of :class:`GaborFilter`.
-        linears: Length-``depth`` list of :class:`equinox.nn.Linear`.
+        filters: Length-``depth`` list of `GaborFilter`.
+        linears: Length-``depth`` list of `equinox.nn.Linear`.
         in_features: Input dimension.
         hidden_features: Filter / hidden width.
         out_features: Output dimension.
-        depth: Number of filter layers :math:`L`.
-        domain: ``(low, high)`` used for :math:`\mu` initialization.
-        gamma_alpha: Shape parameter of the :math:`\gamma` Gamma prior.
-        gamma_beta: Rate parameter of the :math:`\gamma` Gamma prior.
+        depth: Number of filter layers $L$.
+        domain: ``(low, high)`` used for $\mu$ initialization.
+        gamma_alpha: Shape parameter of the $\gamma$ Gamma prior.
+        gamma_beta: Rate parameter of the $\gamma$ Gamma prior.
     """
 
     filters: list[GaborFilter]

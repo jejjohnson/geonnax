@@ -3,16 +3,16 @@
 Deterministic ``equinox.Module`` cores for BatchEnsemble / Rank-1 BNN
 architectures:
 
-* :class:`DenseRank1` — rank-1 ensemble dense layer (Wen et al., 2020;
-  Dusenberry et al., 2020). A shared full-rank kernel :math:`W` plus
-  per-ensemble-member rank-1 multiplicative perturbations :math:`r_i`,
-  :math:`s_i`. The deterministic (BatchEnsemble) forward; a Bayesian
-  wrapper in the consuming probabilistic library swaps :math:`r, s`
+* `DenseRank1` — rank-1 ensemble dense layer (Wen et al., 2020;
+  Dusenberry et al., 2020). A shared full-rank kernel $W$ plus
+  per-ensemble-member rank-1 multiplicative perturbations $r_i$,
+  $s_i$. The deterministic (BatchEnsemble) forward; a Bayesian
+  wrapper in the consuming probabilistic library swaps $r, s$
   for sample sites.
-* :class:`LayerNormEnsemble` — per-ensemble-member LayerNorm. Required
+* `LayerNormEnsemble` — per-ensemble-member LayerNorm. Required
   drop-in replacement for ``LayerNorm`` inside BatchEnsemble / Rank1
   architectures.
-* :class:`MultiHeadAttentionBE` — multi-head attention with
+* `MultiHeadAttentionBE` — multi-head attention with
   BatchEnsemble per-member rank-1 perturbations on each of the four
   Q / K / V / O projections. Output gains a leading ensemble axis.
 """
@@ -58,10 +58,10 @@ def _rs_init(
 
 
 class Rank1ProjInit(NamedTuple):
-    """Per-projection BatchEnsemble inits used by :class:`MultiHeadAttentionBE`.
+    """Per-projection BatchEnsemble inits used by `MultiHeadAttentionBE`.
 
     Bundles the four arrays needed for one rank-1 projection
-    (:math:`W` shared, :math:`r, s, b` per-member) into a single
+    ($W$ shared, $r, s, b$ per-member) into a single
     PyTree leaf so the parent module can carry one such NamedTuple
     per Q/K/V/O projection.
 
@@ -172,26 +172,28 @@ class DenseRank1(eqx.Module):
 
     Implements the BatchEnsemble (Wen et al., 2020) / rank-1 BNN
     (Dusenberry et al., 2020) parameterization: a single shared kernel
-    :math:`W \in \mathbb{R}^{D_\mathrm{in} \times D_\mathrm{out}}` and
+    $W \in \mathbb{R}^{D_\mathrm{in} \times D_\mathrm{out}}$ and
     per-member rank-1 multiplicative perturbations
-    :math:`s_i \in \mathbb{R}^{D_\mathrm{in}}`,
-    :math:`r_i \in \mathbb{R}^{D_\mathrm{out}}` for
-    :math:`i = 1, \ldots, M`. The per-member effective weight is
+    $s_i \in \mathbb{R}^{D_\mathrm{in}}$,
+    $r_i \in \mathbb{R}^{D_\mathrm{out}}$ for
+    $i = 1, \ldots, M$. The per-member effective weight is
 
-    .. math::
+    $$
+    W_i = (s_i \otimes r_i) \circ W,
+    $$
 
-        W_i = (s_i \otimes r_i) \circ W,
 
-    and the efficient forward pass avoids materialising :math:`W_i`:
+    and the efficient forward pass avoids materialising $W_i$:
 
-    .. math::
+    $$
+    y_i = \bigl((x \circ s_i)\, W\bigr) \circ r_i + b_i.
+    $$
 
-        y_i = \bigl((x \circ s_i)\, W\bigr) \circ r_i + b_i.
 
     This is the deterministic core. Per-member diversity comes purely
-    from the random initialisation of :math:`r_i, s_i`. A Bayesian
+    from the random initialisation of $r_i, s_i$. A Bayesian
     wrapper in the consuming probabilistic library may swap
-    :math:`r, s` for sample sites with Normal priors centered at the
+    $r, s$ for sample sites with Normal priors centered at the
     per-member init values to recover the rank-1 BNN of
     Dusenberry et al. (2020).
 
@@ -201,9 +203,9 @@ class DenseRank1(eqx.Module):
         s: Per-member input-side perturbation of shape ``(M, D_in)``.
         b: Per-member bias of shape ``(M, D_out)``. Always present as
             an array (zeros) but only added when ``bias=True``.
-        in_features: Input dimension :math:`D_\mathrm{in}`.
-        out_features: Output dimension :math:`D_\mathrm{out}`.
-        ensemble_size: Number of ensemble members :math:`M`.
+        in_features: Input dimension $D_\mathrm{in}$.
+        out_features: Output dimension $D_\mathrm{out}$.
+        ensemble_size: Number of ensemble members $M$.
         bias: Whether to add the per-member bias in the forward.
 
     Example:
@@ -297,21 +299,22 @@ class LayerNormEnsemble(eqx.Module):
     Drop-in replacement for ``LayerNorm`` inside BatchEnsemble / Rank1
     architectures. Computes the standard LayerNorm normalisation over
     the trailing feature dimension and applies a *per-member* affine
-    transform — each ensemble member :math:`i \in \{1, \ldots, M\}`
-    gets its own learnable scale :math:`\gamma_i \in \mathbb{R}^D`
-    and bias :math:`\beta_i \in \mathbb{R}^D`:
+    transform — each ensemble member $i \in \{1, \ldots, M\}$
+    gets its own learnable scale $\gamma_i \in \mathbb{R}^D$
+    and bias $\beta_i \in \mathbb{R}^D$:
 
-    .. math::
+    $$
+    \hat{x}_i = \frac{x_i - \mu(x_i)}{\sqrt{\sigma^2(x_i) + \epsilon}},
+    \qquad
+    y_i = \gamma_i \odot \hat{x}_i + \beta_i,
+    $$
 
-        \hat{x}_i = \frac{x_i - \mu(x_i)}{\sqrt{\sigma^2(x_i) + \epsilon}},
-        \qquad
-        y_i = \gamma_i \odot \hat{x}_i + \beta_i,
 
-    where :math:`\mu` and :math:`\sigma^2` are the empirical mean and
+    where $\mu$ and $\sigma^2$ are the empirical mean and
     variance over the trailing feature axis (computed independently
     for each member-batch slice). Without per-member scale/bias,
     sharing a single LayerNorm across the ensemble would couple all
-    members and erase the diversity introduced by :class:`DenseRank1`
+    members and erase the diversity introduced by `DenseRank1`
     or any other BatchEnsemble layer upstream.
 
     Input is expected to carry a leading ensemble axis of size
@@ -322,8 +325,8 @@ class LayerNormEnsemble(eqx.Module):
     Attributes:
         scales: Per-member scale of shape ``(M, D)``.
         biases: Per-member bias of shape ``(M, D)``.
-        ensemble_size: Number of ensemble members :math:`M`.
-        feature_dim: Trailing feature dimension :math:`D` over which
+        ensemble_size: Number of ensemble members $M$.
+        feature_dim: Trailing feature dimension $D$ over which
             the normalisation is computed.
         eps: Small positive constant added to the variance for
             numerical stability.
@@ -403,19 +406,21 @@ class MultiHeadAttentionBE(eqx.Module):
     four linear projections — query, key, value, and output — uses a
     BatchEnsemble parameterisation: a shared full-rank kernel plus
     per-ensemble-member rank-1 multiplicative perturbations. So for
-    member :math:`i \in \{1, \ldots, M\}` and projection
-    :math:`P \in \{Q, K, V, O\}`,
+    member $i \in \{1, \ldots, M\}$ and projection
+    $P \in \{Q, K, V, O\}$,
 
-    .. math::
+    $$
+    W_i^{(P)} = (s_i^{(P)} \otimes r_i^{(P)}) \circ W^{(P)},
+    $$
 
-        W_i^{(P)} = (s_i^{(P)} \otimes r_i^{(P)}) \circ W^{(P)},
 
     and the attention itself is the usual
 
-    .. math::
+    $$
+    \mathrm{Attn}(Q, K, V) = \mathrm{softmax}\!
+    \Bigl(\frac{Q K^\top}{\sqrt{d_k}}\Bigr) V.
+    $$
 
-        \mathrm{Attn}(Q, K, V) = \mathrm{softmax}\!
-            \Bigl(\frac{Q K^\top}{\sqrt{d_k}}\Bigr) V.
 
     The forward consumes un-ensembled inputs (``query``, ``key``,
     ``value`` of shape ``(T, D)`` / ``(S, D)``), adds the ensemble
@@ -427,12 +432,12 @@ class MultiHeadAttentionBE(eqx.Module):
 
     Attributes:
         q_proj / k_proj / v_proj / o_proj: Per-projection
-            BatchEnsemble arrays bundled as :class:`Rank1ProjInit`.
-        embed_dim: Total feature dimension :math:`D` of query / key /
+            BatchEnsemble arrays bundled as `Rank1ProjInit`.
+        embed_dim: Total feature dimension $D$ of query / key /
             value (must be divisible by ``num_heads``).
-        num_heads: Number of attention heads :math:`H`. Each head sees
+        num_heads: Number of attention heads $H$. Each head sees
             ``embed_dim // num_heads`` features.
-        ensemble_size: Number of ensemble members :math:`M`.
+        ensemble_size: Number of ensemble members $M$.
         bias: Whether each of the four projections adds a per-member
             bias.
 

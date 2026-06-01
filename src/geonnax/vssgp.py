@@ -20,11 +20,11 @@ from geonnax.randfeat import rff_forward
 class DeepVSSGPCore(eqx.Module):
     r"""Deterministic deep RFF spectral core.
 
-    Stacks :math:`L` random Fourier feature layers, each composed of an
-    RFF map :math:`\Phi_l(z;\, \Omega_l, \ell_l) =
-    \sqrt{1/M}\,[\cos(z\,\Omega_l/\ell_l), \sin(z\,\Omega_l/\ell_l)]`
-    followed by a linear projection :math:`W_l \in
-    \mathbb{R}^{2M \times d_{\mathrm{out}, l}}`. The deterministic
+    Stacks $L$ random Fourier feature layers, each composed of an
+    RFF map $\Phi_l(z;\, \Omega_l, \ell_l) =
+    \sqrt{1/M}\,[\cos(z\,\Omega_l/\ell_l), \sin(z\,\Omega_l/\ell_l)]$
+    followed by a linear projection $W_l \in
+    \mathbb{R}^{2M \times d_{\mathrm{out}, l}}$. The deterministic
     forward composes these layers without sampling.
 
     Attributes:
@@ -39,9 +39,9 @@ class DeepVSSGPCore(eqx.Module):
         in_features: Input dimension.
         hidden_features: Inter-layer dimension.
         out_features: Output dimension.
-        n_features: Per-layer Fourier-feature pair count :math:`M`.
-        depth: Total number of stacked RFF layers :math:`L`. Must be
-            :math:`\ge 1`.
+        n_features: Per-layer Fourier-feature pair count $M$.
+        depth: Total number of stacked RFF layers $L$. Must be
+            $\ge 1$.
 
     Examples:
         >>> import jax.numpy as jnp, jax.random as jr
@@ -80,34 +80,34 @@ class DeepVSSGPCore(eqx.Module):
         lengthscale: float = 1.0,
         prior_std: float = 1.0,
     ) -> DeepVSSGPCore:
-        """Construct a :class:`DeepVSSGPCore`.
+        """Construct a `DeepVSSGPCore`.
 
-        Frequencies are drawn from :math:`\\mathcal{N}(0, 1)` (the RBF
+        Frequencies are drawn from $\\mathcal{N}(0, 1)$ (the RBF
         spectral density in lengthscale-1 units); projections are drawn
-        from :math:`\\mathcal{N}(0, \\sigma_W^2)`; lengthscales are
+        from $\\mathcal{N}(0, \\sigma_W^2)$; lengthscales are
         broadcast from the scalar ``lengthscale`` argument.
 
         Args:
-            in_features: Input dimension. Must be :math:`\\ge 1`.
-            hidden_features: Hidden dimension. Must be :math:`\\ge 1`.
-            out_features: Output dimension. Must be :math:`\\ge 1`.
+            in_features: Input dimension. Must be $\\ge 1$.
+            hidden_features: Hidden dimension. Must be $\\ge 1$.
+            out_features: Output dimension. Must be $\\ge 1$.
             depth: Total stacked RFF layers (including readout). Must be
-                :math:`\\ge 1`.
+                $\\ge 1$.
             key: PRNG key.
             n_features: Per-layer Fourier-feature pair count. Must be
-                :math:`\\ge 1`.
+                $\\ge 1$.
             lengthscale: Initial value for each layer's lengthscale.
-                Must be :math:`> 0`.
+                Must be $> 0$.
             prior_std: Standard deviation used to scale the initial
-                projection weights. Must be :math:`> 0`.
+                projection weights. Must be $> 0$.
 
         Returns:
-            Initialised :class:`DeepVSSGPCore`.
+            Initialised `DeepVSSGPCore`.
 
         Raises:
             ValueError: If ``depth``, any feature dimension, or
-                ``n_features`` is :math:`< 1`, or if ``lengthscale`` /
-                ``prior_std`` is :math:`\\le 0`.
+                ``n_features`` is $< 1$, or if ``lengthscale`` /
+                ``prior_std`` is $\\le 0$.
 
         Examples:
             >>> import jax.random as jr

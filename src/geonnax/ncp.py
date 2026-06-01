@@ -18,10 +18,11 @@ class NCPContinuousPerturb(eqx.Module):
 
     Adds Gaussian noise scaled by a fixed positive scale to the input:
 
-    .. math::
+    $$
+    \tilde{x} = x + \sigma \epsilon, \qquad
+    \epsilon \sim \mathcal{N}(0, I).
+    $$
 
-        \tilde{x} = x + \sigma \epsilon, \qquad
-        \epsilon \sim \mathcal{N}(0, I).
 
     Place before a deterministic network to inject input uncertainty;
     pair with a Bayesian ``DenseNCP`` head for the full NCP
@@ -30,7 +31,7 @@ class NCPContinuousPerturb(eqx.Module):
     Stochasticity comes from the explicit PRNG ``key`` argument.
 
     Attributes:
-        scale: Perturbation scale :math:`\sigma`.
+        scale: Perturbation scale $\sigma$.
 
     Examples:
         >>> import jax.numpy as jnp

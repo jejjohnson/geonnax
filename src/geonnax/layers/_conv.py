@@ -19,7 +19,7 @@ from geonnax.layers._utils import shuffle_kwargs, shuffle_patterns
 class StandardizedConv(eqx.Module):
     """Convolution with optional on-the-fly weight standardization.
 
-    Wraps :class:`equinox.nn.Conv`. When ``standardize`` is set, each output
+    Wraps `equinox.nn.Conv`. When ``standardize`` is set, each output
     filter's weights are mean/variance-normalised at call time (Qiao et al.,
     2019, "Weight Standardization"), which — paired with GroupNorm — stabilises
     training at the small effective batch sizes common in scientific

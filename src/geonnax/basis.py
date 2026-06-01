@@ -8,18 +8,18 @@ live with the consuming library.
 
 Provides:
 
-* :func:`fourier_features` — cos/sin basis at frequencies :math:`2\\pi
-  \\cdot 2^d` for :math:`d = 0, \\dots, D-1`.
-* :func:`seasonal_frequencies` — flatten ``(periods, harmonics)`` pairs
+* `fourier_features` — cos/sin basis at frequencies $2\\pi
+  \\cdot 2^d$ for $d = 0, \\dots, D-1$.
+* `seasonal_frequencies` — flatten ``(periods, harmonics)`` pairs
   into a 1D frequency list.
-* :func:`seasonal_features` — cos/sin basis at multiples of
-  :math:`2\\pi / \\tau_p` for each period :math:`\\tau_p`.
-* :func:`interaction_features` — element-wise products on selected
+* `seasonal_features` — cos/sin basis at multiples of
+  $2\\pi / \\tau_p$ for each period $\\tau_p$.
+* `interaction_features` — element-wise products on selected
   pairs of input columns.
-* :func:`standardize` / :func:`unstandardize` — affine transform with a
+* `standardize` / `unstandardize` — affine transform with a
   precomputed mean and std.
 
-Implementation uses :mod:`einx` (``einx.id`` for broadcasts/reshapes,
+Implementation uses `einx` (``einx.id`` for broadcasts/reshapes,
 ``einx.prod`` for axis reductions) for any non-trivial reshaping, per the
 project convention.
 """
@@ -41,13 +41,14 @@ def fourier_features(
 ) -> Float[Array, "N two_max_degree"]:
     r"""Cos/sin Fourier basis at dyadic frequencies.
 
-    For each input element and each degree :math:`d \in \{0, \dots,
-    D-1\}`, evaluates
+    For each input element and each degree $d \in \{0, \dots,
+    D-1\}$, evaluates
 
-    .. math::
+    $$
+    \phi_{d, \cos}(x) = \cos(2\pi \cdot 2^d \cdot x), \qquad
+    \phi_{d, \sin}(x) = \sin(2\pi \cdot 2^d \cdot x).
+    $$
 
-        \phi_{d, \cos}(x) = \cos(2\pi \cdot 2^d \cdot x), \qquad
-        \phi_{d, \sin}(x) = \sin(2\pi \cdot 2^d \cdot x).
 
     Returns the columns concatenated as ``[cos_0, ..., cos_{D-1},
     sin_0, ..., sin_{D-1}]``, matching Google's bayesnf layout.
@@ -85,14 +86,14 @@ def seasonal_frequencies(
 ) -> tuple[list[int], list[float]]:
     r"""Flatten ``(period, harmonic_count)`` pairs into Python lists.
 
-    For each period :math:`\tau_p` with :math:`H_p` harmonics, emits
-    frequencies :math:`f_{p, h} = h / \tau_p` for :math:`h = 1, \dots,
-    H_p`. The total length is :math:`F = \sum_p H_p`.
+    For each period $\tau_p$ with $H_p$ harmonics, emits
+    frequencies $f_{p, h} = h / \tau_p$ for $h = 1, \dots,
+    H_p$. The total length is $F = \sum_p H_p$.
 
     Inputs are **Python sequences**, not JAX arrays, so this helper
     runs at trace time and never triggers a concretization error under
     ``jax.jit``. Most callers won't use it directly; it's exposed for
-    symmetry with :func:`seasonal_features`.
+    symmetry with `seasonal_features`.
 
     Args:
         periods: Period values.
@@ -100,7 +101,7 @@ def seasonal_frequencies(
 
     Returns:
         ``(period_index, frequency)``: two Python lists of length
-        :math:`F = \sum_p H_p`.
+        $F = \sum_p H_p$.
 
     Examples:
         >>> from geonnax.basis import seasonal_frequencies
@@ -127,17 +128,18 @@ def seasonal_features(
     *,
     rescale: bool = False,
 ) -> Float[Array, "N two_F"]:
-    r"""Cos/sin features at multiples of :math:`2\pi / \tau_p`.
+    r"""Cos/sin features at multiples of $2\pi / \tau_p$.
 
-    For each period :math:`\tau_p` with :math:`H_p` harmonics, evaluates
+    For each period $\tau_p$ with $H_p$ harmonics, evaluates
 
-    .. math::
+    $$
+    \phi_{p, h, \cos}(x) = \cos(2\pi h x / \tau_p), \qquad
+    \phi_{p, h, \sin}(x) = \sin(2\pi h x / \tau_p),
+    $$
 
-        \phi_{p, h, \cos}(x) = \cos(2\pi h x / \tau_p), \qquad
-        \phi_{p, h, \sin}(x) = \sin(2\pi h x / \tau_p),
 
-    for :math:`h = 1, \dots, H_p`. Returns the cos columns concatenated
-    with the sin columns, length :math:`F = \sum_p H_p` each.
+    for $h = 1, \dots, H_p$. Returns the cos columns concatenated
+    with the sin columns, length $F = \sum_p H_p$ each.
 
     ``periods`` and ``harmonics`` are **Python sequences** (tuples,
     lists, or 0-d JAX arrays wrapped at the call site). Keeping them as
@@ -186,8 +188,8 @@ def interaction_features(
 ) -> Float[Array, "N K"]:
     r"""Element-wise products on selected pairs of input columns.
 
-    For each pair :math:`(i, j)` and each row :math:`n`, computes
-    :math:`x_{n, i} \cdot x_{n, j}`.
+    For each pair $(i, j)$ and each row $n$, computes
+    $x_{n, i} \cdot x_{n, j}$.
 
     Args:
         x: Input matrix, shape ``(N, D)``.
@@ -238,7 +240,7 @@ def unstandardize(
     mu: Float[Array, "*shape"],
     std: Float[Array, "*shape"],
 ) -> Float[Array, "*shape"]:
-    """Inverse of :func:`standardize`: ``z * std + mu``.
+    """Inverse of `standardize`: ``z * std + mu``.
 
     Examples:
         >>> import jax.numpy as jnp

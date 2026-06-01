@@ -1,4 +1,4 @@
-"""Shared helpers for the :mod:`geonnax.layers` building blocks."""
+"""Shared helpers for the `geonnax.layers` building blocks."""
 
 from __future__ import annotations
 

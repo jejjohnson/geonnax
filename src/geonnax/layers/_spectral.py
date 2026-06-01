@@ -1,14 +1,14 @@
 """Fourier spectral convolution (the core Fourier Neural Operator layer).
 
-A :class:`SpectralConv` mixes channels in the truncated Fourier domain: it
-``rfft``\\ s the input, keeps the lowest ``n_modes`` frequencies, applies a
+A `SpectralConv` mixes channels in the truncated Fourier domain: it
+`rfft`s the input, keeps the lowest `n_modes` frequencies, applies a
 learnable complex channel mixing there, and inverts the transform. Because the
 spatial grid size is read from the input at call time (never baked into the
 module), the same layer evaluates at any resolution above the mode count — the
 resolution-invariance that defines the FNO (Li et al., 2021).
 
 The complex mixing weights can be stored densely or in a low-rank factorised
-form (CP / Tucker / TT) via :mod:`geonnax.layers._factorized`, which trades a
+form (CP / Tucker / TT) via `geonnax.layers._factorized`, which trades a
 large parameter count for a compact, regularised one (Kossaifi et al., 2023).
 """
 

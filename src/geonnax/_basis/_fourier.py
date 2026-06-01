@@ -1,17 +1,18 @@
-r"""Laplacian eigenfunctions on the bounded box :math:`[-L, L]^D`.
+r"""Laplacian eigenfunctions on the bounded box $[-L, L]^D$.
 
-Dirichlet eigenpairs of :math:`-d^2/dx^2` on :math:`[-L, L]`:
+Dirichlet eigenpairs of $-d^2/dx^2$ on $[-L, L]$:
 
-.. math::
+$$
+\phi_j(x) = \frac{1}{\sqrt{L}} \sin\!\left(\frac{j\pi(x + L)}{2L}\right),
+\qquad
+\lambda_j = \left(\frac{j\pi}{2L}\right)^2,
+\qquad j = 1, 2, \ldots
+$$
 
-    \phi_j(x) = \frac{1}{\sqrt{L}} \sin\!\left(\frac{j\pi(x + L)}{2L}\right),
-    \qquad
-    \lambda_j = \left(\frac{j\pi}{2L}\right)^2,
-    \qquad j = 1, 2, \ldots
 
-The 1D basis is :math:`L^2([-L, L])`-orthonormal. On a :math:`D`-dimensional
+The 1D basis is $L^2([-L, L])$-orthonormal. On a $D$-dimensional
 box the basis is the tensor product, indexed by a multi-index
-:math:`(j_1, \ldots, j_D)`; we flatten in row-major order. These eigenfunctions
+$(j_1, \ldots, j_D)$; we flatten in row-major order. These eigenfunctions
 are the engine of both VFF (#49, GP-side) and HSGP (#41, NN-side).
 """
 
@@ -29,9 +30,10 @@ def fourier_basis_1d(
 ) -> Float[Array, "N M"]:
     r"""Evaluate the first ``num_basis`` 1D Dirichlet eigenfunctions on ``[-L, L]``.
 
-    .. math::
+    $$
+    \phi_j(x) = \frac{1}{\sqrt{L}} \sin\!\left(\frac{j\pi(x + L)}{2L}\right)
+    $$
 
-        \phi_j(x) = \frac{1}{\sqrt{L}} \sin\!\left(\frac{j\pi(x + L)}{2L}\right)
 
     Args:
         x: Inputs in ``[-L, L]``. Values outside the interval are
@@ -40,7 +42,7 @@ def fourier_basis_1d(
         L: Half-width of the bounded domain (must be positive).
 
     Returns:
-        ``(N, M)`` array whose ``(n, j-1)`` entry is :math:`\phi_j(x_n)`.
+        ``(N, M)`` array whose ``(n, j-1)`` entry is $\phi_j(x_n)$.
 
     Raises:
         ValueError: If ``num_basis < 1`` or ``L <= 0``.
@@ -67,7 +69,7 @@ def fourier_eigenvalues_1d(
     *,
     dtype: jnp.dtype = jnp.float32,
 ) -> Float[Array, " M"]:
-    r"""Return :math:`\lambda_j = (j\pi / (2L))^2` for ``j = 1, ..., num_basis``.
+    r"""Return $\lambda_j = (j\pi / (2L))^2$ for ``j = 1, ..., num_basis``.
 
     Examples:
         >>> from geonnax._basis import fourier_eigenvalues_1d
@@ -99,23 +101,24 @@ def fourier_basis(
     num_basis_per_dim: int | tuple[int, ...],
     L: float | tuple[float, ...],
 ) -> tuple[Float[Array, "N M"], Float[Array, " M"]]:
-    r"""Tensor-product Dirichlet eigenpairs on :math:`[-L, L]^D`.
+    r"""Tensor-product Dirichlet eigenpairs on $[-L, L]^D$.
 
-    The :math:`D`-dimensional eigenfunctions are products of 1D basis
+    The $D$-dimensional eigenfunctions are products of 1D basis
     functions, with eigenvalues that *sum* across axes:
 
-    .. math::
+    $$
+    \Phi_{(j_1, \ldots, j_D)}(x) = \prod_{d=1}^D \phi_{j_d}(x_d),
+    \qquad
+    \lambda_{(j_1, \ldots, j_D)} = \sum_{d=1}^D \lambda_{j_d}.
+    $$
 
-        \Phi_{(j_1, \ldots, j_D)}(x) = \prod_{d=1}^D \phi_{j_d}(x_d),
-        \qquad
-        \lambda_{(j_1, \ldots, j_D)} = \sum_{d=1}^D \lambda_{j_d}.
 
     The flattened index is row-major over the multi-index, i.e. the last
     dimension varies fastest. Total feature count is
     ``M = prod(num_basis_per_dim)``.
 
     Args:
-        x: Inputs of shape ``(N, D)`` in :math:`[-L, L]^D`.
+        x: Inputs of shape ``(N, D)`` in $[-L, L]^D$.
         num_basis_per_dim: Per-axis number of 1D basis functions; an
             ``int`` is broadcast to all ``D`` axes.
         L: Per-axis half-width; an ``int``/``float`` is broadcast to all axes.

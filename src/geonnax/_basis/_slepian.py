@@ -1,9 +1,9 @@
-r"""Spherical Slepian functions for axisymmetric caps on :math:`S^2`.
+r"""Spherical Slepian functions for axisymmetric caps on $S^2$.
 
 Slepian cap functions are band-limited linear combinations of real spherical
 harmonics that maximize energy concentration inside a spherical cap.  This
 module builds the cap concentration operator in the same flattened real-SH
-layout as :func:`pyrox._basis.real_spherical_harmonics`, solves the
+layout as `pyrox._basis.real_spherical_harmonics`, solves the
 block-diagonal eigenproblem by azimuthal order, and evaluates retained modes by
 matrix multiplication against the existing SH basis.
 """
@@ -44,7 +44,7 @@ def _normalization(ell: int, m_abs: int) -> float:
 def _associated_legendre_values(
     z: Float[Array, " Q"], l_max: int, m_abs: int
 ) -> list[Float[Array, " Q"]]:
-    r"""Evaluate :math:`P_l^m(z)` for ``l=m,...,l_max`` by recurrence."""
+    r"""Evaluate $P_l^m(z)$ for ``l=m,...,l_max`` by recurrence."""
     one_minus_z2 = jnp.maximum(1.0 - z**2, 0.0)
     p_mm = jnp.ones_like(z)
     if m_abs > 0:
@@ -239,7 +239,7 @@ class SlepianCapBasis(eqx.Module):
     r"""Precomputed Slepian cap eigendecomposition in the real-SH basis.
 
     Each retained Slepian function is a linear combination of the
-    :math:`M = (l_{\max} + 1)^2` real spherical harmonics, with mixing
+    $M = (l_{\max} + 1)^2$ real spherical harmonics, with mixing
     coefficients stored in ``coeffs`` of shape ``(M, K)`` for ``K`` modes.
 
     Examples:
@@ -275,9 +275,9 @@ class SlepianCapBasis(eqx.Module):
 
         Downstream consumers that need to evaluate the same real spherical
         harmonics in the cap frame (e.g.
-        :class:`pyrox.gp.SlepianInducingFeatures`) should call this and feed
-        the result into :func:`pyrox._basis.real_spherical_harmonics` to keep
-        their evaluation consistent with :meth:`evaluate`.
+        `pyrox.gp.SlepianInducingFeatures`) should call this and feed
+        the result into `pyrox._basis.real_spherical_harmonics` to keep
+        their evaluation consistent with `evaluate`.
 
         Examples:
             >>> import jax.numpy as jnp
@@ -342,7 +342,7 @@ def slepian_cap_basis(
         n_modes: Optional maximum number of retained modes. Takes precedence
             over ``eig_threshold``: if both are given, the basis is first
             trimmed by threshold and then truncated to at most ``n_modes``
-            (after sorting by concentration). A :class:`ValueError` is
+            (after sorting by concentration). A `ValueError` is
             raised when ``eig_threshold`` would leave fewer than ``n_modes``
             modes — silent shape contraction would break JIT / static
             shape expectations in downstream code.
@@ -351,7 +351,7 @@ def slepian_cap_basis(
         num_quadrature: Optional Gauss-Legendre quadrature order.
 
     Returns:
-        A :class:`SlepianCapBasis` with coefficient columns sorted by decreasing
+        A `SlepianCapBasis` with coefficient columns sorted by decreasing
         concentration ratio.
 
     Examples:

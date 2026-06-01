@@ -111,7 +111,7 @@ class Block(eqx.Module):
 
 
 class ResnetBlock(eqx.Module):
-    r"""Two :class:`Block`\ s with squeeze-excitation and a residual skip.
+    r"""Two `Block`s with squeeze-excitation and a residual skip.
 
     Attributes:
         block1: First conv/norm/act block (``in -> out``).
