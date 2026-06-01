@@ -16,25 +16,32 @@ import pytest
 import geonnax
 
 
-# Patterns that MkDocs/mkdocstrings will not render (use $...$/$$...$$ for math
-# and `name` / [`name`][path] for cross-references instead).
+# Patterns that MkDocs/mkdocstrings will not render (use $...$/$$...$$ for math,
+# `name` / [`name`][path] for cross-references, and fenced code blocks instead).
 RST_PATTERNS = {
     ":math: role (use $...$)": re.compile(r":math:`"),
     ".. math:: directive (use $$...$$)": re.compile(r"\.\. math::"),
     ":class:/:func:/:meth:/:mod:/:data: role (use `name`)": re.compile(
         r":(?:class|func|meth|mod|data|attr|obj|exc|ref|term):`"
     ),
-    ".. note::/.. warning:: directive (use an admonition)": re.compile(
-        r"\.\. (?:note|warning|code-block|seealso|admonition)::"
+    ".. <directive>:: (use an admonition / fenced code block)": re.compile(
+        r"\.\. (?:note|warning|code|code-block|seealso|admonition|versionadded"
+        r"|versionchanged|deprecated|rubric)::"
+    ),
+    "backslash-escaped suffix (e.g. `Block`\\ s — drop the backslash)": re.compile(
+        r"`+\\+ [A-Za-z]"
     ),
 }
 
-SRC_FILES = sorted(Path(geonnax.__file__).parent.rglob("*.py"))
+GEONNAX_DIR = Path(geonnax.__file__).parent
+SRC_FILES = sorted(GEONNAX_DIR.rglob("*.py"))
 
 
-@pytest.mark.parametrize("path", SRC_FILES, ids=lambda p: p.name)
+@pytest.mark.parametrize(
+    "path", SRC_FILES, ids=lambda p: str(p.relative_to(GEONNAX_DIR.parent))
+)
 def test_no_rst_markup_in_source(path: Path) -> None:
-    text = path.read_text()
+    text = path.read_text(encoding="utf-8")
     offenders = [label for label, pat in RST_PATTERNS.items() if pat.search(text)]
     assert not offenders, (
         f"{path.name} contains Sphinx/RST markup that MkDocs won't render: "

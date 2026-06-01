@@ -1,7 +1,7 @@
 """Fourier spectral convolution (the core Fourier Neural Operator layer).
 
 A `SpectralConv` mixes channels in the truncated Fourier domain: it
-``rfft``\\ s the input, keeps the lowest ``n_modes`` frequencies, applies a
+`rfft`s the input, keeps the lowest `n_modes` frequencies, applies a
 learnable complex channel mixing there, and inverts the transform. Because the
 spatial grid size is read from the input at call time (never baked into the
 module), the same layer evaluates at any resolution above the mode count — the

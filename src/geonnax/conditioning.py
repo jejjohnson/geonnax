@@ -462,14 +462,14 @@ class ConditionedINR(eqx.Module):
     named ``layers``), `ConditionedINR` runs the inner forward and
     inserts a conditioner after each non-readout layer:
 
-    .. code:: text
-
-        z_0 = layer_0(x)
-        z_0 = cond_0(z_0, c)
-        z_1 = layer_1(z_0)
-        z_1 = cond_1(z_1, c)
-        ...
-        y   = layer_{L-1}(z_{L-2})        # readout, not conditioned
+    ```text
+    z_0 = layer_0(x)
+    z_0 = cond_0(z_0, c)
+    z_1 = layer_1(z_0)
+    z_1 = cond_1(z_1, c)
+    ...
+    y   = layer_{L-1}(z_{L-2})        # readout, not conditioned
+    ```
 
     The ``mode="input"`` shortcut applies a single head conditioner to
     ``x`` (concatenation for `ConcatConditioner`, FiLM-style
