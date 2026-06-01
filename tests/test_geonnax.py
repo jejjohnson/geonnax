@@ -185,6 +185,40 @@ def test_hybrid_spherical_slepian_concatenates():
     assert out.shape == (1, enc.num_features)
 
 
+# ---- Tier B: MFN ------------------------------------------------------------
+
+
+def test_fourier_filter_shape():
+    f = geonnax.FourierFilter.init(3, 8, key=jr.PRNGKey(0))
+    out = f(jnp.ones((4, 3)))
+    assert out.shape == (4, 8)
+    assert jnp.max(jnp.abs(out)) <= 1.0  # sin is bounded
+
+
+def test_gabor_filter_shape():
+    g = geonnax.GaborFilter.init(2, 6, key=jr.PRNGKey(0))
+    out = g(jnp.zeros((3, 2)))
+    assert out.shape == (3, 6)
+
+
+def test_fourier_net_forward():
+    net = geonnax.FourierNet.init(2, 16, 1, depth=3, key=jr.PRNGKey(0))
+    out = net(jnp.zeros((4, 2)))
+    assert out.shape == (4, 1)
+
+
+def test_gabor_net_forward():
+    net = geonnax.GaborNet.init(2, 16, 1, depth=3, key=jr.PRNGKey(0))
+    out = net(jnp.zeros((4, 2)))
+    assert out.shape == (4, 1)
+
+
+def test_mfn_squeeze_single_point():
+    net = geonnax.FourierNet.init(2, 4, 3, depth=2, key=jr.PRNGKey(0))
+    out = net(jnp.zeros(2))
+    assert out.shape == (3,)  # 1-D input -> 1-D output
+
+
 # ---- Composition test: everything sits in eqx.nn.Sequential -----------------
 
 

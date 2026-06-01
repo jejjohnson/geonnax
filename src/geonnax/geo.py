@@ -2,7 +2,7 @@
 
 These helpers are deterministic, pandas-free building blocks for
 longitude/latitude preprocessing and spherical-harmonic feature maps.
-The corresponding stateful wrappers in the corresponding `equinox.Module` encoders expose
+The corresponding stateful encoders expose
 the same transforms as :class:`equinox.Module` instances so they
 compose inside :class:`equinox.nn.Sequential`.
 """

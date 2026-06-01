@@ -1,10 +1,10 @@
 """Pure-JAX feature helpers for Bayesian-Neural-Field-style models.
 
 All functions are pure, stateless, and take only JAX arrays — no
-``equinox.Module``, no NumPyro sites, no pandas. The corresponding
-stateful layers in the deterministic ``equinox.Module`` wrappers built atop these helpers (``Standardization``,
+``equinox.Module``, no NumPyro sites, no pandas. ``equinox.Module``
+wrappers built atop these helpers (``Standardization``,
 ``FourierFeatures``, ``SeasonalFeatures``, ``InteractionFeatures``)
-wrap these helpers behind the ``equinox.Module`` PyTree contract.
+live with the consuming library.
 
 Provides:
 

@@ -25,7 +25,17 @@ Submodules:
   ``rff_forward`` / ``rff_cosine_forward`` helpers.
 """
 
-from geonnax import basis, dropout, encoders, geo, ncp, randfeat, siren, slepian
+from geonnax import (
+    basis,
+    dropout,
+    encoders,
+    geo,
+    mfn,
+    ncp,
+    randfeat,
+    siren,
+    slepian,
+)
 from geonnax.dropout import MCDropout
 from geonnax.encoders import (
     Cartesian3DEncoder,
@@ -34,6 +44,7 @@ from geonnax.encoders import (
     LonLatScale,
     SphericalHarmonicEncoder,
 )
+from geonnax.mfn import FourierFilter, FourierNet, GaborFilter, GaborNet, mfn_forward
 from geonnax.ncp import NCPContinuousPerturb
 from geonnax.randfeat import (
     OrthogonalRandomFeatures,
@@ -59,6 +70,10 @@ __all__ = [
     "Cartesian3DEncoder",
     "CyclicEncoder",
     "Deg2Rad",
+    "FourierFilter",
+    "FourierNet",
+    "GaborFilter",
+    "GaborNet",
     "HybridSphericalSlepianEncoder",
     "LonLatScale",
     "MCDropout",
@@ -75,6 +90,8 @@ __all__ = [
     "dropout",
     "encoders",
     "geo",
+    "mfn",
+    "mfn_forward",
     "ncp",
     "orthogonal_blocks",
     "randfeat",
