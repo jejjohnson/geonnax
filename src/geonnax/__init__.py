@@ -118,7 +118,7 @@ from geonnax.unet import NestedResidualUNet, Stage, UNet, XUNet
 from geonnax.vssgp import DeepVSSGPCore
 
 
-__version__ = "0.0.2"  # x-release-please-version
+__version__ = "0.0.3"  # x-release-please-version
 
 __all__ = [
     "FNO",
