@@ -97,6 +97,10 @@ fail_under = 0
 
 [tool.ruff.lint.per-file-ignores]
 # jaxtyping's string shape annotations (`Float[Array, "N D"]`) trip F722.
+# Variadic axes (`Float[Array, "C *spatial"]`) additionally trip F821
+# ("undefined name" `spatial`, read as a starred reference) and UP037
+# ("remove quotes", since `C *spatial` parses as a valid expression under
+# `from __future__ import annotations`) — the quotes are required.
 # Greek/math notation in docstrings + einx specs trips RUF001/2/3.
-"src/geonnax/**" = ["F722", "RUF001", "RUF002", "RUF003"]
-"tests/**" = ["F722", "RUF001", "RUF002", "RUF003"]
+"src/geonnax/**" = ["F722", "F821", "UP037", "RUF001", "RUF002", "RUF003"]
+"tests/**" = ["F722", "F821", "UP037", "RUF001", "RUF002", "RUF003"]

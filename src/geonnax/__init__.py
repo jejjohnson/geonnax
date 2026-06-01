@@ -31,12 +31,14 @@ from geonnax import (
     ensemble,
     geo,
     heteroscedastic,
+    layers,
     mfn,
     ncp,
     randfeat,
     siren,
     slepian,
     sngp,
+    unet,
     vssgp,
 )
 from geonnax.conditioning import (
@@ -70,6 +72,18 @@ from geonnax.heteroscedastic import (
     MCSoftmaxDenseFA,
     hetero_noisy_logits,
 )
+from geonnax.layers import (
+    Attention,
+    Block,
+    ConvNeXtBlock,
+    Downsample,
+    GlobalResponseNorm,
+    LinearAttention,
+    ResnetBlock,
+    SqueezeExcitation,
+    StandardizedConv,
+    Upsample,
+)
 from geonnax.mfn import FourierFilter, FourierNet, GaborFilter, GaborNet, mfn_forward
 from geonnax.ncp import NCPContinuousPerturb
 from geonnax.randfeat import (
@@ -88,6 +102,7 @@ from geonnax.siren import (
 )
 from geonnax.slepian import HybridSphericalSlepianEncoder, SlepianEncoder
 from geonnax.sngp import LaplaceRandomFeatureCovariance, RandomFeatureGaussianProcess
+from geonnax.unet import NestedResidualUNet, Stage, UNet, XUNet
 from geonnax.vssgp import DeepVSSGPCore
 
 
@@ -97,38 +112,52 @@ __all__ = [
     "SIREN",
     "AbstractConditioner",
     "AffineModulation",
+    "Attention",
+    "Block",
     "Cartesian3DEncoder",
     "ConcatConditioner",
     "ConditionedINR",
+    "ConvNeXtBlock",
     "CyclicEncoder",
     "DeepVSSGPCore",
     "Deg2Rad",
     "DenseRank1",
+    "Downsample",
     "FiLM",
     "FourierFilter",
     "FourierNet",
     "GaborFilter",
     "GaborNet",
     "GeneratedSiren",
+    "GlobalResponseNorm",
     "HeteroscedasticHead",
     "HybridSphericalSlepianEncoder",
     "HyperLinear",
     "HyperSIREN",
     "LaplaceRandomFeatureCovariance",
     "LayerNormEnsemble",
+    "LinearAttention",
     "LonLatScale",
     "MCSigmoidDenseFA",
     "MCSoftmaxDenseFA",
     "MultiHeadAttentionBE",
     "NCPContinuousPerturb",
+    "NestedResidualUNet",
     "OrthogonalRandomFeatures",
     "RandomFeatureGaussianProcess",
     "Rank1ProjInit",
+    "ResnetBlock",
     "SirenDense",
     "SirenLayerSpec",
     "SirenLayerType",
     "SlepianEncoder",
     "SphericalHarmonicEncoder",
+    "SqueezeExcitation",
+    "Stage",
+    "StandardizedConv",
+    "UNet",
+    "Upsample",
+    "XUNet",
     "__version__",
     "apply_rank1_proj",
     "basis",
@@ -140,6 +169,7 @@ __all__ = [
     "hetero_noisy_logits",
     "heteroscedastic",
     "init_rank1_proj",
+    "layers",
     "mfn",
     "mfn_forward",
     "ncp",
@@ -151,5 +181,6 @@ __all__ = [
     "siren_W_limit",
     "slepian",
     "sngp",
+    "unet",
     "vssgp",
 ]
