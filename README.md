@@ -26,7 +26,9 @@ For development, see [Contributing](#contributing).
 | Module | Contents |
 |--------|----------|
 | `geonnax.unet` | `UNet` / `XUNet` — dimension-flexible (1D/2D/3D) U-Net with weight-standardized convs, ConvNeXt-V2 blocks, squeeze-excitation, cosine attention, and nested residual (U²-Net) stages |
-| `geonnax.layers` | Reusable conv/attention building blocks: `StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `Downsample`/`Upsample`, … |
+| `geonnax.fno` | `FNO` — dimension-flexible Fourier Neural Operator with dense/CP/Tucker/TT spectral weights and optional domain padding |
+| `geonnax.sfno` | `SFNO` — Spherical FNO on lat/lon grids via a differentiable spherical-harmonic transform |
+| `geonnax.layers` | Reusable building blocks: `StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `SpectralConv`, `SphericalHarmonicTransform`, `Downsample`/`Upsample`, … |
 | `geonnax.siren` | `SIREN`, `SirenDense` — sinusoidal representation networks |
 | `geonnax.mfn` | `FourierNet`, `GaborNet` — multiplicative filter networks |
 | `geonnax.encoders` | Coordinate encoders: `Deg2Rad`, `CyclicEncoder`, `SphericalHarmonicEncoder`, … |
@@ -66,6 +68,27 @@ The same `UNet` works for 1D profiles/series (`num_spatial_dims=1`) and 3D
 volumes (`num_spatial_dims=3`). Set `nested_unet_depths=(2, 1, 1)` to enable
 U²-Net-style nested stages, or `block_type="convnext"` for ConvNeXt-V2 blocks.
 The reusable pieces in `geonnax.layers` can be composed into your own models.
+
+For operator learning, `geonnax.fno.FNO` maps between discretised functions and
+is **resolution-invariant** — train on one grid, evaluate on another:
+
+```python
+# A 2D FNO keeping 16 Fourier modes per axis, with Tucker-factorized weights.
+fno = geonnax.FNO.init(
+    in_channels=3, out_channels=1, n_modes=(16, 16),
+    hidden_channels=32, n_layers=4,
+    factorization="tucker", rank=0.5,   # or "dense" / "cp" / "tt"
+    key=jr.PRNGKey(0),
+)
+y = fno(jnp.ones((3, 64, 64)))          # (1, 64, 64); also runs at 128×128
+
+# On the sphere (lat/lon grid), use the Spherical FNO.
+sfno = geonnax.SFNO.init(
+    in_channels=3, out_channels=1, n_lat=32, n_lon=64, l_max=20,
+    key=jr.PRNGKey(0),
+)
+y = sfno(jnp.ones((3, 32, 64)))         # (1, 32, 64)
+```
 
 ## Contributing
 
