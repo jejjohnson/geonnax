@@ -27,15 +27,32 @@ Submodules:
 
 from geonnax import (
     basis,
+    conditioning,
+    dense,
     dropout,
     encoders,
+    ensemble,
     geo,
+    heteroscedastic,
     mfn,
     ncp,
     randfeat,
     siren,
     slepian,
+    sngp,
+    vssgp,
 )
+from geonnax.conditioning import (
+    AbstractConditioner,
+    AffineModulation,
+    ConcatConditioner,
+    ConditionedINR,
+    FiLM,
+    GeneratedSiren,
+    HyperLinear,
+    HyperSIREN,
+)
+from geonnax.dense import LinearCore
 from geonnax.dropout import MCDropout
 from geonnax.encoders import (
     Cartesian3DEncoder,
@@ -43,6 +60,20 @@ from geonnax.encoders import (
     Deg2Rad,
     LonLatScale,
     SphericalHarmonicEncoder,
+)
+from geonnax.ensemble import (
+    DenseRank1,
+    LayerNormEnsemble,
+    MultiHeadAttentionBE,
+    Rank1ProjInit,
+    apply_rank1_proj,
+    init_rank1_proj,
+)
+from geonnax.heteroscedastic import (
+    HeteroscedasticHead,
+    MCSigmoidDenseFA,
+    MCSoftmaxDenseFA,
+    hetero_noisy_logits,
 )
 from geonnax.mfn import FourierFilter, FourierNet, GaborFilter, GaborNet, mfn_forward
 from geonnax.ncp import NCPContinuousPerturb
@@ -61,35 +92,63 @@ from geonnax.siren import (
     siren_W_limit,
 )
 from geonnax.slepian import HybridSphericalSlepianEncoder, SlepianEncoder
+from geonnax.sngp import LaplaceRandomFeatureCovariance, RandomFeatureGaussianProcess
+from geonnax.vssgp import DeepVSSGPCore
 
 
 __version__ = "0.1.0"
 
 __all__ = [
     "SIREN",
+    "AbstractConditioner",
+    "AffineModulation",
     "Cartesian3DEncoder",
+    "ConcatConditioner",
+    "ConditionedINR",
     "CyclicEncoder",
+    "DeepVSSGPCore",
     "Deg2Rad",
+    "DenseRank1",
+    "FiLM",
     "FourierFilter",
     "FourierNet",
     "GaborFilter",
     "GaborNet",
+    "GeneratedSiren",
+    "HeteroscedasticHead",
     "HybridSphericalSlepianEncoder",
+    "HyperLinear",
+    "HyperSIREN",
+    "LaplaceRandomFeatureCovariance",
+    "LayerNormEnsemble",
+    "LinearCore",
     "LonLatScale",
     "MCDropout",
+    "MCSigmoidDenseFA",
+    "MCSoftmaxDenseFA",
+    "MultiHeadAttentionBE",
     "NCPContinuousPerturb",
     "OrthogonalRandomFeatures",
+    "RandomFeatureGaussianProcess",
+    "Rank1ProjInit",
     "SirenDense",
     "SirenLayerSpec",
     "SirenLayerType",
     "SlepianEncoder",
     "SphericalHarmonicEncoder",
     "__version__",
+    "apply_rank1_proj",
     "basis",
     "build_siren_specs",
+    "conditioning",
+    "dense",
     "dropout",
     "encoders",
+    "ensemble",
     "geo",
+    "hetero_noisy_logits",
+    "heteroscedastic",
+    "init_rank1_proj",
     "mfn",
     "mfn_forward",
     "ncp",
@@ -100,4 +159,6 @@ __all__ = [
     "siren",
     "siren_W_limit",
     "slepian",
+    "sngp",
+    "vssgp",
 ]
