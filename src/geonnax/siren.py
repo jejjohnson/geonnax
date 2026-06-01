@@ -55,6 +55,14 @@ def siren_W_limit(
 
     Raises:
         ValueError: If ``layer_type`` is not one of the three valid values.
+
+    Examples:
+        >>> from geonnax.siren import siren_W_limit
+        >>> siren_W_limit("first", 4, omega=30.0)
+        0.25
+        >>> # hidden divides by omega, so it is smaller than the last regime
+        >>> siren_W_limit("hidden", 4, 30.0) < siren_W_limit("last", 4, 30.0)
+        True
     """
     if layer_type == "first":
         return 1.0 / in_features
@@ -83,7 +91,14 @@ def build_siren_specs(
     hidden_omega: float,
     c: float,
 ) -> tuple[SirenLayerSpec, ...]:
-    """Produce per-layer specs for a depth-``depth`` SIREN, first + hidden… + last."""
+    """Produce per-layer specs for a depth-``depth`` SIREN, first + hidden… + last.
+
+    Examples:
+        >>> from geonnax.siren import build_siren_specs
+        >>> specs = build_siren_specs(2, 16, 1, 4, 30.0, 30.0, 6.0)
+        >>> [s.layer_type for s in specs]  # first + 2 hidden + last
+        ['first', 'hidden', 'hidden', 'last']
+    """
     specs: list[SirenLayerSpec] = []
     for i in range(depth):
         if i == 0:
@@ -150,7 +165,17 @@ class SirenDense(eqx.Module):
         layer_type: SirenLayerType = "hidden",
         c: float = 6.0,
     ) -> SirenDense:
-        """Construct a ``SirenDense`` with Sitzmann-regime weight initialisation."""
+        """Construct a ``SirenDense`` with Sitzmann-regime weight initialisation.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.siren import SirenDense
+            >>> layer = SirenDense.init(
+            ...     3, 8, key=jr.PRNGKey(0), layer_type="first"
+            ... )
+            >>> layer(jnp.ones(3)).shape  # (3,) -> (8,)
+            (8,)
+        """
         _require_positive(
             in_features=in_features,
             out_features=out_features,
@@ -176,9 +201,26 @@ class SirenDense(eqx.Module):
         )
 
     def __call__(self, x: Float[Array, " D_in"]) -> Float[Array, " D_out"]:
+        r"""Apply the layer: ``sin(ω · (W x + b))``, or ``W x + b`` if ``last``.
+
+        Args:
+            x: Input vector of shape ``(in_features,)``.
+
+        Returns:
+            Output vector of shape ``(out_features,)``.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.siren import SirenDense
+            >>> layer = SirenDense.init(4, 5, key=jr.PRNGKey(0))
+            >>> layer(jnp.ones(4)).shape  # (4,) -> (5,)
+            (5,)
+        """
+        # Affine map: (D_in,) · (D_in, D_out) -> (D_out,), then add bias.
         pre = einx.dot("i, i o -> o", x, self.W) + self.b
         if self.layer_type == "last":
-            return pre
+            return pre  # readout layer has no activation
+        # Sine activation with frequency multiplier ω: y = sin(ω · pre).
         return jnp.sin(self.omega * pre)
 
 
@@ -223,7 +265,17 @@ class SIREN(eqx.Module):
         hidden_omega: float = 30.0,
         c: float = 6.0,
     ) -> SIREN:
-        """Construct a SIREN with the correct per-layer init regimes."""
+        """Construct a SIREN with the correct per-layer init regimes.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.siren import SIREN
+            >>> net = SIREN.init(2, 16, 1, depth=4, key=jr.PRNGKey(0))
+            >>> net(jnp.zeros(2)).shape  # (2,) -> (1,)
+            (1,)
+            >>> len(net.layers)  # first + 2 hidden + last
+            4
+        """
         if depth < 2:
             raise ValueError(f"depth must be >= 2 (first + last); got depth={depth}")
         _require_positive(
@@ -266,6 +318,23 @@ class SIREN(eqx.Module):
         )
 
     def __call__(self, x: Float[Array, " D_in"]) -> Float[Array, " D_out"]:
+        r"""Run the full forward pass, composing the sine-activated layers.
+
+        Args:
+            x: Input vector of shape ``(in_features,)``.
+
+        Returns:
+            Output vector of shape ``(out_features,)``.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.siren import SIREN
+            >>> net = SIREN.init(3, 32, 2, depth=3, key=jr.PRNGKey(0))
+            >>> net(jnp.ones(3)).shape  # (3,) -> (2,)
+            (2,)
+        """
+        # z_1 = sin(ω₀(W₀x+b₀)); z_{i+1}=sin(ω(W_i z_i+b_i)); y=W_L z_L+b_L.
+        # Shapes: (D_in,) -> (H,) -> … -> (H,) -> (D_out,).
         z = x
         for layer in self.layers:
             z = layer(z)

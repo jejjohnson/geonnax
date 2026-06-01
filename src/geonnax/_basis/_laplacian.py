@@ -38,6 +38,17 @@ def graph_laplacian_eigpairs(
     Raises:
         ValueError: If ``adjacency`` is not square, has negative entries,
             or ``num_basis`` exceeds ``V``.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax._basis import graph_laplacian_eigpairs
+        >>> # 3-node path graph; L = D - A (or normalized variant).
+        >>> A = jnp.array([[0.0, 1.0, 0.0],
+        ...                [1.0, 0.0, 1.0],
+        ...                [0.0, 1.0, 0.0]])
+        >>> vals, vecs = graph_laplacian_eigpairs(A, num_basis=2)
+        >>> (vals.shape, vecs.shape)  # (M,), (V, M)
+        ((2,), (3, 2))
     """
     A = np.asarray(adjacency)
     if A.ndim != 2 or A.shape[0] != A.shape[1]:

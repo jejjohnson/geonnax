@@ -29,6 +29,13 @@ class Attention(eqx.Module):
         heads: Number of attention heads.
         dim_head: Channels per head.
         scale: Fixed logit temperature applied to the cosine similarity.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import Attention
+        >>> attn = Attention.init(16, 2, key=jr.PRNGKey(0), heads=2, dim_head=8)
+        >>> attn(jnp.ones((16, 8, 8))).shape   # shape-preserving
+        (16, 8, 8)
     """
 
     norm: eqx.nn.GroupNorm
@@ -94,6 +101,14 @@ class LinearAttention(eqx.Module):
         to_out: ``1x1`` conv projecting back to ``dim`` channels.
         heads: Number of attention heads.
         dim_head: Channels per head.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import LinearAttention
+        >>> attn = LinearAttention.init(16, 2, key=jr.PRNGKey(0), heads=2,
+        ...                             dim_head=8)
+        >>> attn(jnp.ones((16, 8, 8))).shape
+        (16, 8, 8)
     """
 
     norm: eqx.nn.GroupNorm

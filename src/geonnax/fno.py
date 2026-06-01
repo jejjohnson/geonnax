@@ -53,6 +53,16 @@ class DomainPadding(eqx.Module):
     Attributes:
         padding: Fraction of each spatial extent to append (e.g. ``0.0625``).
         num_spatial_dims: Number of trailing spatial axes.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax.fno import DomainPadding
+        >>> dp = DomainPadding(padding=0.25, num_spatial_dims=2)
+        >>> padded = dp.pad(jnp.ones((3, 8, 8)))   # 8 -> 8 + round(0.25*8)
+        >>> padded.shape
+        (3, 10, 10)
+        >>> dp.unpad(padded, (8, 8)).shape          # crop back
+        (3, 8, 8)
     """
 
     padding: float = eqx.field(static=True)
@@ -74,12 +84,22 @@ class DomainPadding(eqx.Module):
 class FNOBlock(eqx.Module):
     """One Fourier layer: spectral conv + pointwise skip, then an activation.
 
+    Computes ``act(SpectralConv(x) + W·x)`` — a global spectral term plus a
+    local ``1x1`` channel mix, the standard FNO layer (Li et al., 2021).
+
     Attributes:
         spectral: Global spectral mixing (:class:`SpectralConv`).
         pointwise: Local ``1x1`` channel-mixing skip.
         activation: Pointwise nonlinearity (static).
         use_activation: Whether to apply the activation (static; ``False`` for a
             linear final block).
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.fno import FNOBlock
+        >>> blk = FNOBlock.init(8, (6, 6), key=jr.PRNGKey(0))
+        >>> blk(jnp.ones((8, 32, 32))).shape   # width preserved
+        (8, 32, 32)
     """
 
     spectral: SpectralConv
@@ -129,6 +149,10 @@ class FNO(eqx.Module):
     len(n_modes)``; ``jax.vmap`` over a batch. Each spatial extent must exceed
     twice its mode count.
 
+    Because the spatial grid is only read at call time, the same operator
+    evaluates at any resolution above the mode count — train on one grid,
+    apply on another.
+
     Attributes:
         lifting: Pointwise map ``in_channels -> hidden_channels``.
         blocks: The Fourier layers.
@@ -136,6 +160,30 @@ class FNO(eqx.Module):
         domain_padding: Optional non-periodic padding wrapper.
         activation: Pointwise nonlinearity (static).
         num_spatial_dims, in_channels, out_channels, hidden_channels: Static.
+
+    Examples:
+        A 2D operator mapping a 3-channel field to 1 channel, evaluated at two
+        resolutions with the *same* parameters:
+
+        >>> import jax, jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.fno import FNO
+        >>> op = FNO.init(3, 1, (8, 8), key=jr.PRNGKey(0),
+        ...               hidden_channels=16, n_layers=3)
+        >>> op(jnp.ones((3, 32, 32))).shape
+        (1, 32, 32)
+        >>> op(jnp.ones((3, 64, 64))).shape   # resolution-invariant
+        (1, 64, 64)
+        >>> jax.vmap(op)(jnp.ones((4, 3, 32, 32))).shape   # batched
+        (4, 1, 32, 32)
+
+        Tensorized weights (CP/Tucker/TT) and domain padding for non-periodic
+        fields:
+
+        >>> op = FNO.init(2, 2, (6, 6), key=jr.PRNGKey(0), hidden_channels=8,
+        ...               n_layers=2, factorization="tucker", rank=0.5,
+        ...               domain_padding=0.1)
+        >>> op(jnp.ones((2, 40, 40))).shape
+        (2, 40, 40)
     """
 
     lifting: eqx.nn.Conv

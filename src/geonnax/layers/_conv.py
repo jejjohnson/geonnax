@@ -29,6 +29,14 @@ class StandardizedConv(eqx.Module):
         conv: The underlying Equinox convolution.
         standardize: Whether to standardize weights before convolving.
         eps: Numerical floor added to the per-filter variance.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import StandardizedConv
+        >>> conv = StandardizedConv.init(  # 2D, 3->8 channels, 3x3, same pad
+        ...     2, 3, 8, 3, key=jr.PRNGKey(0), padding=1, standardize=True)
+        >>> conv(jnp.ones((3, 16, 16))).shape
+        (8, 16, 16)
     """
 
     conv: eqx.nn.Conv
@@ -89,6 +97,13 @@ class Downsample(eqx.Module):
     Attributes:
         conv: ``1x1`` conv mapping ``in * 2**d -> out`` channels.
         num_spatial_dims: Number of trailing spatial axes.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import Downsample
+        >>> down = Downsample.init(4, 8, 2, key=jr.PRNGKey(0))
+        >>> down(jnp.ones((4, 16, 16))).shape   # halves spatial, sets channels
+        (8, 8, 8)
     """
 
     conv: StandardizedConv
@@ -134,6 +149,13 @@ class Upsample(eqx.Module):
     Attributes:
         conv: ``1x1`` conv mapping ``in -> out * 2**d`` channels.
         num_spatial_dims: Number of trailing spatial axes.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import Upsample
+        >>> up = Upsample.init(8, 4, 2, key=jr.PRNGKey(0))
+        >>> up(jnp.ones((8, 8, 8))).shape   # doubles spatial, sets channels
+        (4, 16, 16)
     """
 
     conv: StandardizedConv

@@ -21,6 +21,16 @@ class GlobalResponseNorm(eqx.Module):
         beta: Per-channel shift, shape ``(C, *ones)``.
         num_spatial_dims: Number of trailing spatial axes.
         eps: Numerical floor.
+
+    Examples:
+        Initialised to the identity, so it returns its input unchanged at first:
+
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import GlobalResponseNorm
+        >>> grn = GlobalResponseNorm.init(4, 2)
+        >>> x = jr.normal(jr.PRNGKey(0), (4, 6, 6))
+        >>> bool(jnp.allclose(grn(x), x))
+        True
     """
 
     gamma: Float[Array, "C *ones"]

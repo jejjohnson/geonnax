@@ -47,6 +47,15 @@ class SphericalFNOBlock(eqx.Module):
         pointwise: Local ``1x1`` channel-mixing skip.
         activation: Pointwise nonlinearity (static).
         use_activation: Whether to apply the activation (static).
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import SphericalHarmonicTransform
+        >>> from geonnax.sfno import SphericalFNOBlock
+        >>> sht = SphericalHarmonicTransform.init(12, 24, 8)
+        >>> blk = SphericalFNOBlock.init(4, 8, key=jr.PRNGKey(0))
+        >>> blk(jnp.ones((4, 12, 24)), sht).shape
+        (4, 12, 24)
     """
 
     spectral: SphericalSpectralConv
@@ -88,7 +97,8 @@ class SFNO(eqx.Module):
     """Spherical Fourier Neural Operator: lift → spherical blocks → project.
 
     Operates on ``(in_channels, n_lat, n_lon)`` fields on the transform's
-    Gauss–Legendre grid; ``jax.vmap`` over a batch.
+    Gauss–Legendre grid; ``jax.vmap`` over a batch. The grid must resolve the
+    band limit (``n_lat > l_max`` and ``n_lon > 2 * l_max``).
 
     Attributes:
         sht: The shared spherical harmonic transform.
@@ -97,6 +107,18 @@ class SFNO(eqx.Module):
         proj1, proj2: Two-layer pointwise projection ``hidden -> proj -> out``.
         activation: Pointwise nonlinearity (static).
         in_channels, out_channels, hidden_channels, l_max: Static config.
+
+    Examples:
+        Map a 3-channel field on a 16×32 lat/lon grid to 1 channel:
+
+        >>> import jax, jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.sfno import SFNO
+        >>> op = SFNO.init(3, 1, key=jr.PRNGKey(0), n_lat=16, n_lon=32,
+        ...                l_max=10, hidden_channels=16, n_layers=3)
+        >>> op(jnp.ones((3, 16, 32))).shape
+        (1, 16, 32)
+        >>> jax.vmap(op)(jnp.ones((4, 3, 16, 32))).shape
+        (4, 1, 16, 32)
     """
 
     sht: SphericalHarmonicTransform

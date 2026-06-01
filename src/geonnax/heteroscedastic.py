@@ -73,6 +73,18 @@ def hetero_noisy_logits(
         Tensor of shape ``(S, C)`` of MC logit samples; the ``S``
         sample axis is intrinsic to the head, the data axis was stripped
         (``vmap`` to batch).
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> import jax.random as jr
+        >>> from geonnax.heteroscedastic import MCSoftmaxDenseFA
+        >>> layer = MCSoftmaxDenseFA.init(
+        ...     in_features=4, num_classes=3, rank=2, key=jr.PRNGKey(0),
+        ...     num_mc_samples=7,
+        ... )
+        >>> logits = hetero_noisy_logits(layer, jnp.ones(4), key=jr.PRNGKey(2))
+        >>> logits.shape  # (S, C) = (num_mc_samples, num_classes)
+        (7, 3)
     """
     C = layer.num_classes
     r = layer.rank
@@ -119,6 +131,16 @@ class HeteroscedasticHead(eqx.Module):
         diag_init_bias: Initial value for the diagonal-scale bias
             ``b_diag`` (a small negative number keeps initial noise
             small).
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> import jax.random as jr
+        >>> head = HeteroscedasticHead.init(
+        ...     in_features=4, num_classes=3, rank=2, key=jr.PRNGKey(0),
+        ... )
+        >>> out = head(jnp.ones(4), key=jr.PRNGKey(1))  # MC mean of raw logits
+        >>> out.shape
+        (3,)
     """
 
     W_loc: Float[Array, "D_in C"]
@@ -280,6 +302,18 @@ class MCSigmoidDenseFA(HeteroscedasticHead):
 
     See :class:`MCSoftmaxDenseFA` for the noise model, init API, and
     references.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> import jax.random as jr
+        >>> layer = MCSigmoidDenseFA.init(
+        ...     in_features=4, num_classes=3, rank=2, key=jr.PRNGKey(0),
+        ... )
+        >>> probs = layer(jnp.ones(4), key=jr.PRNGKey(1))
+        >>> probs.shape
+        (3,)
+        >>> bool(jnp.all((probs >= 0.0) & (probs <= 1.0)))  # per-class Bernoulli
+        True
     """
 
     def __call__(

@@ -82,6 +82,15 @@ class LaplaceRandomFeatureCovariance(eqx.Module):
         ridge: Diagonal ridge :math:`\lambda`. Used both as the init
             value of ``precision`` and as a solve-time jitter to keep
             the Cholesky well-defined.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax.sngp import LaplaceRandomFeatureCovariance
+        >>> cov = LaplaceRandomFeatureCovariance.init(4, ridge=1.0)
+        >>> cov.precision.shape
+        (4, 4)
+        >>> cov.variance_at(jnp.eye(4)).shape
+        (4,)
     """
 
     precision: Float[Array, "D D"]
@@ -96,7 +105,14 @@ class LaplaceRandomFeatureCovariance(eqx.Module):
         momentum: float = 0.999,
         ridge: float = 1.0,
     ) -> LaplaceRandomFeatureCovariance:
-        """Construct a fresh covariance container with ``ridge * I`` precision."""
+        r"""Construct a fresh covariance container with ``ridge * I`` precision.
+
+        Examples:
+            >>> from geonnax.sngp import LaplaceRandomFeatureCovariance
+            >>> cov = LaplaceRandomFeatureCovariance.init(4, momentum=0.9)
+            >>> cov.precision.shape
+            (4, 4)
+        """
         if num_features <= 0:
             raise ValueError(f"num_features must be > 0; got {num_features}.")
         if not 0.0 <= momentum <= 1.0:
@@ -110,7 +126,18 @@ class LaplaceRandomFeatureCovariance(eqx.Module):
         )
 
     def update(self, features: Float[Array, "B D"]) -> LaplaceRandomFeatureCovariance:
-        """Return a new container with EMA-updated precision."""
+        r"""Return a new container with EMA-updated precision.
+
+        :math:`\hat\Lambda \leftarrow m\,\hat\Lambda + (1-m)\,\Phi^\top\Phi/B`.
+
+        Examples:
+            >>> import jax.numpy as jnp
+            >>> from geonnax.sngp import LaplaceRandomFeatureCovariance
+            >>> cov = LaplaceRandomFeatureCovariance.init(4)
+            >>> new = cov.update(jnp.ones((8, 4)))
+            >>> new is cov
+            False
+        """
         B = features.shape[0]
         # Feature Gram ΦᵀΦ / B: contract the batch axis b → (D, D).
         outer = einx.dot("b d, b e -> d e", features, features) / B
@@ -126,7 +153,16 @@ class LaplaceRandomFeatureCovariance(eqx.Module):
         return jnp.linalg.cholesky(sym + self.ridge * jnp.eye(D, dtype=sym.dtype))
 
     def covariance(self) -> Float[Array, "D D"]:
-        """Inverse of the precision matrix (one-shot Cholesky inversion)."""
+        r"""Inverse of the precision matrix (one-shot Cholesky inversion).
+
+        :math:`\hat\Sigma = (\hat\Lambda + \lambda I)^{-1}`, shape ``(D, D)``.
+
+        Examples:
+            >>> from geonnax.sngp import LaplaceRandomFeatureCovariance
+            >>> cov = LaplaceRandomFeatureCovariance.init(4)
+            >>> cov.covariance().shape
+            (4, 4)
+        """
         L = self._chol()
         D = self.precision.shape[0]
         return jax.scipy.linalg.cho_solve((L, True), jnp.eye(D))
@@ -142,11 +178,20 @@ class LaplaceRandomFeatureCovariance(eqx.Module):
             y = L^{-1} \phi(x_n)^\top, \qquad
             \sigma^2(x_n) = \lVert y \rVert_2^2
             = \phi(x_n)^\top (L L^\top)^{-1} \phi(x_n).
+
+        Examples:
+            >>> import jax.numpy as jnp
+            >>> from geonnax.sngp import LaplaceRandomFeatureCovariance
+            >>> cov = LaplaceRandomFeatureCovariance.init(4)
+            >>> cov.variance_at(jnp.eye(4)).shape
+            (4,)
         """
         L = self._chol()
+        # Solve L y = Φᵀ ; (D, D)\(D, N) -> (D, N), one column per row of Φ.
         y = jax.scipy.linalg.solve_triangular(
             L, einx.id("n d -> d n", features), lower=True
         )
+        # σ²(xₙ) = ‖yₙ‖² ; sum over D -> (N,)
         return einx.sum("[d] n", y * y)
 
 
@@ -215,6 +260,18 @@ class RandomFeatureGaussianProcess(eqx.Module):
         Liu, J. Z., et al. (2020). *Simple and Principled Uncertainty
         Estimation with Deterministic Deep Learning via Distance
         Awareness.* NeurIPS.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.sngp import RandomFeatureGaussianProcess
+        >>> layer = RandomFeatureGaussianProcess.init(
+        ...     in_features=3, num_features=16, out_features=2, key=jr.PRNGKey(0)
+        ... )
+        >>> layer(jnp.ones(3)).shape
+        (2,)
+        >>> mean, var = layer(jnp.ones(3), return_cov=True)
+        >>> mean.shape, var.shape
+        ((2,), ())
     """
 
     W: Float[Array, "D_in D"]
@@ -240,7 +297,22 @@ class RandomFeatureGaussianProcess(eqx.Module):
         ridge: float = 1.0,
         head_scale: float = 0.01,
     ) -> Self:
-        """Construct an SNGP head with frozen RFF freqs and an empty precision."""
+        r"""Construct an SNGP head with frozen RFF freqs and an empty precision.
+
+        Frequencies ``W`` are drawn from :math:`\mathcal N(0, 1)` (the RBF
+        spectral density) and biases ``b`` from :math:`\mathrm{Uniform}(0, 2\pi)`;
+        both are frozen. The linear head is Glorot-scaled and the Laplace
+        precision starts at ``ridge * I``.
+
+        Examples:
+            >>> import jax.random as jr
+            >>> from geonnax.sngp import RandomFeatureGaussianProcess
+            >>> layer = RandomFeatureGaussianProcess.init(
+            ...     in_features=3, num_features=16, out_features=2, key=jr.PRNGKey(0)
+            ... )
+            >>> layer.W.shape
+            (3, 16)
+        """
         if in_features <= 0 or num_features <= 0 or out_features <= 0:
             raise ValueError(
                 "in_features, num_features, out_features must all be > 0; "
@@ -275,10 +347,21 @@ class RandomFeatureGaussianProcess(eqx.Module):
         are guarded with :func:`jax.lax.stop_gradient` so gradient-based
         optimisers leave them frozen at their init values. The
         lengthscale is the active bandwidth control.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.sngp import RandomFeatureGaussianProcess
+            >>> layer = RandomFeatureGaussianProcess.init(
+            ...     in_features=3, num_features=16, out_features=2, key=jr.PRNGKey(0)
+            ... )
+            >>> layer.feature_map(jnp.ones(3)).shape
+            (16,)
         """
         W = jax.lax.stop_gradient(self.W)
         b = jax.lax.stop_gradient(self.bias)
+        # z = Wx/ℓ + b ; (D_in,)·(D_in, D) -> (D,)
         z = einx.dot("d, d f -> f", x, W) / self.lengthscale + b
+        # φ(x) = sqrt(2/D) cos(z) ; (D,)
         return jnp.sqrt(2.0 / self.num_features) * jnp.cos(z)
 
     def __call__(
@@ -287,7 +370,22 @@ class RandomFeatureGaussianProcess(eqx.Module):
         *,
         return_cov: bool = False,
     ) -> Float[Array, " D_out"] | tuple[Float[Array, " D_out"], Float[Array, ""]]:
-        features = self.feature_map(x)
+        r"""Mean prediction (and optional Laplace variance) for one input.
+
+        Returns ``mean: (D_out,)``, or ``(mean, var)`` with scalar ``var``
+        when ``return_cov=True``.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.sngp import RandomFeatureGaussianProcess
+            >>> layer = RandomFeatureGaussianProcess.init(
+            ...     in_features=3, num_features=16, out_features=2, key=jr.PRNGKey(0)
+            ... )
+            >>> layer(jnp.ones(3)).shape
+            (2,)
+        """
+        features = self.feature_map(x)  # (D_in,) -> (D,)
+        # μ(x) = φ(x) H + b_H ; (D,)·(D, D_out) -> (D_out,)
         mean = einx.dot("f, f o -> o", features, self.output_linear) + self.output_bias
         if return_cov:
             # variance_at takes (N, D); single example becomes a row of 1.
@@ -303,6 +401,17 @@ class RandomFeatureGaussianProcess(eqx.Module):
         ``jax.vmap(self.feature_map)(x_batch)`` — and the update folds
         the empirical second moment into the EMA. Call this once per
         training batch *after* the gradient step.
+
+        Examples:
+            >>> import jax, jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.sngp import RandomFeatureGaussianProcess
+            >>> layer = RandomFeatureGaussianProcess.init(
+            ...     in_features=3, num_features=8, out_features=1, key=jr.PRNGKey(0)
+            ... )
+            >>> feats = jax.vmap(layer.feature_map)(jnp.ones((4, 3)))
+            >>> new = layer.update_precision(feats)
+            >>> new.covariance.precision.shape
+            (8, 8)
         """
         new_cov = self.covariance.update(features)
         return eqx.tree_at(lambda layer: layer.covariance, self, new_cov)

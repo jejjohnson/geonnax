@@ -25,6 +25,12 @@ def harmonic_degrees(l_max: int) -> tuple[int, ...]:
 
     Layout matches :func:`real_spherical_harmonics`: outer loop over ``l``,
     inner loop over ``m = -l, ..., l``.
+
+    Examples:
+        >>> from geonnax._basis import harmonic_degrees
+        >>> # l=0 -> 1 col, l=1 -> 3 cols, l=2 -> 5 cols; total (l_max+1)^2 = 9
+        >>> harmonic_degrees(2)
+        (0, 1, 1, 1, 2, 2, 2, 2, 2)
     """
     if l_max < 0:
         raise ValueError(f"l_max must be >= 0, got {l_max}.")
@@ -103,6 +109,14 @@ def real_spherical_harmonics(
     Returns:
         ``(N, (l_max + 1)^2)`` array with the SH index flattened as
         outer loop over ``l``, inner loop over ``m = -l, ..., l``.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax._basis import real_spherical_harmonics
+        >>> # unit (N, 3) Cartesian inputs -> (N, (l_max + 1)^2) features
+        >>> xyz = jnp.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
+        >>> real_spherical_harmonics(xyz, l_max=3).shape  # (2, 4**2)
+        (2, 16)
     """
     if l_max < 0:
         raise ValueError(f"l_max must be >= 0, got {l_max}.")

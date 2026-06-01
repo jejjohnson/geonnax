@@ -31,6 +31,15 @@ class NCPContinuousPerturb(eqx.Module):
 
     Attributes:
         scale: Perturbation scale :math:`\sigma`.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> import jax.random as jr
+        >>> perturb = NCPContinuousPerturb(scale=0.5)
+        >>> x = jnp.zeros(3)
+        >>> out = perturb(x, key=jr.PRNGKey(0))  # x̃ = x + σ·ε, ε ~ N(0, I)
+        >>> out.shape
+        (3,)
     """
 
     scale: float | Float[Array, ""] = 1.0
@@ -41,6 +50,7 @@ class NCPContinuousPerturb(eqx.Module):
         *,
         key: Array,
     ) -> Float[Array, " D"]:
+        # x̃ = x + σ·ε with ε ~ N(0, I), same shape/dtype as x → (D,).
         eps = jax.random.normal(key, x.shape, dtype=x.dtype)
         return x + self.scale * eps
 
