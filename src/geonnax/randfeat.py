@@ -103,6 +103,11 @@ class OrthogonalRandomFeatures(eqx.Module):
     ) -> OrthogonalRandomFeatures:
         if lengthscale <= 0:
             raise ValueError(f"lengthscale must be > 0, got {lengthscale}.")
+        if in_features <= 0 or n_features <= 0:
+            raise ValueError(
+                "in_features and n_features must be > 0; got "
+                f"in_features={in_features}, n_features={n_features}."
+            )
         if n_features % in_features != 0:
             raise ValueError(
                 f"n_features ({n_features}) must be divisible by in_features "

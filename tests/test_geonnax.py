@@ -554,6 +554,15 @@ def test_concat_conditioner_broadcast_z():
     assert out.shape == (5, 8)
 
 
+def test_conditioner_rejects_scalar_h_with_batched_z():
+    """Vector h + batched z would silently drop contexts after squeeze."""
+    import pytest
+
+    cond = geonnax.AffineModulation.init(num_features=6, cond_dim=3, key=jr.PRNGKey(0))
+    with pytest.raises(ValueError, match="single-vector h"):
+        cond(jnp.ones((6,)), jnp.ones((4, 3)))
+
+
 def test_affine_modulation_identity_at_init():
     """AffineModulation is identity at init (bias=0, one_plus_tanh)."""
     cond = geonnax.AffineModulation.init(num_features=6, cond_dim=3, key=jr.PRNGKey(0))

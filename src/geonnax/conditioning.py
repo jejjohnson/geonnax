@@ -83,6 +83,14 @@ def _atleast_2d_pair(h: Array, z: Array) -> tuple[Array, Array, bool]:
             f"Conditioners accept z of shape (K,) or (N, K); got z.ndim={z.ndim}. "
             "For higher-rank batches, flatten leading axes first."
         )
+    # A single-vector h paired with a batched z would silently drop all but
+    # the first context after the post-call squeeze; reject explicitly.
+    if h.ndim == 1 and z.ndim == 2:
+        raise ValueError(
+            "Cannot pair a single-vector h of shape (C,) with a batched z of "
+            f"shape (N, K)={z.shape}; either broadcast h to (N, C) yourself "
+            "or pass a single z of shape (K,)."
+        )
     squeeze = h.ndim == 1
     if squeeze:
         h = einx.id("c -> 1 c", h)
@@ -528,9 +536,12 @@ class ConditionedINR(eqx.Module):
         ...
         y   = layer_{L-1}(z_{L-2})        # readout, not conditioned
 
-    The ``mode="input"`` shortcut concatenates ``c`` to the input
-    *before* running ``inner`` — useful for inner networks that don't
-    expose a ``layers`` sequence (e.g. plain ``eqx.nn.MLP`` instances).
+    The ``mode="input"`` shortcut applies a single head conditioner to
+    ``x`` (concatenation for :class:`ConcatConditioner`, FiLM-style
+    modulation for :class:`AffineModulation`, or input-generation for
+    :class:`HyperLinear`) *before* running ``inner`` — useful for inner
+    networks that don't expose a ``layers`` sequence (e.g. plain
+    ``eqx.nn.MLP`` instances).
 
     Conditioners must be ``AbstractConditioner`` instances whose
     ``num_features`` matches the corresponding ``inner`` layer's output

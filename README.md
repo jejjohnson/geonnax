@@ -1,10 +1,10 @@
-# pypackage_template
+# geonnax
 
-[![Tests](https://github.com/jejjohnson/pypackage_template/actions/workflows/ci.yml/badge.svg)](https://github.com/jejjohnson/pypackage_template/actions/workflows/ci.yml)
-[![Lint](https://github.com/jejjohnson/pypackage_template/actions/workflows/lint.yml/badge.svg)](https://github.com/jejjohnson/pypackage_template/actions/workflows/lint.yml)
-[![Type Check](https://github.com/jejjohnson/pypackage_template/actions/workflows/typecheck.yml/badge.svg)](https://github.com/jejjohnson/pypackage_template/actions/workflows/typecheck.yml)
-[![Deploy Docs](https://github.com/jejjohnson/pypackage_template/actions/workflows/pages.yml/badge.svg)](https://github.com/jejjohnson/pypackage_template/actions/workflows/pages.yml)
-[![codecov](https://codecov.io/gh/jejjohnson/pypackage_template/branch/main/graph/badge.svg)](https://codecov.io/gh/jejjohnson/pypackage_template)
+[![Tests](https://github.com/jejjohnson/geonnax/actions/workflows/ci.yml/badge.svg)](https://github.com/jejjohnson/geonnax/actions/workflows/ci.yml)
+[![Lint](https://github.com/jejjohnson/geonnax/actions/workflows/lint.yml/badge.svg)](https://github.com/jejjohnson/geonnax/actions/workflows/lint.yml)
+[![Type Check](https://github.com/jejjohnson/geonnax/actions/workflows/typecheck.yml/badge.svg)](https://github.com/jejjohnson/geonnax/actions/workflows/typecheck.yml)
+[![Deploy Docs](https://github.com/jejjohnson/geonnax/actions/workflows/pages.yml/badge.svg)](https://github.com/jejjohnson/geonnax/actions/workflows/pages.yml)
+[![codecov](https://codecov.io/gh/jejjohnson/geonnax/branch/main/graph/badge.svg)](https://codecov.io/gh/jejjohnson/geonnax)
 [![PyPI version](https://img.shields.io/pypi/v/geonnax.svg)](https://pypi.org/project/geonnax/)
 [![Python versions](https://img.shields.io/pypi/pyversions/geonnax.svg)](https://pypi.org/project/geonnax/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -13,7 +13,7 @@
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://pre-commit.com/)
 
 Author: J. Emmanuel Johnson
-Repo: [https://github.com/jejjohnson/pypackage_template](https://github.com/jejjohnson/pypackage_template)
+Repo: [https://github.com/jejjohnson/geonnax](https://github.com/jejjohnson/geonnax)
 Website: [jejjohnson.netlify.com](https://jejjohnson.netlify.com)
 
 An opinionated, modern Python package template with best-practice tooling already wired up. When you use this template, you get linting, formatting, type checking, testing with coverage gates, auto-generated documentation, automated releases, security scanning, and AI agent instructions — all configured and integrated from day one. No boilerplate to write; just rename the package and start coding.
@@ -23,7 +23,7 @@ An opinionated, modern Python package template with best-practice tooling alread
 ## 📂 Repository Layout
 
 ```
-pypackage_template/
+geonnax/
 ├── src/geonnax/                    # Main package code (src layout)
 ├── tests/                            # pytest test suite
 ├── docs/                             # MkDocs documentation source
@@ -53,8 +53,8 @@ pypackage_template/
 
 ```bash
 # Prerequisites: uv (https://github.com/astral-sh/uv)
-git clone https://github.com/jejjohnson/pypackage_template.git
-cd pypackage_template
+git clone https://github.com/jejjohnson/geonnax.git
+cd geonnax
 make install      # install all dependency groups
 make test         # run tests
 make docs-serve   # preview docs locally
