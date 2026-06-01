@@ -14,6 +14,12 @@ leading channel axis and ``num_spatial_dims`` trailing spatial axes — shape
   :class:`ConvNeXtBlock`, :class:`SqueezeExcitation`.
 - :mod:`geonnax.layers._attention` — :class:`Attention`,
   :class:`LinearAttention`.
+- :mod:`geonnax.layers._spectral` — :class:`SpectralConv` (Fourier neural
+  operator layer).
+- :mod:`geonnax.layers._factorized` — :class:`DenseTensor` / :class:`CPTensor`
+  / :class:`TuckerTensor` / :class:`TTTensor` low-rank weight parameterisations.
+- :mod:`geonnax.layers._spherical_transform` —
+  :class:`SphericalHarmonicTransform`, :class:`SphericalSpectralConv`.
 """
 
 from geonnax.layers._attention import Attention, LinearAttention
@@ -24,18 +30,40 @@ from geonnax.layers._blocks import (
     SqueezeExcitation,
 )
 from geonnax.layers._conv import Downsample, StandardizedConv, Upsample
+from geonnax.layers._factorized import (
+    CPTensor,
+    DenseTensor,
+    Factorization,
+    TTTensor,
+    TuckerTensor,
+    init_factorized_tensor,
+)
 from geonnax.layers._norm import GlobalResponseNorm
+from geonnax.layers._spectral import SpectralConv
+from geonnax.layers._spherical_transform import (
+    SphericalHarmonicTransform,
+    SphericalSpectralConv,
+)
 
 
 __all__ = [
     "Attention",
     "Block",
+    "CPTensor",
     "ConvNeXtBlock",
+    "DenseTensor",
     "Downsample",
+    "Factorization",
     "GlobalResponseNorm",
     "LinearAttention",
     "ResnetBlock",
+    "SpectralConv",
+    "SphericalHarmonicTransform",
+    "SphericalSpectralConv",
     "SqueezeExcitation",
     "StandardizedConv",
+    "TTTensor",
+    "TuckerTensor",
     "Upsample",
+    "init_factorized_tensor",
 ]
