@@ -192,6 +192,13 @@ def test_sht_rejects_negative_l_max():
         SphericalHarmonicTransform.init(8, 16, -1)
 
 
+def test_sht_rejects_under_resolved_grid():
+    with pytest.raises(ValueError, match="n_lat must exceed l_max"):
+        SphericalHarmonicTransform.init(8, 64, 12)
+    with pytest.raises(ValueError, match="n_lon must exceed 2"):
+        SphericalHarmonicTransform.init(32, 16, 12)
+
+
 def test_spherical_spectral_conv():
     l_max, n_lat, n_lon = 8, 12, 24
     sht = SphericalHarmonicTransform.init(n_lat, n_lon, l_max)

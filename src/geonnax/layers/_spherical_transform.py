@@ -76,14 +76,33 @@ class SphericalHarmonicTransform(eqx.Module):
     def init(cls, n_lat: int, n_lon: int, l_max: int) -> SphericalHarmonicTransform:
         """Construct the transform matrices for a Gauss–Legendre lat/lon grid.
 
+        The grid must resolve the band limit, otherwise the quadrature is
+        under-resolved and the analysis/synthesis pair is not invertible on the
+        requested ``l_max`` (it would silently alias high modes): a
+        Gauss–Legendre rule needs ``n_lat > l_max`` (exact to degree
+        ``2 * n_lat - 1``) and equispaced longitudes need ``n_lon > 2 * l_max``
+        to represent every order ``m``.
+
         Args:
-            n_lat: Number of Gauss–Legendre latitudes (use ``>= l_max + 1`` for
-                an accurate quadrature).
-            n_lon: Number of equispaced longitudes.
+            n_lat: Number of Gauss–Legendre latitudes (must be ``> l_max``).
+            n_lon: Number of equispaced longitudes (must be ``> 2 * l_max``).
             l_max: Maximum spherical-harmonic degree.
+
+        Raises:
+            ValueError: If ``l_max < 0`` or the grid under-resolves ``l_max``.
         """
         if l_max < 0:
             raise ValueError(f"l_max must be >= 0, got {l_max}.")
+        if n_lat <= l_max:
+            raise ValueError(
+                "n_lat must exceed l_max for an exact Gauss–Legendre quadrature; "
+                f"got n_lat={n_lat}, l_max={l_max}."
+            )
+        if n_lon <= 2 * l_max:
+            raise ValueError(
+                "n_lon must exceed 2 * l_max to resolve every order m; "
+                f"got n_lon={n_lon}, l_max={l_max}."
+            )
         xyz, weights = _gauss_legendre_grid(n_lat, n_lon)
         synth = np.asarray(real_spherical_harmonics(jnp.asarray(xyz), l_max))
         analy = (synth * weights[:, None]).T
