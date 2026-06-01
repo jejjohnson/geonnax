@@ -152,7 +152,12 @@ class ResnetBlock(eqx.Module):
         )
         res_conv = (
             StandardizedConv.init(
-                num_spatial_dims, in_channels, out_channels, 1, key=k4
+                num_spatial_dims,
+                in_channels,
+                out_channels,
+                1,
+                key=k4,
+                standardize=weight_standardize,
             )
             if in_channels != out_channels
             else None
@@ -235,7 +240,12 @@ class ConvNeXtBlock(eqx.Module):
         )
         res_conv = (
             StandardizedConv.init(
-                num_spatial_dims, in_channels, out_channels, 1, key=k4
+                num_spatial_dims,
+                in_channels,
+                out_channels,
+                1,
+                key=k4,
+                standardize=weight_standardize,
             )
             if in_channels != out_channels
             else None

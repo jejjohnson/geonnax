@@ -149,6 +149,17 @@ def test_unet_dimension_flexible(nd):
     assert model(x).shape == x.shape
 
 
+def test_unet_single_stage():
+    # len(dim_mults) == 1 exercises the minimum key allocation.
+    model = UNet.init(8, key=KEY, channels=2, dim_mults=(1,))
+    assert model(jnp.ones((2, 16, 16))).shape == (2, 16, 16)
+
+
+def test_unet_rejects_unknown_block_type():
+    with pytest.raises(ValueError, match="block_type must be"):
+        UNet.init(8, key=KEY, dim_mults=(1, 2), block_type="convnxt")
+
+
 def test_unet_rejects_empty_dim_mults():
     with pytest.raises(ValueError, match="dim_mults must be non-empty"):
         UNet.init(8, key=KEY, dim_mults=())

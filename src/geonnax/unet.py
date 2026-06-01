@@ -202,7 +202,7 @@ class Stage(eqx.Module):
                 groups=groups,
                 weight_standardize=weight_standardize,
             )
-        else:
+        elif block_type == "resnet":
             leaf = ResnetBlock.init(
                 in_channels,
                 out_channels,
@@ -211,6 +211,10 @@ class Stage(eqx.Module):
                 groups=groups,
                 weight_standardize=weight_standardize,
                 squeeze_excite=squeeze_excite,
+            )
+        else:
+            raise ValueError(
+                f"block_type must be 'resnet' or 'convnext', got {block_type!r}"
             )
         nested = (
             NestedResidualUNet.init(
@@ -343,7 +347,9 @@ class UNet(eqx.Module):
         dims = [dim, *(dim * m for m in dim_mults)]
         in_out = list(pairwise(dims))
 
-        keys = iter(jax.random.split(key, 4 + 6 * n_stages))
+        # Keys consumed: init_conv (1) + down stages (2 each) + mid (3) +
+        # up stages (2 each) + consolidate (1) + final_block (1) + final_conv (1).
+        keys = iter(jax.random.split(key, 4 * n_stages + 7))
 
         init_conv = StandardizedConv.init(
             num_spatial_dims,
@@ -462,7 +468,12 @@ class UNet(eqx.Module):
             squeeze_excite=squeeze_excite,
         )
         final_conv = StandardizedConv.init(
-            num_spatial_dims, dim, out_channels, 1, key=next(keys)
+            num_spatial_dims,
+            dim,
+            out_channels,
+            1,
+            key=next(keys),
+            standardize=weight_standardize,
         )
 
         return cls(
