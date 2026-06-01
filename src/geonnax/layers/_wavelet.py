@@ -32,7 +32,19 @@ import jax.numpy as jnp
 from jaxtyping import Array, Float
 
 
-Wavelet = Literal["haar", "db1", "db2", "db3", "db4", "sym4"]
+Wavelet = Literal[
+    "haar",
+    "db1",
+    "db2",
+    "db3",
+    "db4",
+    "db5",
+    "sym4",
+    "sym5",
+    "sym6",
+    "coif1",
+    "coif2",
+]
 
 # Orthonormal decomposition low-pass taps (sum == sqrt(2), unit L2 norm). The
 # high-pass partner is derived by the quadrature-mirror relation, and synthesis
@@ -64,6 +76,18 @@ _DEC_LO: dict[str, tuple[float, ...]] = {
         0.7148465705525415,
         0.2303778133088552,
     ),
+    "db5": (
+        0.003335725285001549,
+        -0.012580751999015526,
+        -0.006241490213011705,
+        0.07757149384006515,
+        -0.03224486958502952,
+        -0.24229488706619015,
+        0.13842814590110342,
+        0.7243085284385744,
+        0.6038292697974729,
+        0.160102397974125,
+    ),
     "sym4": (
         -0.0757657147892733,
         -0.0296355276459985,
@@ -73,6 +97,54 @@ _DEC_LO: dict[str, tuple[float, ...]] = {
         -0.0992195435768472,
         -0.0126039672620378,
         0.0322231006040427,
+    ),
+    "sym5": (
+        0.027333068345077982,
+        0.029519490925774643,
+        -0.039134249302383094,
+        0.1993975339773936,
+        0.7234076904024206,
+        0.6339789634582119,
+        0.01660210576452232,
+        -0.17532808990845047,
+        -0.021101834024758855,
+        0.019538882735286728,
+    ),
+    "sym6": (
+        0.015404109327027373,
+        0.0034907120842174702,
+        -0.11799011114819057,
+        -0.048311742585633,
+        0.4910559419267466,
+        0.787641141030194,
+        0.3379294217276218,
+        -0.07263752278646252,
+        -0.021060292512300564,
+        0.04472490177066578,
+        0.0017677118642428036,
+        -0.007800708325034148,
+    ),
+    "coif1": (
+        -0.01565572813546454,
+        -0.0727326195128539,
+        0.38486484686420286,
+        0.8525720202122554,
+        0.3378976624578092,
+        -0.0727326195128539,
+    ),
+    "coif2": (
+        -0.0007205494453645122,
+        -0.0018232088707029932,
+        0.0056114348193944995,
+        0.023680171946334084,
+        -0.0594344186464569,
+        -0.0764885990783064,
+        0.41700518442169254,
+        0.8127236354455423,
+        0.3861100668211622,
+        -0.06737255472196302,
+        -0.04146493678175915,
+        0.016387336463522112,
     ),
 }
 _DEC_LO["db1"] = _DEC_LO["haar"]
@@ -278,7 +350,11 @@ class WaveletConv(eqx.Module):
             out_channels: Output channel count.
             num_spatial_dims: Number of spatial axes (1, 2, or 3).
             key: PRNG key.
-            wavelet: Wavelet name (``"haar"``, ``"db2"``..``"db4"``, ``"sym4"``).
+            wavelet: Wavelet name — ``"haar"``, Daubechies ``"db2"``..``"db5"``,
+                Symlets ``"sym4"``..``"sym6"``, or Coiflets ``"coif1"``/``"coif2"``
+                (Coiflets have vanishing moments on the scaling function too, so
+                they absorb smooth large-scale trends — handy for fields like SSH
+                or SST).
             level: Number of DWT levels.
             bias: Whether to add a learnable spatial-domain bias.
             init_scale: Std of the channel-mix weights; defaults to the

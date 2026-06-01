@@ -12,7 +12,18 @@ from geonnax.wno import WNO, WaveletNeuralOperator, WNOBlock
 
 
 KEY = jr.PRNGKey(0)
-WAVELETS = ["haar", "db2", "db3", "db4", "sym4"]
+WAVELETS = [
+    "haar",
+    "db2",
+    "db3",
+    "db4",
+    "db5",
+    "sym4",
+    "sym5",
+    "sym6",
+    "coif1",
+    "coif2",
+]
 
 
 def _grads_finite(model, *args):

@@ -160,7 +160,8 @@ class WNO(eqx.Module):
             key: PRNG key.
             hidden_channels: Channel width of the wavelet blocks.
             n_layers: Number of wavelet blocks.
-            wavelet: Wavelet name (``"haar"``, ``"db2"``..``"db4"``, ``"sym4"``).
+            wavelet: Wavelet name — ``"haar"``, Daubechies ``"db2"``..``"db5"``,
+                Symlets ``"sym4"``..``"sym6"``, or Coiflets ``"coif1"``/``"coif2"``.
             level: Number of DWT levels per block.
             projection_channels: Hidden width of the projection MLP (defaults to
                 ``hidden_channels``).
