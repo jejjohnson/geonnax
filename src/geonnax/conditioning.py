@@ -111,7 +111,7 @@ class AbstractConditioner(eqx.Module):
     num_features: int = eqx.field(static=True)
     cond_dim: int = eqx.field(static=True)
 
-    def __call__(self, h: Array, z: Array) -> Array:  # pragma: no cover
+    def __call__(self, h: Array, z: Array, /) -> Array:  # pragma: no cover
         raise NotImplementedError
 
 
