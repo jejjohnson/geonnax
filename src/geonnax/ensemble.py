@@ -104,13 +104,15 @@ def apply_rank1_proj(
     silently mis-classify inputs whose sequence length happens to equal
     the ensemble size (e.g. self-attention with ``T = M``):
 
-    * ``has_ensemble=False``: ``x`` has shape ``(*batch, D_in)`` and the
-      output gains a leading ``M`` axis: ``(M, *batch, D_out)``. Use
-      this for the Q/K/V projections, whose inputs are un-ensembled.
+    * ``has_ensemble=False``: ``x`` has shape ``(..., D_in)`` (any
+      intrinsic-to-the-layer axes, e.g. a sequence axis, but no data
+      batch axis) and the output gains a leading ``M`` axis:
+      ``(M, ..., D_out)``. Use this for the Q/K/V projections, whose
+      inputs are un-ensembled.
     * ``has_ensemble=True``: ``x`` already carries an ``M`` leading
-      axis (``(M, *batch, D_in)``); the per-member projection flows
-      through unchanged. Use this for the O projection after attention
-      has already added the ensemble axis.
+      axis (``(M, ..., D_in)``); the per-member projection flows through
+      unchanged. Use this for the O projection after attention has
+      already added the ensemble axis.
     """
     if has_ensemble:
         if x.ndim < 2 or x.shape[0] != ensemble_size:
@@ -178,10 +180,10 @@ class DenseRank1(eqx.Module):
         ...     out_features=2,
         ...     ensemble_size=3,
         ... )
-        >>> x = jnp.ones((5, 4))
+        >>> x = jnp.ones(4)
         >>> y = layer(x)
         >>> y.shape
-        (3, 5, 2)
+        (3, 2)
 
     References:
         Wen, Y., Tran, D., & Ba, J. (2020). *BatchEnsemble: An
@@ -236,23 +238,21 @@ class DenseRank1(eqx.Module):
             bias=bias,
         )
 
-    def __call__(
-        self, x: Float[Array, "*batch D_in"]
-    ) -> Float[Array, "M *batch D_out"]:
-        # yᵢ = ((x ∘ sᵢ) W) ∘ rᵢ + bᵢ. The einx `...` ellipsis keeps
-        # arbitrary leading batch dims while broadcasting the per-member
-        # sᵢ, rᵢ over them, and the named `m` axis is introduced by the
-        # input-scaling step. Avoids materialising the per-member
-        # effective kernel Wᵢ = (sᵢ ⊗ rᵢ) ∘ W and the manual reshapes
-        # that broadcasting rᵢ / bᵢ would otherwise need.
-        #   x:        (*batch, D_in)
-        #   x_scaled: (M, *batch, D_in)
-        #   h, out:   (M, *batch, D_out)
-        x_scaled = einx.multiply("... d, m d -> m ... d", x, self.s)
-        h = einx.dot("m ... d, d o -> m ... o", x_scaled, self.W)
-        out = einx.multiply("m ... o, m o -> m ... o", h, self.r)
+    def __call__(self, x: Float[Array, " D_in"]) -> Float[Array, "M D_out"]:
+        # yᵢ = ((x ∘ sᵢ) W) ∘ rᵢ + bᵢ. Single-example forward — the M axis
+        # is intrinsic to the BatchEnsemble layer and is introduced by the
+        # per-member input-scaling step. The user vmaps over a data axis.
+        # Avoids materialising the per-member effective kernel
+        # Wᵢ = (sᵢ ⊗ rᵢ) ∘ W and the manual reshapes that broadcasting
+        # rᵢ / bᵢ would otherwise need.
+        #   x:        (D_in,)
+        #   x_scaled: (M, D_in)
+        #   h, out:   (M, D_out)
+        x_scaled = einx.multiply("d, m d -> m d", x, self.s)
+        h = einx.dot("m d, d o -> m o", x_scaled, self.W)
+        out = einx.multiply("m o, m o -> m o", h, self.r)
         if self.bias:
-            out = einx.add("m ... o, m o -> m ... o", out, self.b)
+            out = einx.add("m o, m o -> m o", out, self.b)
         return out
 
 
@@ -280,9 +280,9 @@ class LayerNormEnsemble(eqx.Module):
     or any other BatchEnsemble layer upstream.
 
     Input is expected to carry a leading ensemble axis of size
-    ``ensemble_size`` and a trailing feature axis of size
-    ``feature_dim``. Any number of intermediate batch / time axes
-    are supported and pass through unchanged.
+    ``ensemble_size`` — that axis is intrinsic to BatchEnsemble layers,
+    not a data batch — followed by a trailing feature axis of size
+    ``feature_dim``. The user ``jax.vmap`` s over any data batch axis.
 
     Attributes:
         scales: Per-member scale of shape ``(M, D)``.
@@ -296,10 +296,10 @@ class LayerNormEnsemble(eqx.Module):
     Example:
         >>> import jax.numpy as jnp
         >>> ln = LayerNormEnsemble.init(ensemble_size=3, feature_dim=4)
-        >>> x = jnp.ones((3, 5, 4))  # (M, batch, D)
+        >>> x = jnp.ones((3, 4))  # (M, D)
         >>> y = ln(x)
         >>> y.shape
-        (3, 5, 4)
+        (3, 4)
     """
 
     scales: Float[Array, "M D"]
@@ -333,10 +333,11 @@ class LayerNormEnsemble(eqx.Module):
             eps=eps,
         )
 
-    def __call__(self, x: Float[Array, "M *batch D"]) -> Float[Array, "M *batch D"]:
-        if x.ndim < 2:
+    def __call__(self, x: Float[Array, "M D"]) -> Float[Array, "M D"]:
+        if x.ndim != 2:
             raise ValueError(
-                f"x must have at least 2 dims (M and D); got shape {x.shape}."
+                f"x must have shape (M, D); got shape {x.shape}. "
+                "vmap over any data batch axis."
             )
         if x.shape[0] != self.ensemble_size:
             raise ValueError(
@@ -349,16 +350,15 @@ class LayerNormEnsemble(eqx.Module):
                 f"feature_dim = {self.feature_dim}."
             )
 
-        # Per-slice mean/var over the trailing feature axis.
+        # Per-member mean/var over the trailing feature axis.
         mean = jnp.mean(x, axis=-1, keepdims=True)
         var = jnp.var(x, axis=-1, keepdims=True)
         x_hat = (x - mean) * jax.lax.rsqrt(var + self.eps)
 
-        # Per-member affine: broadcast (M, D) γ/β over the intermediate
-        # *batch axes via named ellipsis — no manual reshape bookkeeping.
-        #   x_hat: (M, *batch, D)   γ, β: (M, D)
-        scaled = einx.multiply("m ... d, m d -> m ... d", x_hat, self.scales)
-        return einx.add("m ... d, m d -> m ... d", scaled, self.biases)
+        # Per-member affine.
+        #   x_hat: (M, D)   γ, β: (M, D)
+        scaled = einx.multiply("m d, m d -> m d", x_hat, self.scales)
+        return einx.add("m d, m d -> m d", scaled, self.biases)
 
 
 class MultiHeadAttentionBE(eqx.Module):

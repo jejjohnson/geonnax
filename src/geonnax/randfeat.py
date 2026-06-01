@@ -21,10 +21,10 @@ def rff_forward(
     W: Float[Array, "D_in n_features"],
     lengthscale: float | Float[Array, ""],
     n_features: int,
-    x: Float[Array, "*batch D_in"],
-) -> Float[Array, "*batch D_rff"]:
+    x: Float[Array, " D_in"],
+) -> Float[Array, " D_rff"]:
     """Shared RFF feature map: ``sqrt(1/D) [cos(xW/l), sin(xW/l)]``."""
-    z = einx.dot("... din, din f -> ... f", x, W) / lengthscale
+    z = einx.dot("din, din f -> f", x, W) / lengthscale
     scale = jnp.sqrt(1.0 / n_features)
     return scale * jnp.concatenate([jnp.cos(z), jnp.sin(z)], axis=-1)
 
@@ -34,10 +34,10 @@ def rff_cosine_forward(
     b: Float[Array, " n_features"],
     lengthscale: float | Float[Array, ""],
     n_features: int,
-    x: Float[Array, "*batch D_in"],
-) -> Float[Array, "*batch n_features"]:
+    x: Float[Array, " D_in"],
+) -> Float[Array, " n_features"]:
     """Shared single-cosine RFF feature map: ``sqrt(2/D) cos(xW/l + b)``."""
-    proj = einx.dot("... din, din f -> ... f", x, W) / lengthscale + b
+    proj = einx.dot("din, din f -> f", x, W) / lengthscale + b
     return jnp.sqrt(2.0 / n_features) * jnp.cos(proj)
 
 
@@ -122,7 +122,7 @@ class OrthogonalRandomFeatures(eqx.Module):
             W=W,
         )
 
-    def __call__(self, x: Float[Array, "*batch D_in"]) -> Float[Array, "*batch D_rff"]:
+    def __call__(self, x: Float[Array, " D_in"]) -> Float[Array, " D_rff"]:
         return rff_forward(self.W, self.lengthscale, self.n_features, x)
 
 

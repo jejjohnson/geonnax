@@ -53,11 +53,11 @@ def _glorot_uniform(
 
 def hetero_noisy_logits(
     layer: HeteroscedasticHead,
-    x: Float[Array, "N D_in"],
+    x: Float[Array, " D_in"],
     *,
     key: PRNGKeyArray,
-) -> Float[Array, "S N C"]:
-    """Sample ``num_mc_samples`` heteroscedastic logits in one shot.
+) -> Float[Array, "S C"]:
+    """Sample ``num_mc_samples`` heteroscedastic logits for one example.
 
     Computes mean logits, low-rank factor, and diagonal scale via three
     deterministic linear maps, then draws Monte Carlo logit
@@ -66,36 +66,33 @@ def hetero_noisy_logits(
     Args:
         layer: A :class:`HeteroscedasticHead` (or subclass) carrying
             the weight / bias arrays.
-        x: Input features of shape ``(N, D_in)``.
+        x: Input feature vector of shape ``(D_in,)``.
         key: PRNG key used to draw the Gaussian noise samples.
 
     Returns:
-        Tensor of shape ``(S, N, C)`` of MC logit samples.
+        Tensor of shape ``(S, C)`` of MC logit samples; the ``S``
+        sample axis is intrinsic to the head, the data axis was stripped
+        (``vmap`` to batch).
     """
-    N = x.shape[0]
     C = layer.num_classes
     r = layer.rank
     S = layer.num_mc_samples
 
-    mu = einx.dot("n d, d c -> n c", x, layer.W_loc) + layer.b_loc  # (N, C)
+    mu = einx.dot("d, d c -> c", x, layer.W_loc) + layer.b_loc  # (C,)
 
-    # Low-rank factor: project to (N, C·r) then split the trailing axis.
-    raw_scale = einx.dot("n d, d k -> n k", x, layer.W_scale) + layer.b_scale
-    V = einx.id("n (c r) -> n c r", raw_scale, r=r)
+    # Low-rank factor: project to (C·r,) then split the trailing axis.
+    raw_scale = einx.dot("d, d k -> k", x, layer.W_scale) + layer.b_scale
+    V = einx.id("(c r) -> c r", raw_scale, r=r)
 
-    sigma = jnp.exp(
-        einx.dot("n d, d c -> n c", x, layer.W_diag) + layer.b_diag
-    )  # (N, C)
+    sigma = jnp.exp(einx.dot("d, d c -> c", x, layer.W_diag) + layer.b_diag)  # (C,)
 
     kz, ku = jr.split(key)
-    z = jr.normal(kz, (S, N, r), dtype=x.dtype)
-    u = jr.normal(ku, (S, N, C), dtype=x.dtype)
+    z = jr.normal(kz, (S, r), dtype=x.dtype)
+    u = jr.normal(ku, (S, C), dtype=x.dtype)
     # Low-rank + diagonal noise: V z contracts the rank axis r, the diagonal
-    # term broadcasts σ over the S sample axis. Both land at (S, N, C).
-    eps = einx.dot("n c r, s n r -> s n c", V, z) + einx.multiply(
-        "n c, s n c -> s n c", sigma, u
-    )
-    return einx.add("n c, s n c -> s n c", mu, eps)
+    # term broadcasts σ over the S sample axis. Both land at (S, C).
+    eps = einx.dot("c r, s r -> s c", V, z) + einx.multiply("c, s c -> s c", sigma, u)
+    return einx.add("c, s c -> s c", mu, eps)
 
 
 class HeteroscedasticHead(eqx.Module):
@@ -183,10 +180,10 @@ class HeteroscedasticHead(eqx.Module):
 
     def __call__(
         self,
-        x: Float[Array, "N D_in"],
+        x: Float[Array, " D_in"],
         *,
         key: PRNGKeyArray,
-    ) -> Float[Array, "N C"]:
+    ) -> Float[Array, " C"]:
         """Default forward returns the MC mean of the raw logits.
 
         Subclasses override this to apply a link function (softmax /
@@ -243,10 +240,10 @@ class MCSoftmaxDenseFA(HeteroscedasticHead):
         >>> layer = MCSoftmaxDenseFA.init(
         ...     in_features=4, num_classes=3, rank=2, key=jr.PRNGKey(0),
         ... )
-        >>> x = jnp.ones((5, 4))
+        >>> x = jnp.ones(4)
         >>> probs = layer(x, key=jr.PRNGKey(1))
         >>> probs.shape
-        (5, 3)
+        (3,)
         >>> bool(jnp.allclose(probs.sum(axis=-1), 1.0))
         True
 
@@ -258,10 +255,10 @@ class MCSoftmaxDenseFA(HeteroscedasticHead):
 
     def __call__(
         self,
-        x: Float[Array, "N D_in"],
+        x: Float[Array, " D_in"],
         *,
         key: PRNGKeyArray,
-    ) -> Float[Array, "N C"]:
+    ) -> Float[Array, " C"]:
         logits = hetero_noisy_logits(self, x, key=key)
         return jnp.mean(jax.nn.softmax(logits, axis=-1), axis=0)
 
@@ -287,10 +284,10 @@ class MCSigmoidDenseFA(HeteroscedasticHead):
 
     def __call__(
         self,
-        x: Float[Array, "N D_in"],
+        x: Float[Array, " D_in"],
         *,
         key: PRNGKeyArray,
-    ) -> Float[Array, "N C"]:
+    ) -> Float[Array, " C"]:
         logits = hetero_noisy_logits(self, x, key=key)
         return jnp.mean(jax.nn.sigmoid(logits), axis=0)
 

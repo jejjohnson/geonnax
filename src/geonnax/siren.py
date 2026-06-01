@@ -175,8 +175,8 @@ class SirenDense(eqx.Module):
             c=c,
         )
 
-    def __call__(self, x: Float[Array, "*batch D_in"]) -> Float[Array, "*batch D_out"]:
-        pre = einx.dot("... i, i o -> ... o", x, self.W) + self.b
+    def __call__(self, x: Float[Array, " D_in"]) -> Float[Array, " D_out"]:
+        pre = einx.dot("i, i o -> o", x, self.W) + self.b
         if self.layer_type == "last":
             return pre
         return jnp.sin(self.omega * pre)
@@ -265,7 +265,7 @@ class SIREN(eqx.Module):
             hidden_omega=hidden_omega,
         )
 
-    def __call__(self, x: Float[Array, "*batch D_in"]) -> Float[Array, "*batch D_out"]:
+    def __call__(self, x: Float[Array, " D_in"]) -> Float[Array, " D_out"]:
         z = x
         for layer in self.layers:
             z = layer(z)

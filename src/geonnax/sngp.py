@@ -268,53 +268,43 @@ class RandomFeatureGaussianProcess(eqx.Module):
             out_features=out_features,
         )
 
-    def feature_map(self, x: Float[Array, "*batch D_in"]) -> Float[Array, "*batch D"]:
+    def feature_map(self, x: Float[Array, " D_in"]) -> Float[Array, " D"]:
         r"""Random Fourier feature map: :math:`\phi(x) = \sqrt{2/D}\,\cos(Wx/\ell + b)`.
 
-        Frequencies and bias are guarded with
-        :func:`jax.lax.stop_gradient` so gradient-based optimisers
-        leave them frozen at their init values. The lengthscale is the
-        active bandwidth control.
+        Single-example: ``x: (D_in,)`` → ``(D,)``. Frequencies and bias
+        are guarded with :func:`jax.lax.stop_gradient` so gradient-based
+        optimisers leave them frozen at their init values. The
+        lengthscale is the active bandwidth control.
         """
         W = jax.lax.stop_gradient(self.W)
         b = jax.lax.stop_gradient(self.bias)
-        z = einx.dot("... d, d f -> ... f", x, W) / self.lengthscale + b
+        z = einx.dot("d, d f -> f", x, W) / self.lengthscale + b
         return jnp.sqrt(2.0 / self.num_features) * jnp.cos(z)
 
     def __call__(
         self,
-        x: Float[Array, "*batch D_in"],
+        x: Float[Array, " D_in"],
         *,
         return_cov: bool = False,
-    ) -> (
-        Float[Array, "*batch D_out"]
-        | tuple[Float[Array, "*batch D_out"], Float[Array, " *batch"]]
-    ):
+    ) -> Float[Array, " D_out"] | tuple[Float[Array, " D_out"], Float[Array, ""]]:
         features = self.feature_map(x)
-        mean = (
-            einx.dot("... f, f o -> ... o", features, self.output_linear)
-            + self.output_bias
-        )
+        mean = einx.dot("f, f o -> o", features, self.output_linear) + self.output_bias
         if return_cov:
-            # variance_at expects a 2-D (N, D) features matrix; flatten any
-            # leading batch dims, compute the per-row variance, then restore.
-            flat_features = features.reshape(-1, self.num_features)
-            var = self.covariance.variance_at(flat_features).reshape(
-                features.shape[:-1]
-            )
+            # variance_at takes (N, D); single example becomes a row of 1.
+            var = self.covariance.variance_at(features[None, :])[0]
             return mean, var
         return mean
 
-    def update_precision(self, features: Float[Array, "*batch D"]) -> Self:
+    def update_precision(self, features: Float[Array, "B D"]) -> Self:
         """Return a new layer with an EMA-updated Laplace precision.
 
-        Pure-functional: ``self`` is unchanged. Pass features computed
-        on the current minibatch (e.g. via :meth:`feature_map`) — the
-        update folds the empirical second moment into the EMA. Call
-        this once per training batch *after* the gradient step.
+        Pure-functional: ``self`` is unchanged. Pass a *batch* of features
+        ``(B, D)`` computed on the current minibatch — e.g. by
+        ``jax.vmap(self.feature_map)(x_batch)`` — and the update folds
+        the empirical second moment into the EMA. Call this once per
+        training batch *after* the gradient step.
         """
-        flat = features.reshape(-1, self.num_features)
-        new_cov = self.covariance.update(flat)
+        new_cov = self.covariance.update(features)
         return eqx.tree_at(lambda layer: layer.covariance, self, new_cov)
 
 

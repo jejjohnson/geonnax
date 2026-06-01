@@ -20,6 +20,10 @@ conditioner. The :func:`HyperSIREN` constructor sugar builds the NIF
 ShapeNet/ParameterNet composite (Pan, Brunton, Kutz — JMLR 2023) by
 special-casing per-layer init-scale calibration so the generated weights
 match Sitzmann's variance-preservation property.
+
+All modules follow the canonical Equinox single-example convention:
+inputs are vectors of shape ``(C,)`` and ``(K,)``; callers should
+``jax.vmap`` to batch.
 """
 
 from __future__ import annotations
@@ -58,46 +62,6 @@ def _apply_gamma(raw: Array, kind: str) -> Array:
     )
 
 
-def _broadcast_z(z: Array, n_rows: int) -> Array:
-    """Broadcast a single context ``(K,)`` to ``(N, K)``; pass-through otherwise."""
-    if z.ndim == 1:
-        return einx.id("k -> n k", z, n=n_rows)
-    return z
-
-
-def _atleast_2d_pair(h: Array, z: Array) -> tuple[Array, Array, bool]:
-    """Promote ``h``, ``z`` to 2D for the inner kernel; record whether to squeeze.
-
-    Conditioners accept either ``(C,)`` or ``(N, C)`` for ``h`` and
-    correspondingly ``(K,)`` or ``(N, K)`` for ``z``. Higher-rank batch
-    shapes are rejected here with a clear error rather than silently
-    misbroadcasting.
-    """
-    if h.ndim not in (1, 2):
-        raise ValueError(
-            f"Conditioners accept h of shape (C,) or (N, C); got h.ndim={h.ndim}. "
-            "For higher-rank batches, flatten leading axes first."
-        )
-    if z.ndim not in (1, 2):
-        raise ValueError(
-            f"Conditioners accept z of shape (K,) or (N, K); got z.ndim={z.ndim}. "
-            "For higher-rank batches, flatten leading axes first."
-        )
-    # A single-vector h paired with a batched z would silently drop all but
-    # the first context after the post-call squeeze; reject explicitly.
-    if h.ndim == 1 and z.ndim == 2:
-        raise ValueError(
-            "Cannot pair a single-vector h of shape (C,) with a batched z of "
-            f"shape (N, K)={z.shape}; either broadcast h to (N, C) yourself "
-            "or pass a single z of shape (K,)."
-        )
-    squeeze = h.ndim == 1
-    if squeeze:
-        h = einx.id("c -> 1 c", h)
-    z = _broadcast_z(z, h.shape[0])
-    return h, z, squeeze
-
-
 # ---------------------------------------------------------------------------
 # Protocol
 # ---------------------------------------------------------------------------
@@ -107,7 +71,7 @@ class AbstractConditioner(eqx.Module):
     """Duck-typed protocol for ``(h, z) -> y`` conditioning layers.
 
     Concrete subclasses share the contract ``__call__(h, z) -> Array``
-    where ``h.shape[-1] == num_features`` and ``z.shape[-1] == cond_dim``.
+    where ``h.shape == (num_features,)`` and ``z.shape == (cond_dim,)``.
     There is no ``abstractmethod`` enforcement — subclasses simply
     implement ``__call__``.
 
@@ -144,9 +108,9 @@ class ConcatConditioner(AbstractConditioner):
     Example:
         >>> import jax.random as jr, jax.numpy as jnp
         >>> layer = ConcatConditioner.init(num_features=8, cond_dim=4, key=jr.key(0))
-        >>> y = layer(jnp.ones((5, 8)), jnp.ones((5, 4)))
+        >>> y = layer(jnp.ones(8), jnp.ones(4))
         >>> y.shape
-        (5, 8)
+        (8,)
     """
 
     proj: eqx.nn.Linear
@@ -186,9 +150,9 @@ class ConcatConditioner(AbstractConditioner):
 
     def __call__(
         self,
-        h: Float[Array, "*batch C"],
-        z: Float[Array, "*batch K"] | Float[Array, " K"],
-    ) -> Float[Array, "*batch C"]:
+        h: Float[Array, " C"],
+        z: Float[Array, " K"],
+    ) -> Float[Array, " C"]:
         if h.shape[-1] != self.num_features:
             raise ValueError(
                 f"h.shape[-1]={h.shape[-1]} does not match "
@@ -198,11 +162,9 @@ class ConcatConditioner(AbstractConditioner):
             raise ValueError(
                 f"z.shape[-1]={z.shape[-1]} does not match cond_dim={self.cond_dim}."
             )
-        h2d, z2d, squeeze = _atleast_2d_pair(h, z)
-        # Concatenate on the feature axis, then per-row Linear via vmap.
-        cat = jnp.concatenate([h2d, z2d], axis=-1)
-        out = jax.vmap(self.proj)(cat)
-        return out[0] if squeeze else out
+        # Concatenate on the feature axis and apply the single Linear.
+        cat = jnp.concatenate([h, z], axis=-1)
+        return self.proj(cat)
 
 
 # ---------------------------------------------------------------------------
@@ -239,9 +201,9 @@ class AffineModulation(AbstractConditioner):
     Example:
         >>> import jax.random as jr, jax.numpy as jnp
         >>> film = AffineModulation.init(num_features=8, cond_dim=4, key=jr.key(0))
-        >>> y = film(jnp.ones((5, 8)), jnp.ones((5, 4)))
+        >>> y = film(jnp.ones(8), jnp.ones(4))
         >>> y.shape
-        (5, 8)
+        (8,)
     """
 
     generator: eqx.nn.Linear
@@ -297,21 +259,21 @@ class AffineModulation(AbstractConditioner):
             gamma_activation=gamma_activation,
         )
 
-    def _gamma_beta(self, z: Array) -> tuple[Array, Array, Array]:
-        """Compute ``(raw_γ, γ, β)`` from a context array of shape ``(N, K)``."""
-        raw = jax.vmap(self.generator)(z)  # (N, 2C)
+    def _gamma_beta(self, z: Float[Array, " K"]) -> tuple[Array, Array, Array]:
+        """Compute ``(raw_γ, γ, β)`` from a single context vector ``(K,)``."""
+        raw = self.generator(z)  # (2C,)
         # Split on the feature axis: first half = β, second half = raw_γ.
         # einx.id keeps the (two, c) split explicit and avoids jnp.split.
-        split = einx.id("n (two c) -> two n c", raw, two=2)
+        split = einx.id("(two c) -> two c", raw, two=2)
         beta, raw_gamma = split[0], split[1]
         gamma = _apply_gamma(raw_gamma, self.gamma_activation)
         return raw_gamma, gamma, beta
 
     def __call__(
         self,
-        h: Float[Array, "*batch C"],
-        z: Float[Array, "*batch K"] | Float[Array, " K"],
-    ) -> Float[Array, "*batch C"]:
+        h: Float[Array, " C"],
+        z: Float[Array, " K"],
+    ) -> Float[Array, " C"]:
         if h.shape[-1] != self.num_features:
             raise ValueError(
                 f"h.shape[-1]={h.shape[-1]} does not match "
@@ -321,15 +283,10 @@ class AffineModulation(AbstractConditioner):
             raise ValueError(
                 f"z.shape[-1]={z.shape[-1]} does not match cond_dim={self.cond_dim}."
             )
-        h2d, z2d, squeeze = _atleast_2d_pair(h, z)
-        _raw_gamma, gamma, beta = self._gamma_beta(z2d)
-        out = gamma * h2d + beta
-        return out[0] if squeeze else out
+        _raw_gamma, gamma, beta = self._gamma_beta(z)
+        return gamma * h + beta
 
-    def log_det(
-        self,
-        z: Float[Array, "*batch K"] | Float[Array, " K"],
-    ) -> Float[Array, " *batch"]:
+    def log_det(self, z: Float[Array, " K"]) -> Float[Array, ""]:
         """Sum of ``log γ`` across the feature axis.
 
         Only valid when ``gamma_activation="exp"`` — that's the only
@@ -338,11 +295,10 @@ class AffineModulation(AbstractConditioner):
         a generic Jacobian must compute it manually.
 
         Args:
-            z: Context array of shape ``(N, K)`` or ``(K,)``.
+            z: Context vector of shape ``(K,)``.
 
         Returns:
-            Log-determinant of the diagonal scaling, shape ``(N,)`` (or
-            scalar for 1-D ``z``).
+            Scalar log-determinant of the diagonal scaling.
 
         Raises:
             NotImplementedError: If ``gamma_activation != "exp"``.
@@ -353,11 +309,8 @@ class AffineModulation(AbstractConditioner):
                 f"{self.gamma_activation!r}. Use exp parameterisation for "
                 "bijection wrappers."
             )
-        squeeze = z.ndim == 1
-        z2d = einx.id("k -> 1 k", z) if squeeze else z
-        raw_gamma, _gamma, _beta = self._gamma_beta(z2d)
-        ldj = einx.sum("n [c]", raw_gamma)
-        return ldj[0] if squeeze else ldj
+        raw_gamma, _gamma, _beta = self._gamma_beta(z)
+        return einx.sum("[c]", raw_gamma)
 
 
 #: Backwards-compatible alias for :class:`AffineModulation`.
@@ -374,15 +327,9 @@ class HyperLinear(AbstractConditioner):
 
     A single ``eqx.nn.Linear`` of output size ``target_out * target_in +
     target_out`` produces the flat parameter vector for an ad-hoc linear
-    layer; ``W`` and ``b`` are split out via :func:`einx.id`.
-    The forward dispatches on ``z.ndim``:
-
-    * ``z.shape == (K,)`` — *shared* path: one ``(W, b)`` generated and
-      reused across every row of ``x``. Cheap (one small affine + one
-      matmul).
-    * ``z.shape == (N, K)`` — *per-sample* path: ``(W, b)`` generated for
-      each row, applied via ``einx.dot``. Costs ``N * C * C_in``
-      flops per call.
+    layer; ``W`` and ``b`` are split out via :func:`einx.id`. The forward
+    consumes single-example vectors ``x: (C_in,)`` and ``z: (K,)`` and
+    returns ``(C_out,)``.
 
     The generator weight scale is multiplied by ``init_scale`` so the
     generated ``W`` magnitude starts small and the composite is near-zero
@@ -400,10 +347,9 @@ class HyperLinear(AbstractConditioner):
         >>> hyper = HyperLinear.init(
         ...     target_in=4, target_out=8, cond_dim=3, key=jr.key(0)
         ... )
-        >>> y_shared = hyper(jnp.ones((6, 4)), jnp.ones((3,)))
-        >>> y_persample = hyper(jnp.ones((6, 4)), jnp.ones((6, 3)))
-        >>> (y_shared.shape, y_persample.shape)
-        ((6, 8), (6, 8))
+        >>> y = hyper(jnp.ones(4), jnp.ones(3))
+        >>> y.shape
+        (8,)
     """
 
     generator: eqx.nn.Linear
@@ -477,9 +423,9 @@ class HyperLinear(AbstractConditioner):
 
     def __call__(
         self,
-        x: Float[Array, "*batch C_in"],
-        z: Float[Array, "*batch K"] | Float[Array, " K"],
-    ) -> Float[Array, "*batch C_out"]:
+        x: Float[Array, " C_in"],
+        z: Float[Array, " K"],
+    ) -> Float[Array, " C_out"]:
         if x.shape[-1] != self.target_in:
             raise ValueError(
                 f"x.shape[-1]={x.shape[-1]} does not match target_in={self.target_in}."
@@ -488,30 +434,9 @@ class HyperLinear(AbstractConditioner):
             raise ValueError(
                 f"z.shape[-1]={z.shape[-1]} does not match cond_dim={self.cond_dim}."
             )
-        squeeze = x.ndim == 1
-        if squeeze:
-            x = einx.id("c -> 1 c", x)
-
-        if z.ndim == 1:
-            # Shared (W, b): generate once, reuse across all rows.
-            flat = self.generator(z)
-            W, b = self._split_params(flat)
-            out = einx.dot("c c_in, n c_in -> n c", W, x) + b
-        else:
-            # Per-sample (W, b): generate per row of z, contract per row.
-            flats = jax.vmap(self.generator)(z)  # (N, out*in + out)
-            w_size = self.target_out * self.target_in
-            flat_W = flats[:, :w_size]
-            flat_b = flats[:, w_size:]
-            W = einx.id(
-                "n (c c_in) -> n c c_in",
-                flat_W,
-                c=self.target_out,
-                c_in=self.target_in,
-            )
-            out = einx.dot("n c c_in, n c_in -> n c", W, x) + flat_b
-
-        return out[0] if squeeze else out
+        flat = self.generator(z)
+        W, b = self._split_params(flat)
+        return W @ x + b
 
 
 # ---------------------------------------------------------------------------
@@ -566,9 +491,9 @@ class ConditionedINR(eqx.Module):
         >>> wrapped = ConditionedINR.init(
         ...     inner, conditioner_cls=AffineModulation, cond_dim=4, key=key
         ... )
-        >>> y = wrapped(jnp.zeros((10, 2)), jnp.zeros((10, 4)))
+        >>> y = wrapped(jnp.zeros(2), jnp.zeros(4))
         >>> y.shape
-        (10, 1)
+        (1,)
     """
 
     inner: eqx.Module
@@ -664,9 +589,9 @@ class ConditionedINR(eqx.Module):
 
     def __call__(
         self,
-        x: Float[Array, "*batch D_in"],
-        z: Float[Array, "*batch K"] | Float[Array, " K"],
-    ) -> Float[Array, "*batch D_out"]:
+        x: Float[Array, " D_in"],
+        z: Float[Array, " K"],
+    ) -> Float[Array, " D_out"]:
         if z.shape[-1] != self.cond_dim:
             raise ValueError(
                 f"z.shape[-1]={z.shape[-1]} does not match cond_dim={self.cond_dim}."
@@ -744,7 +669,8 @@ class GeneratedSiren(eqx.Module):
 
     Built by :func:`HyperSIREN`. The ``parameter_net`` runs once on ``mu``
     per forward call to produce the latent ``z``; ``z`` then drives every
-    per-layer :class:`HyperLinear`.
+    per-layer :class:`HyperLinear`. Single-example forward: ``x: (D_in,)``,
+    ``mu: (P,)`` → ``(D_out,)``.
     """
 
     parameter_net: eqx.Module
@@ -754,11 +680,12 @@ class GeneratedSiren(eqx.Module):
     out_features: int = eqx.field(static=True)
     depth: int = eqx.field(static=True)
 
-    def __call__(self, x: Array, mu: Array) -> Array:
+    def __call__(
+        self,
+        x: Float[Array, " D_in"],
+        mu: Float[Array, " P"],
+    ) -> Float[Array, " D_out"]:
         z = self.parameter_net(mu)  # ty: ignore[call-non-callable]
-        squeeze = x.ndim == 1
-        if squeeze:
-            x = einx.id("c -> 1 c", x)
         h = x
         for siren_layer, hyper in zip(
             self.siren.layers, self.hyper_layers, strict=True
@@ -768,7 +695,7 @@ class GeneratedSiren(eqx.Module):
                 h = pre
             else:
                 h = jnp.sin(siren_layer.omega * pre)
-        return h[0] if squeeze else h
+        return h
 
 
 def HyperSIREN(

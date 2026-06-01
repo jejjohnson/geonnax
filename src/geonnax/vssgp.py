@@ -133,14 +133,14 @@ class DeepVSSGPCore(eqx.Module):
             depth=depth,
         )
 
-    def __call__(self, x: Float[Array, "*batch D_in"]) -> Float[Array, "*batch D_out"]:
+    def __call__(self, x: Float[Array, " D_in"]) -> Float[Array, " D_out"]:
         z = x
         for layer_idx in range(self.depth):
             W_freq = self.W_freqs[layer_idx]
             W_proj = self.W_projs[layer_idx]
             ls = self.lengthscales[layer_idx]
             phi = rff_forward(W_freq, ls, self.n_features, z)
-            z = einx.dot("... f, f o -> ... o", phi, W_proj)
+            z = einx.dot("f, f o -> o", phi, W_proj)
         return z
 
 

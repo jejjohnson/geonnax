@@ -37,10 +37,10 @@ class NCPContinuousPerturb(eqx.Module):
 
     def __call__(
         self,
-        x: Float[Array, "*batch D"],
+        x: Float[Array, " D"],
         *,
         key: Array,
-    ) -> Float[Array, "*batch D"]:
+    ) -> Float[Array, " D"]:
         eps = jax.random.normal(key, x.shape, dtype=x.dtype)
         return x + self.scale * eps
 

@@ -60,20 +60,27 @@ def test_deg2rad_module():
 
 def test_lonlat_scale_module():
     enc = geonnax.LonLatScale()
-    out = enc(jnp.array([[-180.0, -90.0], [0.0, 0.0], [180.0, 90.0]]))
+    out = jax.vmap(enc)(jnp.array([[-180.0, -90.0], [0.0, 0.0], [180.0, 90.0]]))
     expected = jnp.array([[-1.0, -1.0], [0.0, 0.0], [1.0, 1.0]])
     assert jnp.allclose(out, expected)
 
 
+def test_lonlat_scale_module_single_example():
+    enc = geonnax.LonLatScale()
+    out = enc(jnp.array([180.0, 90.0]))
+    assert jnp.allclose(out, jnp.array([1.0, 1.0]))
+
+
 def test_cartesian3d_encoder_module():
     enc = geonnax.Cartesian3DEncoder()
-    out = enc(jnp.array([[0.0, 0.0]]))
-    assert jnp.allclose(out, jnp.array([[1.0, 0.0, 0.0]]), atol=1e-6)
+    out = enc(jnp.array([0.0, 0.0]))
+    assert out.shape == (3,)
+    assert jnp.allclose(out, jnp.array([1.0, 0.0, 0.0]), atol=1e-6)
 
 
 def test_cyclic_encoder_module():
     enc = geonnax.CyclicEncoder()
-    out = enc(jnp.array([0.0, jnp.pi]))
+    out = jax.vmap(enc)(jnp.array([0.0, jnp.pi]))
     assert out.shape == (2, 2)
     assert jnp.allclose(out[:, 0], jnp.array([1.0, -1.0]), atol=1e-5)
 
@@ -81,32 +88,23 @@ def test_cyclic_encoder_module():
 def test_spherical_harmonic_encoder_cartesian():
     enc = geonnax.SphericalHarmonicEncoder(l_max=3)
     xyz = jnp.array([[1.0, 0.0, 0.0], [0.0, 1.0, 0.0]])
-    out = enc(xyz)
+    out = jax.vmap(enc)(xyz)
     assert out.shape == (2, 16)
     assert enc.num_features == 16
 
 
 def test_spherical_harmonic_encoder_lonlat():
     enc = geonnax.SphericalHarmonicEncoder(l_max=2, input_mode="lonlat")
-    out = enc(jnp.array([[0.0, 0.0], [jnp.pi / 2, 0.0]]))
+    out = jax.vmap(enc)(jnp.array([[0.0, 0.0], [jnp.pi / 2, 0.0]]))
     assert out.shape == (2, 9)
 
 
 # ---- Tier A: stochastic-via-key cores ---------------------------------------
 
 
-def test_mcdropout_keeps_shape_and_scales():
-    drop = geonnax.MCDropout(rate=0.5)
-    x = jnp.ones((4, 8))
-    out = drop(x, key=jr.PRNGKey(0))
-    assert out.shape == x.shape
-    # Survivors are scaled by 2.0; zeros are dropped.
-    assert jnp.all((out == 0.0) | (out == 2.0))
-
-
 def test_ncp_continuous_perturb_changes_input():
     perturb = geonnax.NCPContinuousPerturb(scale=0.5)
-    x = jnp.zeros((4, 3))
+    x = jnp.zeros(3)
     out = perturb(x, key=jr.PRNGKey(0))
     assert out.shape == x.shape
     assert jnp.any(out != 0.0)
@@ -117,16 +115,16 @@ def test_ncp_continuous_perturb_changes_input():
 
 def test_siren_dense_init_and_call():
     layer = geonnax.SirenDense.init(3, 8, key=jr.PRNGKey(0), layer_type="first")
-    out = layer(jnp.ones((5, 3)))
-    assert out.shape == (5, 8)
+    out = layer(jnp.ones(3))
+    assert out.shape == (8,)
     # Sine activation keeps outputs in [-1, 1].
     assert jnp.max(jnp.abs(out)) <= 1.0
 
 
 def test_siren_full_network():
     net = geonnax.SIREN.init(2, 16, 1, depth=4, key=jr.PRNGKey(0))
-    out = net(jnp.zeros((10, 2)))
-    assert out.shape == (10, 1)
+    out = net(jnp.zeros(2))
+    assert out.shape == (1,)
     assert len(net.layers) == 4
 
 
@@ -144,15 +142,15 @@ def test_orthogonal_random_features_shape():
     orf = geonnax.OrthogonalRandomFeatures.init(
         4, 8, key=jr.PRNGKey(0), lengthscale=1.0
     )
-    out = orf(jnp.ones((3, 4)))
+    out = orf(jnp.ones(4))
     # rff_forward concatenates cos and sin so output has 2 * n_features columns.
-    assert out.shape == (3, 16)
+    assert out.shape == (16,)
 
 
 def test_rff_forward_helper_matches_orf():
     key = jr.PRNGKey(1)
     orf = geonnax.OrthogonalRandomFeatures.init(2, 4, key=key, lengthscale=1.0)
-    x = jr.normal(jr.PRNGKey(2), (3, 2))
+    x = jr.normal(jr.PRNGKey(2), (2,))
     direct = geonnax.rff_forward(orf.W, orf.lengthscale, orf.n_features, x)
     assert jnp.allclose(orf(x), direct)
 
@@ -168,7 +166,7 @@ def test_slepian_encoder_from_cap_runs():
         eig_threshold=0.0,
         n_modes=4,
     )
-    out = enc(jnp.array([[0.0, 0.0], [0.1, 0.05]]))
+    out = jax.vmap(enc)(jnp.array([[0.0, 0.0], [0.1, 0.05]]))
     assert out.shape == (2, enc.num_features)
 
 
@@ -181,8 +179,8 @@ def test_hybrid_spherical_slepian_concatenates():
         eig_threshold=0.0,
         n_modes=2,
     )
-    out = enc(jnp.array([[0.0, 0.0]]))
-    assert out.shape == (1, enc.num_features)
+    out = enc(jnp.array([0.0, 0.0]))
+    assert out.shape == (enc.num_features,)
 
 
 # ---- Tier B: MFN ------------------------------------------------------------
@@ -190,33 +188,33 @@ def test_hybrid_spherical_slepian_concatenates():
 
 def test_fourier_filter_shape():
     f = geonnax.FourierFilter.init(3, 8, key=jr.PRNGKey(0))
-    out = f(jnp.ones((4, 3)))
-    assert out.shape == (4, 8)
+    out = f(jnp.ones(3))
+    assert out.shape == (8,)
     assert jnp.max(jnp.abs(out)) <= 1.0  # sin is bounded
 
 
 def test_gabor_filter_shape():
     g = geonnax.GaborFilter.init(2, 6, key=jr.PRNGKey(0))
-    out = g(jnp.zeros((3, 2)))
-    assert out.shape == (3, 6)
+    out = g(jnp.zeros(2))
+    assert out.shape == (6,)
 
 
 def test_fourier_net_forward():
     net = geonnax.FourierNet.init(2, 16, 1, depth=3, key=jr.PRNGKey(0))
-    out = net(jnp.zeros((4, 2)))
-    assert out.shape == (4, 1)
+    out = net(jnp.zeros(2))
+    assert out.shape == (1,)
 
 
 def test_gabor_net_forward():
     net = geonnax.GaborNet.init(2, 16, 1, depth=3, key=jr.PRNGKey(0))
-    out = net(jnp.zeros((4, 2)))
-    assert out.shape == (4, 1)
+    out = net(jnp.zeros(2))
+    assert out.shape == (1,)
 
 
-def test_mfn_squeeze_single_point():
+def test_mfn_single_point():
     net = geonnax.FourierNet.init(2, 4, 3, depth=2, key=jr.PRNGKey(0))
     out = net(jnp.zeros(2))
-    assert out.shape == (3,)  # 1-D input -> 1-D output
+    assert out.shape == (3,)
 
 
 # ---- Composition test: everything sits in eqx.nn.Sequential -----------------
@@ -225,8 +223,8 @@ def test_mfn_squeeze_single_point():
 def test_encoders_compose_by_hand():
     deg = geonnax.Deg2Rad()
     cart = geonnax.Cartesian3DEncoder(input_unit="radians")
-    out = cart(deg(jnp.array([[0.0, 0.0]])))
-    assert out.shape == (1, 3)
+    out = cart(deg(jnp.array([0.0, 0.0])))
+    assert out.shape == (3,)
 
 
 def test_no_numpyro_import_in_package():
@@ -253,10 +251,10 @@ def test_mc_softmax_dense_fa_init_and_forward():
     layer = geonnax.MCSoftmaxDenseFA.init(
         in_features=4, num_classes=3, rank=2, key=jr.PRNGKey(0)
     )
-    x = jnp.ones((5, 4))
+    x = jnp.ones(4)
     probs = layer(x, key=jr.PRNGKey(1))
-    assert probs.shape == (5, 3)
-    # MC-averaged softmax rows must still sum to 1.
+    assert probs.shape == (3,)
+    # MC-averaged softmax must still sum to 1.
     assert jnp.allclose(probs.sum(axis=-1), 1.0, atol=1e-5)
 
 
@@ -264,9 +262,9 @@ def test_mc_sigmoid_dense_fa_init_and_forward():
     layer = geonnax.MCSigmoidDenseFA.init(
         in_features=4, num_classes=3, rank=2, key=jr.PRNGKey(0)
     )
-    x = jnp.ones((5, 4))
+    x = jnp.ones(4)
     probs = layer(x, key=jr.PRNGKey(1))
-    assert probs.shape == (5, 3)
+    assert probs.shape == (3,)
     # MC-averaged sigmoid stays in [0, 1] per element.
     assert jnp.all((probs >= 0.0) & (probs <= 1.0))
 
@@ -279,9 +277,9 @@ def test_hetero_noisy_logits_shape():
         key=jr.PRNGKey(0),
         num_mc_samples=7,
     )
-    x = jnp.ones((5, 4))
+    x = jnp.ones(4)
     logits = geonnax.hetero_noisy_logits(layer, x, key=jr.PRNGKey(2))
-    assert logits.shape == (7, 5, 3)
+    assert logits.shape == (7, 3)
 
 
 def test_heteroscedastic_module_no_numpyro():
@@ -313,19 +311,19 @@ def test_random_feature_gaussian_process_mean_shape():
     layer = geonnax.RandomFeatureGaussianProcess.init(
         in_features=3, num_features=16, out_features=2, key=jr.PRNGKey(0)
     )
-    x = jnp.ones((5, 3))
+    x = jnp.ones(3)
     mean = layer(x)
-    assert mean.shape == (5, 2)
+    assert mean.shape == (2,)
 
 
 def test_random_feature_gaussian_process_return_cov():
     layer = geonnax.RandomFeatureGaussianProcess.init(
         in_features=3, num_features=16, out_features=2, key=jr.PRNGKey(0)
     )
-    x = jnp.ones((5, 3))
+    x = jnp.ones(3)
     mean, var = layer(x, return_cov=True)
-    assert mean.shape == (5, 2)
-    assert var.shape == (5,)
+    assert mean.shape == (2,)
+    assert var.shape == ()
 
 
 def test_random_feature_gaussian_process_update_precision():
@@ -333,7 +331,7 @@ def test_random_feature_gaussian_process_update_precision():
         in_features=3, num_features=8, out_features=1, key=jr.PRNGKey(0)
     )
     x = jnp.ones((4, 3))
-    features = layer.feature_map(x)
+    features = jax.vmap(layer.feature_map)(x)
     new_layer = layer.update_precision(features)
     # The container should be a fresh instance with an updated precision.
     assert new_layer is not layer
@@ -353,43 +351,8 @@ def test_jit_round_trip_siren():
     """Sanity-check a JIT'd SIREN forward — exercise the static fields."""
     net = geonnax.SIREN.init(2, 8, 1, depth=3, key=jr.PRNGKey(0))
     f = jax.jit(lambda m, x: m(x))
-    out = f(net, jnp.zeros((4, 2)))
-    assert out.shape == (4, 1)
-
-
-# ---- Tier D: deterministic linear core (variational dense family) ----------
-
-
-def test_linear_core_init_and_forward():
-    layer = geonnax.LinearCore.init(4, 3, key=jr.PRNGKey(0))
-    assert layer.W.shape == (4, 3)
-    assert layer.b is not None
-    assert layer.b.shape == (3,)
-    out = layer(jnp.ones((5, 4)))
-    assert out.shape == (5, 3)
-
-
-def test_linear_core_no_bias():
-    layer = geonnax.LinearCore.init(4, 3, key=jr.PRNGKey(0), bias=False)
-    assert layer.b is None
-    out = layer(jnp.ones((2, 4)))
-    assert out.shape == (2, 3)
-
-
-def test_linear_core_matches_manual_matmul():
-    layer = geonnax.LinearCore.init(4, 3, key=jr.PRNGKey(0))
-    x = jnp.arange(8.0).reshape(2, 4)
-    expected = x @ layer.W + layer.b
-    assert jnp.allclose(layer(x), expected, atol=1e-6)
-
-
-def test_dense_module_no_numpyro():
-    import pathlib
-
-    import geonnax.dense as dense_mod
-
-    src = pathlib.Path(dense_mod.__file__).read_text()
-    assert "numpyro" not in src
+    out = f(net, jnp.zeros(2))
+    assert out.shape == (1,)
 
 
 # ---- Tier D: DeepVSSGP deterministic core ----------------------------------
@@ -411,8 +374,8 @@ def test_deep_vssgp_core_init_and_forward():
     assert core.W_freqs[1].shape == (4, 8)
     assert core.W_projs[0].shape == (16, 4)
     assert core.W_projs[-1].shape == (16, 1)
-    out = core(jnp.zeros((6, 2)))
-    assert out.shape == (6, 1)
+    out = core(jnp.zeros(2))
+    assert out.shape == (1,)
 
 
 def test_deep_vssgp_core_depth_one():
@@ -424,8 +387,8 @@ def test_deep_vssgp_core_depth_one():
         key=jr.PRNGKey(1),
         n_features=4,
     )
-    out = core(jnp.ones((7, 3)))
-    assert out.shape == (7, 2)
+    out = core(jnp.ones(3))
+    assert out.shape == (2,)
 
 
 def test_vssgp_module_no_numpyro():
@@ -447,8 +410,8 @@ def test_dense_rank1_init_and_call():
         out_features=2,
         ensemble_size=3,
     )
-    out = layer(jnp.ones((5, 4)))
-    assert out.shape == (3, 5, 2)
+    out = layer(jnp.ones(4))
+    assert out.shape == (3, 2)
 
 
 def test_dense_rank1_no_bias_omits_bias():
@@ -460,24 +423,24 @@ def test_dense_rank1_no_bias_omits_bias():
         bias=False,
     )
     # With bias=False and x=0, output is purely the bias-free linear map → 0.
-    out = layer(jnp.zeros((4, 3)))
-    assert out.shape == (2, 4, 2)
+    out = layer(jnp.zeros(3))
+    assert out.shape == (2, 2)
     assert jnp.allclose(out, 0.0)
 
 
 def test_layer_norm_ensemble_shape_preserved():
     ln = geonnax.LayerNormEnsemble.init(ensemble_size=3, feature_dim=4)
-    x = jnp.ones((3, 5, 4))
+    x = jnp.ones((3, 4))
     out = ln(x)
-    assert out.shape == (3, 5, 4)
+    assert out.shape == (3, 4)
 
 
 def test_layer_norm_ensemble_normalizes_to_zero_mean():
     ln = geonnax.LayerNormEnsemble.init(ensemble_size=2, feature_dim=4)
     key = jr.PRNGKey(0)
-    x = jr.normal(key, (2, 6, 4))
+    x = jr.normal(key, (2, 4))
     out = ln(x)
-    # Default scales=1, biases=0 → per-slice mean ≈ 0, var ≈ 1.
+    # Default scales=1, biases=0 → per-member mean ≈ 0, var ≈ 1.
     assert jnp.allclose(jnp.mean(out, axis=-1), 0.0, atol=1e-5)
 
 
@@ -488,7 +451,7 @@ def test_multi_head_attention_be_self_attention():
         num_heads=2,
         ensemble_size=3,
     )
-    x = jnp.ones((5, 8))
+    x = jnp.ones((5, 8))  # (seq_len, embed_dim) — seq is intrinsic to attention
     out = mha(x, x, x)
     assert out.shape == (3, 5, 8)
 
@@ -502,11 +465,11 @@ def test_rank1_proj_helpers():
         init_scale=0.5,
     )
     assert isinstance(proj, geonnax.Rank1ProjInit)
-    x = jnp.ones((5, 4))
+    x = jnp.ones(4)
     out = geonnax.apply_rank1_proj(
         x, proj, ensemble_size=3, bias=True, has_ensemble=False
     )
-    assert out.shape == (3, 5, 2)
+    assert out.shape == (3, 2)
     # Round-trip with has_ensemble=True.
     proj2 = geonnax.init_rank1_proj(
         jr.PRNGKey(1),
@@ -518,15 +481,15 @@ def test_rank1_proj_helpers():
     out2 = geonnax.apply_rank1_proj(
         out, proj2, ensemble_size=3, bias=True, has_ensemble=True
     )
-    assert out2.shape == (3, 5, 2)
+    assert out2.shape == (3, 2)
 
 
 def test_jit_round_trip_dense_rank1():
     """JIT'd DenseRank1 forward — exercise the static fields under jax.jit."""
     layer = geonnax.DenseRank1.init(jr.PRNGKey(0), 4, 2, 3)
     f = jax.jit(lambda m, x: m(x))
-    out = f(layer, jnp.ones((5, 4)))
-    assert out.shape == (3, 5, 2)
+    out = f(layer, jnp.ones(4))
+    assert out.shape == (3, 2)
 
 
 def test_ensemble_module_no_numpyro():
@@ -542,33 +505,24 @@ def test_ensemble_module_no_numpyro():
 
 def test_concat_conditioner_shape():
     cond = geonnax.ConcatConditioner.init(num_features=8, cond_dim=4, key=jr.PRNGKey(0))
-    h = jnp.ones((5, 8))
-    z = jnp.ones((5, 4))
+    h = jnp.ones(8)
+    z = jnp.ones(4)
     out = cond(h, z)
-    assert out.shape == (5, 8)
+    assert out.shape == (8,)
 
 
-def test_concat_conditioner_broadcast_z():
+def test_concat_conditioner_vmap_over_batch():
     cond = geonnax.ConcatConditioner.init(num_features=8, cond_dim=4, key=jr.PRNGKey(0))
-    out = cond(jnp.ones((5, 8)), jnp.ones((4,)))
+    out = jax.vmap(cond)(jnp.ones((5, 8)), jnp.ones((5, 4)))
     assert out.shape == (5, 8)
-
-
-def test_conditioner_rejects_scalar_h_with_batched_z():
-    """Vector h + batched z would silently drop contexts after squeeze."""
-    import pytest
-
-    cond = geonnax.AffineModulation.init(num_features=6, cond_dim=3, key=jr.PRNGKey(0))
-    with pytest.raises(ValueError, match="single-vector h"):
-        cond(jnp.ones((6,)), jnp.ones((4, 3)))
 
 
 def test_affine_modulation_identity_at_init():
     """AffineModulation is identity at init (bias=0, one_plus_tanh)."""
     cond = geonnax.AffineModulation.init(num_features=6, cond_dim=3, key=jr.PRNGKey(0))
-    h = jnp.arange(12.0).reshape(2, 6)
+    h = jnp.arange(6.0)
     # zero context => raw_gamma=0 => gamma = 1+tanh(0)=1, beta=0 => out == h.
-    out = cond(h, jnp.zeros((2, 3)))
+    out = cond(h, jnp.zeros(3))
     assert jnp.allclose(out, h, atol=1e-6)
 
 
@@ -580,23 +534,23 @@ def test_affine_modulation_log_det_exp_only():
     cond = geonnax.AffineModulation.init(
         num_features=4, cond_dim=2, key=jr.PRNGKey(0), gamma_activation="exp"
     )
-    ldj = cond.log_det(jnp.zeros((3, 2)))
-    assert ldj.shape == (3,)
+    ldj = cond.log_det(jnp.zeros(2))
+    assert ldj.shape == ()
 
 
-def test_hyper_linear_shared_path():
+def test_hyper_linear_single_example():
     hyper = geonnax.HyperLinear.init(
         target_in=4, target_out=8, cond_dim=3, key=jr.PRNGKey(0)
     )
-    out = hyper(jnp.ones((6, 4)), jnp.ones((3,)))
-    assert out.shape == (6, 8)
+    out = hyper(jnp.ones(4), jnp.ones(3))
+    assert out.shape == (8,)
 
 
-def test_hyper_linear_per_sample_path():
+def test_hyper_linear_vmap_over_batch():
     hyper = geonnax.HyperLinear.init(
         target_in=4, target_out=8, cond_dim=3, key=jr.PRNGKey(0)
     )
-    out = hyper(jnp.ones((6, 4)), jnp.ones((6, 3)))
+    out = jax.vmap(hyper)(jnp.ones((6, 4)), jnp.ones((6, 3)))
     assert out.shape == (6, 8)
 
 
@@ -609,8 +563,8 @@ def test_conditioned_inr_feature_mode_with_siren():
         cond_dim=4,
         key=key,
     )
-    out = wrapped(jnp.zeros((10, 2)), jnp.zeros((10, 4)))
-    assert out.shape == (10, 1)
+    out = wrapped(jnp.zeros(2), jnp.zeros(4))
+    assert out.shape == (1,)
 
 
 def test_conditioned_inr_input_mode_with_siren():
@@ -623,8 +577,8 @@ def test_conditioned_inr_input_mode_with_siren():
         key=key,
         mode="input",
     )
-    out = wrapped(jnp.zeros((10, 2)), jnp.zeros((10, 4)))
-    assert out.shape == (10, 1)
+    out = wrapped(jnp.zeros(2), jnp.zeros(4))
+    assert out.shape == (1,)
 
 
 def test_hyper_siren_forward():
@@ -643,11 +597,11 @@ def test_hyper_siren_forward():
         key=build_key,
     )
     assert isinstance(net, geonnax.GeneratedSiren)
-    out = net(jnp.zeros((5, 2)), jnp.zeros((3,)))
-    assert out.shape == (5, 1)
+    out = net(jnp.zeros(2), jnp.zeros(3))
+    assert out.shape == (1,)
 
 
-def test_hyper_siren_single_point_squeeze():
+def test_hyper_siren_single_point():
     import equinox as eqx
 
     key = jr.PRNGKey(0)

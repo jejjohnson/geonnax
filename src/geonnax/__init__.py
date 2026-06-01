@@ -15,7 +15,6 @@ Submodules:
   graph-Laplacian eigenpairs.
 - :mod:`geonnax.encoders` — coordinate encoders (``Deg2Rad``, …,
   ``SphericalHarmonicEncoder``).
-- :mod:`geonnax.dropout` — ``MCDropout``.
 - :mod:`geonnax.ncp` — ``NCPContinuousPerturb`` input perturbation.
 - :mod:`geonnax.siren` — ``SirenDense``, ``SIREN`` (Sitzmann et al.,
   2020).
@@ -28,8 +27,6 @@ Submodules:
 from geonnax import (
     basis,
     conditioning,
-    dense,
-    dropout,
     encoders,
     ensemble,
     geo,
@@ -52,8 +49,6 @@ from geonnax.conditioning import (
     HyperLinear,
     HyperSIREN,
 )
-from geonnax.dense import LinearCore
-from geonnax.dropout import MCDropout
 from geonnax.encoders import (
     Cartesian3DEncoder,
     CyclicEncoder,
@@ -121,9 +116,7 @@ __all__ = [
     "HyperSIREN",
     "LaplaceRandomFeatureCovariance",
     "LayerNormEnsemble",
-    "LinearCore",
     "LonLatScale",
-    "MCDropout",
     "MCSigmoidDenseFA",
     "MCSoftmaxDenseFA",
     "MultiHeadAttentionBE",
@@ -141,8 +134,6 @@ __all__ = [
     "basis",
     "build_siren_specs",
     "conditioning",
-    "dense",
-    "dropout",
     "encoders",
     "ensemble",
     "geo",

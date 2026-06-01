@@ -77,8 +77,8 @@ class FourierFilter(eqx.Module):
             out_features=out_features,
         )
 
-    def __call__(self, x: Float[Array, "N D"]) -> Float[Array, "N H"]:
-        proj = einx.dot("n d, h d -> n h", jnp.atleast_2d(x), self.Omega)
+    def __call__(self, x: Float[Array, " D"]) -> Float[Array, " H"]:
+        proj = einx.dot("d, h d -> h", x, self.Omega)
         return jnp.sin(proj + self.phi)
 
 
@@ -155,23 +155,22 @@ class GaborFilter(eqx.Module):
             domain=domain,
         )
 
-    def __call__(self, x: Float[Array, "N D"]) -> Float[Array, "N H"]:
-        x2d = jnp.atleast_2d(x)
+    def __call__(self, x: Float[Array, " D"]) -> Float[Array, " H"]:
         gamma = jnp.exp(self.log_gamma)
-        x_norm_sq = jnp.sum(x2d**2, axis=-1, keepdims=True)
-        mu_norm_sq = jnp.sum(self.mu**2, axis=-1)[None, :]
-        cross = einx.dot("n d, h d -> n h", x2d, self.mu)
+        x_norm_sq = jnp.sum(x**2)
+        mu_norm_sq = jnp.sum(self.mu**2, axis=-1)
+        cross = einx.dot("d, h d -> h", x, self.mu)
         sq_dist = jnp.maximum(x_norm_sq + mu_norm_sq - 2.0 * cross, 0.0)
-        envelope = jnp.exp(-0.5 * gamma[None, :] * sq_dist)
-        sinusoidal = jnp.sin(einx.dot("n d, h d -> n h", x2d, self.Omega) + self.phi)
+        envelope = jnp.exp(-0.5 * gamma * sq_dist)
+        sinusoidal = jnp.sin(einx.dot("d, h d -> h", x, self.Omega) + self.phi)
         return sinusoidal * envelope
 
 
 def mfn_forward(
-    x: Float[Array, "N D"],
+    x: Float[Array, " D"],
     filters: Sequence[Callable[[JaxArray], JaxArray]],
     linears: Sequence[Callable[[JaxArray], JaxArray]],
-) -> Float[Array, "N O"]:
+) -> Float[Array, " O"]:
     """Pure-JAX MFN forward pass given user-supplied filter and linear callables.
 
     Implements the Fathony et al. (2021) multiplicative chaining:
@@ -187,10 +186,8 @@ def mfn_forward(
     :class:`GaborNet`.
 
     ``filters`` and ``linears`` must have the same length :math:`L`.
-    ``linears`` are treated as single-sample callables and are
-    :func:`jax.vmap`-ed over the batch dimension internally.
-    :class:`FourierFilter` / :class:`GaborFilter` instances handle
-    batched input natively.
+    ``x`` is a single example of shape ``(in_features,)``; use
+    :func:`jax.vmap` for batched application.
     """
     if len(filters) == 0 or len(linears) == 0:
         raise ValueError(
@@ -202,11 +199,10 @@ def mfn_forward(
             f"filters and linears must have equal length; got "
             f"{len(filters)} and {len(linears)}."
         )
-    x = jnp.atleast_2d(x)
     z = filters[0](x)
     for f, lin in zip(filters[1:], linears[:-1], strict=True):
-        z = f(x) * jax.vmap(lin)(z)
-    return jax.vmap(linears[-1])(z)
+        z = f(x) * lin(z)
+    return linears[-1](z)
 
 
 class FourierNet(eqx.Module):
@@ -223,10 +219,6 @@ class FourierNet(eqx.Module):
     Each :math:`g_i` is a :class:`FourierFilter` of width
     ``hidden_features``; the last linear is the readout projecting to
     ``out_features``.
-
-    Note:
-        Single-point input ``(D,)`` is automatically promoted to
-        ``(1, D)`` and the result is squeezed back to ``(O,)``.
 
     Attributes:
         filters: Length-``depth`` list of :class:`FourierFilter`.
@@ -283,10 +275,8 @@ class FourierNet(eqx.Module):
             depth=depth,
         )
 
-    def __call__(self, x: Float[Array, "N D"]) -> Float[Array, "N O"]:
-        squeeze = x.ndim == 1
-        out = mfn_forward(x, self.filters, self.linears)
-        return out[0] if squeeze else out
+    def __call__(self, x: Float[Array, " D"]) -> Float[Array, " O"]:
+        return mfn_forward(x, self.filters, self.linears)
 
 
 class GaborNet(eqx.Module):
@@ -372,10 +362,8 @@ class GaborNet(eqx.Module):
             gamma_beta=gamma_beta,
         )
 
-    def __call__(self, x: Float[Array, "N D"]) -> Float[Array, "N O"]:
-        squeeze = x.ndim == 1
-        out = mfn_forward(x, self.filters, self.linears)
-        return out[0] if squeeze else out
+    def __call__(self, x: Float[Array, " D"]) -> Float[Array, " O"]:
+        return mfn_forward(x, self.filters, self.linears)
 
 
 __all__ = [

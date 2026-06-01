@@ -20,18 +20,18 @@ from geonnax.geo import lonlat_to_cartesian3d
 
 
 def _unit_xyz(
-    x: Float[Array, "N 3"] | Float[Array, "N 2"],
+    x: Float[Array, " 3"] | Float[Array, " 2"],
     input_mode: Literal["cartesian", "lonlat"],
-) -> Float[Array, "N 3"]:
+) -> Float[Array, " 3"]:
     if input_mode == "cartesian":
-        if x.ndim != 2 or x.shape[-1] != 3:
+        if x.ndim != 1 or x.shape[-1] != 3:
             raise ValueError(
-                f"x must be (N, 3) when input_mode='cartesian'; got shape {x.shape}."
+                f"x must be (3,) when input_mode='cartesian'; got shape {x.shape}."
             )
         return x
-    if x.ndim != 2 or x.shape[-1] != 2:
-        raise ValueError(f"x must be (N, 2) when input_mode='lonlat'; got {x.shape}.")
-    return lonlat_to_cartesian3d(x, input_unit="radians")
+    if x.ndim != 1 or x.shape[-1] != 2:
+        raise ValueError(f"x must be (2,) when input_mode='lonlat'; got {x.shape}.")
+    return lonlat_to_cartesian3d(x[None, :], input_unit="radians")[0]
 
 
 class SlepianEncoder(eqx.Module):
@@ -82,12 +82,12 @@ class SlepianEncoder(eqx.Module):
 
     def __call__(
         self,
-        x: Float[Array, "N 3"] | Float[Array, "N 2"],
-    ) -> Float[Array, "N K"]:
+        x: Float[Array, " 3"] | Float[Array, " 2"],
+    ) -> Float[Array, " K"]:
         unit_xyz = _unit_xyz(x, self.input_mode)
-        features = self.basis.evaluate(unit_xyz)
+        features = self.basis.evaluate(unit_xyz[None, :])[0]
         if self.weight_by_eigenvalue:
-            features = features * jnp.sqrt(self.basis.eigenvalues)[None, :]
+            features = features * jnp.sqrt(self.basis.eigenvalues)
         return features
 
 
@@ -129,8 +129,8 @@ class HybridSphericalSlepianEncoder(eqx.Module):
 
     def __call__(
         self,
-        x: Float[Array, "N 3"] | Float[Array, "N 2"],
-    ) -> Float[Array, "N F"]:
+        x: Float[Array, " 3"] | Float[Array, " 2"],
+    ) -> Float[Array, " F"]:
         return jnp.concatenate([self.sh_encoder(x), self.slepian_encoder(x)], axis=-1)
 
 
