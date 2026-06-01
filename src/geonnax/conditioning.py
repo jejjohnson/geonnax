@@ -302,6 +302,16 @@ class AffineModulation(AbstractConditioner):
 
         Raises:
             NotImplementedError: If ``gamma_activation != "exp"``.
+
+        Examples:
+            >>> import jax.numpy as jnp
+            >>> import jax.random as jr
+            >>> film = AffineModulation.init(
+            ...     num_features=4, cond_dim=2, key=jr.PRNGKey(0),
+            ...     gamma_activation="exp",
+            ... )
+            >>> film.log_det(jnp.zeros(2)).shape  # scalar Σ log γ = Σ raw_γ
+            ()
         """
         if self.gamma_activation != "exp":
             raise NotImplementedError(
@@ -671,6 +681,24 @@ class GeneratedSiren(eqx.Module):
     per forward call to produce the latent ``z``; ``z`` then drives every
     per-layer :class:`HyperLinear`. Single-example forward: ``x: (D_in,)``,
     ``mu: (P,)`` → ``(D_out,)``.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> import jax.random as jr
+        >>> import equinox as eqx
+        >>> from geonnax.conditioning import HyperSIREN
+        >>> pnet_key, build_key = jr.split(jr.PRNGKey(0))
+        >>> pnet = eqx.nn.MLP(
+        ...     in_size=3, out_size=4, width_size=8, depth=2, key=pnet_key
+        ... )
+        >>> net = HyperSIREN(
+        ...     in_features=2, hidden_features=16, out_features=1, depth=3,
+        ...     cond_dim=4, parameter_net=pnet, key=build_key,
+        ... )
+        >>> isinstance(net, GeneratedSiren)
+        True
+        >>> net(jnp.zeros(2), jnp.zeros(3)).shape  # (x, mu) -> (D_out,)
+        (1,)
     """
 
     parameter_net: eqx.Module
@@ -748,6 +776,21 @@ def HyperSIREN(
     Raises:
         ValueError: If ``depth < 2`` or any positive-only argument is
             non-positive.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> import jax.random as jr
+        >>> import equinox as eqx
+        >>> pnet_key, build_key = jr.split(jr.PRNGKey(0))
+        >>> pnet = eqx.nn.MLP(
+        ...     in_size=2, out_size=4, width_size=8, depth=2, key=pnet_key
+        ... )
+        >>> net = HyperSIREN(
+        ...     in_features=3, hidden_features=8, out_features=2, depth=2,
+        ...     cond_dim=4, parameter_net=pnet, key=build_key,
+        ... )
+        >>> net(jnp.zeros(3), jnp.zeros(2)).shape
+        (2,)
     """
     if depth < 2:
         raise ValueError(f"depth must be >= 2 (first + last); got depth={depth}.")

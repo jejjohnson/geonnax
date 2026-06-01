@@ -1,8 +1,8 @@
 site_name: geonnax
-site_description: My short description for my project.
+site_description: Pure-Equinox neural-network zoo for geoscientific machine learning.
 site_author: J. Emmanuel Johnson
-repo_url: https://github.com/jejjohnson/pypackage_template
-repo_name: jejjohnson/pypackage_template
+repo_url: https://github.com/jejjohnson/geonnax
+repo_name: jejjohnson/geonnax
 
 theme:
   name: material
@@ -34,8 +34,18 @@ plugins:
           paths: [src]
           options:
             docstring_style: google
+            docstring_section_style: table
             show_source: true
             show_root_heading: true
+            show_root_full_path: false
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            members_order: source
+            heading_level: 3
+            show_signature_annotations: true
+            signature_crossrefs: true
+            merge_init_into_class: false
+            filters: ["!^_"]
   - mkdocs-jupyter:
       execute: false
       ignore_h1_titles: true
@@ -44,7 +54,15 @@ nav:
   - Home: index.md
   - Examples:
       - Demo: notebooks/example_demo.ipynb
-  - API Reference: api/reference.md
+  - API Reference:
+      - Overview: api/index.md
+      - Operators (FNO / SFNO): api/operators.md
+      - U-Net: api/unet.md
+      - Building Blocks: api/layers.md
+      - Representation Networks: api/representation.md
+      - Encoders & Geometry: api/encoders.md
+      - Uncertainty & Bayesian: api/uncertainty.md
+      - Spectral Bases: api/bases.md
   - Contributing: contributing.md
   - Changelog: CHANGELOG.md
 

@@ -241,6 +241,23 @@ def init_factorized_tensor(
 
     Raises:
         ValueError: If ``factorization`` is unknown.
+
+    Examples:
+        All forms reconstruct the requested shape; the low-rank ones store
+        far fewer parameters than dense:
+
+        >>> import jax, jax.random as jr, equinox as eqx
+        >>> from geonnax.layers import init_factorized_tensor
+        >>> shape = (8, 8, 16, 16, 2)
+        >>> def n_params(t):
+        ...     leaves = jax.tree_util.tree_leaves(eqx.filter(t, eqx.is_array))
+        ...     return sum(x.size for x in leaves)
+        >>> dense = init_factorized_tensor(shape, "dense", key=jr.PRNGKey(0))
+        >>> cp = init_factorized_tensor(shape, "cp", key=jr.PRNGKey(0), rank=0.25)
+        >>> dense.reconstruct().shape == cp.reconstruct().shape == shape
+        True
+        >>> n_params(cp) < n_params(dense)
+        True
     """
     if factorization == "dense":
         return DenseTensor.init(shape, key=key, scale=scale)

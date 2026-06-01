@@ -119,6 +119,12 @@ def shannon_number(l_max: int, area: float | Float[Array, ""]) -> Float[Array, "
 
     Returns:
         Expected number of well-concentrated Slepian modes.
+
+    Examples:
+        >>> from geonnax._basis import shannon_number
+        >>> # N = (l_max+1)^2 * area / (4*pi); area = 4*pi -> N = (l_max+1)^2
+        >>> float(shannon_number(3, 4.0 * 3.141592653589793))
+        16.0
     """
     _check_l_max(l_max)
     return ((l_max + 1) ** 2) * jnp.asarray(area) / (4.0 * jnp.pi)
@@ -141,6 +147,12 @@ def slepian_concentration_matrix(
 
     Returns:
         ``((l_max + 1)^2, (l_max + 1)^2)`` concentration matrix.
+
+    Examples:
+        >>> from geonnax._basis import slepian_concentration_matrix
+        >>> # M = (l_max + 1)^2 = 4 for l_max = 1; cap half-angle in radians.
+        >>> slepian_concentration_matrix(1, 0.5).shape
+        (4, 4)
     """
     _check_l_max(l_max)
     _check_cap_radius(cap_radius)
@@ -164,7 +176,15 @@ def slepian_cap_eigh_per_m(
     *,
     num_quadrature: int | None = None,
 ) -> tuple[Float[Array, " M"], Float[Array, "M M"]]:
-    """Solve the cap Slepian eigenproblem one azimuthal block at a time."""
+    """Solve the cap Slepian eigenproblem one azimuthal block at a time.
+
+    Examples:
+        >>> from geonnax._basis import slepian_cap_eigh_per_m
+        >>> # M = (l_max + 1)^2 = 4 modes for l_max = 1.
+        >>> vals, coeffs = slepian_cap_eigh_per_m(1, 0.5)
+        >>> (vals.shape, coeffs.shape)  # (M,), (M, M)
+        ((4,), (4, 4))
+    """
     _check_l_max(l_max)
     _check_cap_radius(cap_radius)
     n_quad = num_quadrature or max(2 * l_max + 3, 8)
@@ -216,7 +236,21 @@ def _centered_coordinates(
 
 
 class SlepianCapBasis(eqx.Module):
-    """Precomputed Slepian cap eigendecomposition in the real-SH basis."""
+    r"""Precomputed Slepian cap eigendecomposition in the real-SH basis.
+
+    Each retained Slepian function is a linear combination of the
+    :math:`M = (l_{\max} + 1)^2` real spherical harmonics, with mixing
+    coefficients stored in ``coeffs`` of shape ``(M, K)`` for ``K`` modes.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax._basis import slepian_cap_basis
+        >>> basis = slepian_cap_basis(3, 0.35, n_modes=2, eig_threshold=0.0)
+        >>> # Evaluate K=2 Slepian functions at N=2 unit Cartesian points.
+        >>> xyz = jnp.array([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0]])
+        >>> basis.evaluate(xyz).shape  # (N, K)
+        (2, 2)
+    """
 
     l_max: int = eqx.field(static=True)
     coeffs: Float[Array, "M K"]
@@ -226,7 +260,14 @@ class SlepianCapBasis(eqx.Module):
 
     @property
     def num_modes(self) -> int:
-        """Number of retained Slepian modes."""
+        """Number of retained Slepian modes.
+
+        Examples:
+            >>> from geonnax._basis import slepian_cap_basis
+            >>> basis = slepian_cap_basis(3, 0.35, n_modes=2, eig_threshold=0.0)
+            >>> basis.num_modes
+            2
+        """
         return int(self.eigenvalues.shape[0])
 
     def centred_coordinates(self, unit_xyz: Float[Array, "N 3"]) -> Float[Array, "N 3"]:
@@ -237,20 +278,47 @@ class SlepianCapBasis(eqx.Module):
         :class:`pyrox.gp.SlepianInducingFeatures`) should call this and feed
         the result into :func:`pyrox._basis.real_spherical_harmonics` to keep
         their evaluation consistent with :meth:`evaluate`.
+
+        Examples:
+            >>> import jax.numpy as jnp
+            >>> from geonnax._basis import slepian_cap_basis
+            >>> basis = slepian_cap_basis(3, 0.35, n_modes=2, eig_threshold=0.0)
+            >>> xyz = jnp.array([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0]])
+            >>> basis.centred_coordinates(xyz).shape  # (N, 3) preserved
+            (2, 3)
         """
         if unit_xyz.ndim != 2 or unit_xyz.shape[-1] != 3:
             raise ValueError(f"unit_xyz must be (N, 3); got shape {unit_xyz.shape}.")
         return _centered_coordinates(unit_xyz, self.lonlat_centre)
 
     def evaluate(self, unit_xyz: Float[Array, "N 3"]) -> Float[Array, "N K"]:
-        """Evaluate retained Slepian functions at unit Cartesian locations."""
+        """Evaluate retained Slepian functions at unit Cartesian locations.
+
+        Examples:
+            >>> import jax.numpy as jnp
+            >>> from geonnax._basis import slepian_cap_basis
+            >>> basis = slepian_cap_basis(3, 0.35, n_modes=2, eig_threshold=0.0)
+            >>> xyz = jnp.array([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0]])
+            >>> basis.evaluate(xyz).shape  # (N, K)
+            (2, 2)
+        """
         centered = self.centred_coordinates(unit_xyz)
         harmonics = real_spherical_harmonics(centered, self.l_max)
         # Mix harmonics into Slepian modes: contract the harmonic axis m.
         return einx.dot("n m, m k -> n k", harmonics, self.coeffs)
 
     def rotate_to(self, lonlat_centre: Float[Array, " 2"]) -> SlepianCapBasis:
-        """Return an equivalent cap basis evaluated around ``lonlat_centre``."""
+        """Return an equivalent cap basis evaluated around ``lonlat_centre``.
+
+        Examples:
+            >>> import jax.numpy as jnp
+            >>> from geonnax._basis import slepian_cap_basis
+            >>> basis = slepian_cap_basis(3, 0.35, n_modes=2, eig_threshold=0.0)
+            >>> # lonlat_centre is (lon, lat) in radians; mode count is preserved.
+            >>> moved = basis.rotate_to(jnp.array([0.1, 0.2]))
+            >>> moved.num_modes
+            2
+        """
         centre = jnp.asarray(lonlat_centre)
         if centre.shape != (2,):
             raise ValueError(f"lonlat_centre must have shape (2,), got {centre.shape}.")
@@ -285,6 +353,13 @@ def slepian_cap_basis(
     Returns:
         A :class:`SlepianCapBasis` with coefficient columns sorted by decreasing
         concentration ratio.
+
+    Examples:
+        >>> from geonnax._basis import slepian_cap_basis
+        >>> # Retain the 2 most concentrated modes for an l_max=3 cap.
+        >>> basis = slepian_cap_basis(3, 0.35, n_modes=2, eig_threshold=0.0)
+        >>> basis.num_modes
+        2
     """
     if n_modes is not None and n_modes < 1:
         raise ValueError(f"n_modes must be >= 1, got {n_modes}.")

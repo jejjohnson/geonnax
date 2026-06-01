@@ -63,6 +63,17 @@ class NestedResidualUNet(eqx.Module):
         upsamples: Per-level factor-2 upsamplers.
         up_blocks: Per-level residual blocks on the decoder path.
         skip_scale: Multiplier applied after adding each skip (``1/√2``).
+
+    Examples:
+        Channel-preserving refinement at fixed width (here depth-2 over a
+        16×16 grid, so each axis must be divisible by ``2**2``):
+
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.unet import NestedResidualUNet
+        >>> block = NestedResidualUNet.init(8, depth=2, num_spatial_dims=2,
+        ...                                 key=jr.PRNGKey(0))
+        >>> block(jnp.ones((8, 16, 16))).shape
+        (8, 16, 16)
     """
 
     down_blocks: list[ResnetBlock]
@@ -267,6 +278,26 @@ class UNet(eqx.Module):
         final_conv: Output head ``dim -> out_channels``.
         num_spatial_dims, channels, out_channels: Static config.
         skip_scale: ``1/√2`` skip multiplier.
+
+    Examples:
+        A 2D U-Net mapping a 3-channel field to 1 channel (input axes must be
+        divisible by ``2**len(dim_mults) = 8``):
+
+        >>> import jax, jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.unet import UNet
+        >>> net = UNet.init(16, key=jr.PRNGKey(0), channels=3, out_channels=1,
+        ...                 dim_mults=(1, 2, 4))
+        >>> net(jnp.ones((3, 32, 32))).shape
+        (1, 32, 32)
+        >>> jax.vmap(net)(jnp.ones((4, 3, 32, 32))).shape   # batched
+        (4, 1, 32, 32)
+
+        Opt into ConvNeXt-V2 blocks and U²-Net nested stages:
+
+        >>> net = UNet.init(8, key=jr.PRNGKey(0), channels=2, dim_mults=(1, 2),
+        ...                 block_type="convnext", nested_unet_depths=(2, 1))
+        >>> net(jnp.ones((2, 32, 32))).shape
+        (2, 32, 32)
     """
 
     init_conv: StandardizedConv

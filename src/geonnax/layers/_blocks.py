@@ -22,6 +22,13 @@ class SqueezeExcitation(eqx.Module):
         fc1: Squeeze projection ``C -> C // reduction``.
         fc2: Excitation projection ``C // reduction -> C``.
         num_spatial_dims: Number of trailing spatial axes.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import SqueezeExcitation
+        >>> se = SqueezeExcitation.init(8, 2, key=jr.PRNGKey(0))
+        >>> se(jnp.ones((8, 5, 5))).shape   # re-weights channels, shape kept
+        (8, 5, 5)
     """
 
     fc1: eqx.nn.Linear
@@ -58,6 +65,13 @@ class Block(eqx.Module):
     Attributes:
         conv: Same-padding convolution (default ``kernel_size=3``).
         norm: GroupNorm over the output channels.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import Block
+        >>> blk = Block.init(3, 6, 2, key=jr.PRNGKey(0))   # 3 -> 6 channels
+        >>> blk(jnp.ones((3, 8, 8))).shape
+        (6, 8, 8)
     """
 
     conv: StandardizedConv
@@ -105,6 +119,13 @@ class ResnetBlock(eqx.Module):
         se: Optional squeeze-excitation gate on the output.
         res_conv: ``1x1`` projection of the residual when channels change,
             otherwise ``None`` (identity).
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import ResnetBlock
+        >>> blk = ResnetBlock.init(3, 6, 2, key=jr.PRNGKey(0))
+        >>> blk(jnp.ones((3, 8, 8))).shape
+        (6, 8, 8)
     """
 
     block1: Block
@@ -184,6 +205,13 @@ class ConvNeXtBlock(eqx.Module):
         grn: Global Response Normalization on the expanded features.
         pw2: Pointwise projection ``in * mult -> out``.
         res_conv: ``1x1`` residual projection when channels change.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import ConvNeXtBlock
+        >>> blk = ConvNeXtBlock.init(4, 8, 2, key=jr.PRNGKey(0))
+        >>> blk(jnp.ones((4, 8, 8))).shape
+        (8, 8, 8)
     """
 
     ds_conv: StandardizedConv

@@ -63,6 +63,23 @@ class SphericalHarmonicTransform(eqx.Module):
         analy: Analysis matrix ``(M, P)`` mapping grid values → coefficients.
         degrees: Per-coefficient degree ``l`` (static).
         n_lat, n_lon, l_max: Grid/band configuration (static).
+
+    Examples:
+        Analysis and synthesis are inverse on band-limited fields:
+
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import SphericalHarmonicTransform
+        >>> sht = SphericalHarmonicTransform.init(n_lat=12, n_lon=24, l_max=8)
+        >>> field = jnp.ones((2, 12, 24))
+        >>> coeffs = sht.forward(field)          # (channels, (l_max+1)**2)
+        >>> coeffs.shape
+        (2, 81)
+        >>> sht.inverse(coeffs).shape            # back to the grid
+        (2, 12, 24)
+        >>> # round-trip is (near) exact for band-limited signals:
+        >>> c = jr.normal(jr.PRNGKey(0), (2, 81))
+        >>> bool(jnp.allclose(sht.forward(sht.inverse(c)), c, atol=1e-4))
+        True
     """
 
     synth: Float[Array, "P M"]
@@ -141,6 +158,15 @@ class SphericalSpectralConv(eqx.Module):
         bias: Optional bias of shape ``(out_channels, 1, 1)``.
         degree_index: Per-coefficient degree, as an int array for gathering.
         in_channels, out_channels, l_max: Static config.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import (
+        ...     SphericalHarmonicTransform, SphericalSpectralConv)
+        >>> sht = SphericalHarmonicTransform.init(12, 24, 8)
+        >>> conv = SphericalSpectralConv.init(3, 5, 8, key=jr.PRNGKey(0))
+        >>> conv(jnp.ones((3, 12, 24)), sht).shape   # 3 -> 5 channels
+        (5, 12, 24)
     """
 
     weight: Float[Array, "L C_out C_in"]

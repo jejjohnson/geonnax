@@ -64,6 +64,17 @@ class Rank1ProjInit(NamedTuple):
     (:math:`W` shared, :math:`r, s, b` per-member) into a single
     PyTree leaf so the parent module can carry one such NamedTuple
     per Q/K/V/O projection.
+
+    Examples:
+        >>> import jax.random as jr
+        >>> proj = init_rank1_proj(
+        ...     jr.PRNGKey(0), in_features=4, out_features=2,
+        ...     ensemble_size=3, init_scale=0.5,
+        ... )
+        >>> isinstance(proj, Rank1ProjInit)
+        True
+        >>> proj.W.shape  # shared kernel (D_in, D_out)
+        (4, 2)
     """
 
     W: Float[Array, "D_in D_out"]
@@ -79,7 +90,17 @@ def init_rank1_proj(
     ensemble_size: int,
     init_scale: float,
 ) -> Rank1ProjInit:
-    """Glorot-init shared kernel + per-member rank-1 vectors + zero bias."""
+    """Glorot-init shared kernel + per-member rank-1 vectors + zero bias.
+
+    Examples:
+        >>> import jax.random as jr
+        >>> proj = init_rank1_proj(
+        ...     jr.PRNGKey(0), in_features=4, out_features=2,
+        ...     ensemble_size=3, init_scale=0.5,
+        ... )
+        >>> proj.r.shape, proj.s.shape  # (M, D_out), (M, D_in)
+        ((3, 2), (3, 4))
+    """
     kw, kr, ks = jr.split(key, 3)
     return Rank1ProjInit(
         W=_glorot_uniform(kw, in_features, out_features),
@@ -113,6 +134,20 @@ def apply_rank1_proj(
       axis (``(M, ..., D_in)``); the per-member projection flows through
       unchanged. Use this for the O projection after attention has
       already added the ensemble axis.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> import jax.random as jr
+        >>> proj = init_rank1_proj(
+        ...     jr.PRNGKey(0), in_features=4, out_features=2,
+        ...     ensemble_size=3, init_scale=0.5,
+        ... )
+        >>> out = apply_rank1_proj(  # (D_in,) -> (M, D_out)
+        ...     jnp.ones(4), proj, ensemble_size=3, bias=True,
+        ...     has_ensemble=False,
+        ... )
+        >>> out.shape
+        (3, 2)
     """
     if has_ensemble:
         if x.ndim < 2 or x.shape[0] != ensemble_size:

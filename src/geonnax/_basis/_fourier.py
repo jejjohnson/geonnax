@@ -44,6 +44,13 @@ def fourier_basis_1d(
 
     Raises:
         ValueError: If ``num_basis < 1`` or ``L <= 0``.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax._basis import fourier_basis_1d
+        >>> x = jnp.linspace(-1.0, 1.0, 5)  # (N=5,) in [-L, L]
+        >>> fourier_basis_1d(x, num_basis=3, L=1.0).shape  # -> (N, M)
+        (5, 3)
     """
     if num_basis < 1:
         raise ValueError(f"num_basis must be >= 1, got {num_basis}.")
@@ -60,7 +67,13 @@ def fourier_eigenvalues_1d(
     *,
     dtype: jnp.dtype = jnp.float32,
 ) -> Float[Array, " M"]:
-    r"""Return :math:`\lambda_j = (j\pi / (2L))^2` for ``j = 1, ..., num_basis``."""
+    r"""Return :math:`\lambda_j = (j\pi / (2L))^2` for ``j = 1, ..., num_basis``.
+
+    Examples:
+        >>> from geonnax._basis import fourier_eigenvalues_1d
+        >>> fourier_eigenvalues_1d(num_basis=4, L=1.0).shape  # -> (M,)
+        (4,)
+    """
     if num_basis < 1:
         raise ValueError(f"num_basis must be >= 1, got {num_basis}.")
     if L <= 0:
@@ -113,6 +126,15 @@ def fourier_basis(
 
     Raises:
         ValueError: If ``num_basis_per_dim`` or ``L`` has wrong length.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax._basis import fourier_basis
+        >>> x = jnp.zeros((4, 2))  # (N=4, D=2)
+        >>> # M = prod(num_basis_per_dim) = 3 * 3 = 9
+        >>> Phi, lam = fourier_basis(x, num_basis_per_dim=3, L=1.0)
+        >>> (Phi.shape, lam.shape)
+        ((4, 9), (9,))
     """
     if x.ndim != 2:
         raise ValueError(f"x must be 2D (N, D); got shape {x.shape}.")
@@ -176,6 +198,12 @@ def fourier_eigenvalues(
 
     Useful when only the eigenvalues are needed (e.g. building ``K_uu`` for
     inducing features without evaluating ``k_ux``).
+
+    Examples:
+        >>> from geonnax._basis import fourier_eigenvalues
+        >>> # M = prod(num_basis_per_dim) = 3 * 3 = 9 for D=2
+        >>> fourier_eigenvalues(num_basis_per_dim=3, L=1.0, D=2).shape
+        (9,)
     """
     M_per = _to_tuple(num_basis_per_dim, D, "num_basis_per_dim")
     L_per = _to_tuple(L, D, "L")

@@ -61,7 +61,7 @@ check-env-%:
 # ---------------------------------------------------------------------------
 # Phony declarations
 # ---------------------------------------------------------------------------
-.PHONY: help install lint format typecheck test test-cov \
+.PHONY: help install lint format typecheck test test-cov doctest \
         precommit build clean version docs docs-serve docs-deploy \
         gh-labels gh-sub gh-block gh-show
 
@@ -137,6 +137,11 @@ test-cov: ## 📊 Run tests with coverage report
 	@printf "$(YELLOW)>>> Running tests with coverage...$(RESET)\n"
 	uv run pytest -v
 	@printf "$(GREEN)>>> ✅ Coverage report generated!$(RESET)\n"
+
+doctest: ## 📖 Run the docstring examples as doctests
+	@printf "$(YELLOW)>>> Running docstring doctests...$(RESET)\n"
+	uv run pytest --doctest-modules src/geonnax -o addopts=
+	@printf "$(GREEN)>>> ✅ Doctests passed!$(RESET)\n"
 
 # ===========================================================================
 ##@ Pre-commit

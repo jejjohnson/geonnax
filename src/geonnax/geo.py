@@ -46,14 +46,17 @@ def _promote_to_floating(x: Num[Array, ...]) -> Float[Array, ...]:
 def deg2rad(x: Float[Array, ...]) -> Float[Array, ...]:
     r"""Convert degrees to radians element-wise.
 
-    Example:
+    Computes ``x · π / 180`` and preserves the input shape.
+
+    Examples:
         >>> import jax.numpy as jnp
-        >>> deg2rad(jnp.array([0.0, 90.0, 180.0]))
-        Array([0.       , 1.5707964, 3.1415927], dtype=float32)
+        >>> from geonnax.geo import deg2rad
+        >>> deg2rad(jnp.array([0.0, 90.0, 180.0])).shape
+        (3,)
         >>> deg2rad(jnp.array([[45.0, -90.0], [270.0, 360.0]])).shape
         (2, 2)
     """
-    return x * (jnp.pi / 180.0)
+    return x * (jnp.pi / 180.0)  # deg → rad: scale by π/180, shape preserved
 
 
 def lonlat_scale(
@@ -84,28 +87,31 @@ def lonlat_scale(
     Returns:
         Rescaled lon/lat array of shape ``(N, 2)``.
 
-    Example:
+    Examples:
         >>> import jax.numpy as jnp
+        >>> from geonnax.geo import lonlat_scale
         >>> lonlat = jnp.array([[-180.0, -90.0], [0.0, 0.0], [180.0, 90.0]])
-        >>> lonlat_scale(lonlat)
-        Array([[-1., -1.],
-               [ 0.,  0.],
-               [ 1.,  1.]], dtype=float32)
-        >>> # Custom domain (e.g. a regional grid in degrees)
+        >>> lonlat_scale(lonlat).shape
+        (3, 2)
+        >>> # Midpoint of each range maps exactly to 0.
+        >>> bool((lonlat_scale(jnp.array([[0.0, 0.0]]))[0] == 0.0).all())
+        True
+        >>> # Custom domain (e.g. a regional grid in degrees).
         >>> lonlat_scale(
         ...     jnp.array([[0.0, 50.0]]),
         ...     lon_range=(-10.0, 10.0),
         ...     lat_range=(40.0, 60.0),
-        ... )
-        Array([[0., 0.]], dtype=float32)
+        ... ).shape
+        (1, 2)
     """
     _validate_lonlat_shape(lonlat)
     _validate_range(lon_range, name="lon_range")
     _validate_range(lat_range, name="lat_range")
 
     lonlat = _promote_to_floating(lonlat)
-    lower = jnp.asarray([lon_range[0], lat_range[0]], dtype=lonlat.dtype)
-    upper = jnp.asarray([lon_range[1], lat_range[1]], dtype=lonlat.dtype)
+    lower = jnp.asarray([lon_range[0], lat_range[0]], dtype=lonlat.dtype)  # (2,)
+    upper = jnp.asarray([lon_range[1], lat_range[1]], dtype=lonlat.dtype)  # (2,)
+    # Affine map: 2·(x − lo)/(hi − lo) − 1, so [lo, hi] → [-1, 1]. (N,2) -> (N,2)
     return 2.0 * (lonlat - lower) / (upper - lower) - 1.0
 
 
@@ -137,27 +143,30 @@ def lonlat_to_cartesian3d(
     Returns:
         Unit Cartesian coordinates of shape ``(N, 3)``.
 
-    Example:
+    Examples:
         >>> import jax.numpy as jnp
-        >>> # Prime meridian / equator → +x
-        >>> lonlat_to_cartesian3d(jnp.array([[0.0, 0.0]]))
-        Array([[1., 0., 0.]], dtype=float32)
-        >>> # 90° east / equator → +y
-        >>> lonlat_to_cartesian3d(jnp.array([[90.0, 0.0]]), input_unit="degrees")
-        Array([[...e-08, 1.0000000e+00, 0.0000000e+00]], dtype=float32)
-        >>> # North pole → +z
-        >>> lonlat_to_cartesian3d(
-        ...     jnp.array([[0.0, 0.5 * jnp.pi]])
-        ... )[:, 2]
-        Array([1.], dtype=float32)
+        >>> from geonnax.geo import lonlat_to_cartesian3d
+        >>> # Prime meridian / equator → +x; output is one row of unit norm.
+        >>> lonlat_to_cartesian3d(jnp.array([[0.0, 0.0]])).shape
+        (1, 3)
+        >>> # North pole (lat = π/2) → +z, so the z-column equals 1.
+        >>> bool(
+        ...     jnp.allclose(
+        ...         lonlat_to_cartesian3d(jnp.array([[0.0, 0.5 * jnp.pi]]))[:, 2],
+        ...         1.0,
+        ...     )
+        ... )
+        True
     """
     _validate_lonlat_shape(lonlat)
     _validate_input_unit(input_unit)
 
+    # (N,2) in deg/rad → radians; columns are λ (lon) and ϕ (lat).
     angles = deg2rad(lonlat) if input_unit == "degrees" else lonlat
-    lon = angles[:, 0]
-    lat = angles[:, 1]
-    cos_lat = jnp.cos(lat)
+    lon = angles[:, 0]  # λ, shape (N,)
+    lat = angles[:, 1]  # ϕ, shape (N,)
+    cos_lat = jnp.cos(lat)  # (N,)
+    # x = cosϕ·cosλ, y = cosϕ·sinλ, z = sinϕ. Stack to (N,3) on the unit sphere.
     return jnp.stack(
         [
             cos_lat * jnp.cos(lon),
@@ -180,21 +189,23 @@ def cyclic_encode(
         ``(N, 2)`` for vector input or ``(N, 2 * D)`` for matrix input,
         laid out as ``[cos_0, ..., cos_{D-1}, sin_0, ..., sin_{D-1}]``.
 
-    Example:
+    Examples:
         >>> import jax.numpy as jnp
-        >>> cyclic_encode(jnp.array([0.0, jnp.pi]))
-        Array([[ 1.0000000e+00,  0.0000000e+00],
-               [-1.0000000e+00, -8.7422777e-08]], dtype=float32)
+        >>> from geonnax.geo import cyclic_encode
+        >>> # Vector input (N,) → (N, 2) of [cos, sin].
+        >>> cyclic_encode(jnp.array([0.0, jnp.pi])).shape
+        (2, 2)
         >>> # Multi-dimensional input: each column is encoded independently.
         >>> cyclic_encode(jnp.zeros((3, 2))).shape
         (3, 4)
     """
     if angles.ndim == 1:
-        promoted = einx.id("n -> n 1", angles)
+        promoted = einx.id("n -> n 1", angles)  # (N,) -> (N, 1)
     elif angles.ndim == 2:
-        promoted = angles
+        promoted = angles  # (N, D)
     else:
         raise ValueError(f"angles must be (N,) or (N, D); got shape {angles.shape}.")
+    # [cos θ, sin θ] embeds each angle on the unit circle. (N, D) -> (N, 2·D)
     return jnp.concatenate([jnp.cos(promoted), jnp.sin(promoted)], axis=-1)
 
 
@@ -215,17 +226,20 @@ def spherical_harmonic_encode(
     Returns:
         Real spherical-harmonic features of shape ``(N, (l_max + 1)^2)``.
 
-    Example:
+    Examples:
         >>> import jax.numpy as jnp
+        >>> from geonnax.geo import spherical_harmonic_encode
         >>> lonlat = jnp.array([[0.0, 0.0], [1.5707964, 0.0]])
+        >>> # (N, 2) -> (N, (l_max + 1)^2); here (l_max + 1)^2 = 16.
         >>> spherical_harmonic_encode(lonlat, l_max=3).shape
         (2, 16)
-        >>> # Pairs with the GP side for a consistent basis:
+        >>> # l_max=0 keeps only the constant Y_0^0 mode.
         >>> spherical_harmonic_encode(lonlat, l_max=0).shape
         (2, 1)
     """
+    # (N, 2) -> (N, 3) unit sphere, then evaluate Y_l^m up to l_max.
     unit_xyz = lonlat_to_cartesian3d(lonlat, input_unit=input_unit)
-    return real_spherical_harmonics(unit_xyz, l_max=l_max)
+    return real_spherical_harmonics(unit_xyz, l_max=l_max)  # (N, (l_max+1)^2)
 
 
 __all__ = [

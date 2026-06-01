@@ -62,6 +62,12 @@ def fourier_features(
 
     Returns:
         Array of shape ``(N, 2 * max_degree)``.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax.basis import fourier_features
+        >>> fourier_features(jnp.linspace(0.0, 1.0, 5), max_degree=3).shape
+        (5, 6)
     """
     degrees = jnp.arange(max_degree)
     # Broadcast x to (N, D) frequencies without an explicit reshape.
@@ -95,6 +101,15 @@ def seasonal_frequencies(
     Returns:
         ``(period_index, frequency)``: two Python lists of length
         :math:`F = \sum_p H_p`.
+
+    Examples:
+        >>> from geonnax.basis import seasonal_frequencies
+        >>> # periods (7, 365) with (1, 2) harmonics -> F = 1 + 2 = 3 freqs
+        >>> idx, freqs = seasonal_frequencies([7.0, 365.0], [1, 2])
+        >>> idx
+        [0, 1, 1]
+        >>> len(freqs)
+        3
     """
     period_index: list[int] = []
     freqs: list[float] = []
@@ -139,6 +154,14 @@ def seasonal_features(
 
     Returns:
         Array of shape ``(N, 2 * F)``.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax.basis import seasonal_features
+        >>> x = jnp.linspace(0.0, 10.0, 4)
+        >>> # F = 1 + 2 = 3 frequencies -> 2 * F = 6 columns
+        >>> seasonal_features(x, [7.0, 365.0], [1, 2]).shape
+        (4, 6)
     """
     _, freq_list = seasonal_frequencies(periods, harmonics)
     if not freq_list:
@@ -173,6 +196,14 @@ def interaction_features(
 
     Returns:
         Array of shape ``(N, K)`` of pairwise products.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax.basis import interaction_features
+        >>> x = jnp.arange(6.0).reshape(2, 3)  # (N=2, D=3)
+        >>> pairs = jnp.array([[0, 1], [0, 2]])  # (K=2, 2)
+        >>> interaction_features(x, pairs).shape
+        (2, 2)
     """
     if pairs.shape[0] == 0:
         return jnp.zeros((x.shape[0], 0), dtype=x.dtype)
@@ -191,6 +222,13 @@ def standardize(
     Broadcasts ``mu`` and ``std`` against ``x`` per the JAX broadcasting
     rules. ``std`` is *not* clamped; pass a positive value or guard
     upstream.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax.basis import standardize
+        >>> x = jnp.array([1.0, 3.0, 5.0])
+        >>> bool(jnp.allclose(standardize(x, 3.0, 2.0), jnp.array([-1, 0, 1])))
+        True
     """
     return (x - mu) / std
 
@@ -200,5 +238,15 @@ def unstandardize(
     mu: Float[Array, "*shape"],
     std: Float[Array, "*shape"],
 ) -> Float[Array, "*shape"]:
-    """Inverse of :func:`standardize`: ``z * std + mu``."""
+    """Inverse of :func:`standardize`: ``z * std + mu``.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax.basis import standardize, unstandardize
+        >>> x = jnp.array([1.0, 3.0, 5.0])
+        >>> # unstandardize undoes standardize for the same (mu, std).
+        >>> z = standardize(x, 3.0, 2.0)
+        >>> bool(jnp.allclose(unstandardize(z, 3.0, 2.0), x))
+        True
+    """
     return z * std + mu

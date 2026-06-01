@@ -56,6 +56,10 @@ class SpectralConv(eqx.Module):
     over a batch. Each spatial extent must exceed twice its mode count so the
     low/high-frequency corner blocks do not overlap.
 
+    The forward map is, per retained mode ``k``,
+    ``ŷ[o, k] = Σ_i Ŵ[i, o, k] · x̂[i, k]`` where ``x̂ = rfft(x)`` and ``Ŵ`` is
+    the (optionally factorized) complex weight.
+
     Attributes:
         weights: One factorized complex weight per spectral corner block; each
             reconstructs to ``(in_channels, out_channels, *n_modes, 2)`` (the
@@ -64,6 +68,22 @@ class SpectralConv(eqx.Module):
         in_channels, out_channels: Channel counts (static).
         n_modes: Retained modes per spatial axis (static).
         factorization: Weight parameterisation (static).
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.layers import SpectralConv
+        >>> sc = SpectralConv.init(4, 6, (8, 8), key=jr.PRNGKey(0))
+        >>> sc(jnp.ones((4, 32, 32))).shape
+        (6, 32, 32)
+        >>> sc(jnp.ones((4, 64, 64))).shape   # resolution-invariant
+        (6, 64, 64)
+
+        With a Tensor-Train factorization of the spectral weights:
+
+        >>> sc = SpectralConv.init(8, 8, (4, 4, 4), key=jr.PRNGKey(0),
+        ...                        factorization="tt", rank=0.5)
+        >>> sc(jnp.ones((8, 16, 16, 16))).shape
+        (8, 16, 16, 16)
     """
 
     weights: list[FactorizedTensor]

@@ -60,7 +60,15 @@ class FourierFilter(eqx.Module):
         key: PRNGKeyArray,
         freq_scale: float = 256.0,
     ) -> FourierFilter:
-        """Construct with Fathony-et-al. §4.1 initialization."""
+        """Construct with Fathony-et-al. §4.1 initialization.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.mfn import FourierFilter
+            >>> f = FourierFilter.init(3, 8, key=jr.PRNGKey(0))
+            >>> f(jnp.ones(3)).shape  # (3,) -> (8,)
+            (8,)
+        """
         _require_positive(
             in_features=in_features,
             out_features=out_features,
@@ -78,8 +86,24 @@ class FourierFilter(eqx.Module):
         )
 
     def __call__(self, x: Float[Array, " D"]) -> Float[Array, " H"]:
+        r"""Evaluate the filter ``g(x) = sin(Ω x + φ)``.
+
+        Args:
+            x: Input vector of shape ``(in_features,)``.
+
+        Returns:
+            Filter response of shape ``(out_features,)``.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.mfn import FourierFilter
+            >>> f = FourierFilter.init(2, 6, key=jr.PRNGKey(0))
+            >>> f(jnp.zeros(2)).shape  # (2,) -> (6,)
+            (6,)
+        """
+        # Frequency projection: (D,) · (H, D) -> (H,).
         proj = einx.dot("d, h d -> h", x, self.Omega)
-        return jnp.sin(proj + self.phi)
+        return jnp.sin(proj + self.phi)  # g(x) = sin(Ω x + φ), shape (H,)
 
 
 class GaborFilter(eqx.Module):
@@ -124,7 +148,15 @@ class GaborFilter(eqx.Module):
         gamma_alpha: float = 6.0,
         gamma_beta: float = 1.0,
     ) -> GaborFilter:
-        """Construct with Fathony-et-al. §4.2 initialization."""
+        """Construct with Fathony-et-al. §4.2 initialization.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.mfn import GaborFilter
+            >>> g = GaborFilter.init(2, 6, key=jr.PRNGKey(0))
+            >>> g(jnp.zeros(2)).shape  # (2,) -> (6,)
+            (6,)
+        """
         _require_positive(
             in_features=in_features,
             out_features=out_features,
@@ -156,14 +188,31 @@ class GaborFilter(eqx.Module):
         )
 
     def __call__(self, x: Float[Array, " D"]) -> Float[Array, " H"]:
-        gamma = jnp.exp(self.log_gamma)
-        x_norm_sq = jnp.sum(x**2)
-        mu_norm_sq = jnp.sum(self.mu**2, axis=-1)
-        cross = einx.dot("d, h d -> h", x, self.mu)
-        sq_dist = jnp.maximum(x_norm_sq + mu_norm_sq - 2.0 * cross, 0.0)
-        envelope = jnp.exp(-0.5 * gamma * sq_dist)
+        r"""Evaluate ``g(x) = sin(Ω x + φ) ⊙ exp(-γ/2 · ‖x - μ‖²)``.
+
+        Args:
+            x: Input vector of shape ``(in_features,)``.
+
+        Returns:
+            Filter response of shape ``(out_features,)``.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.mfn import GaborFilter
+            >>> g = GaborFilter.init(3, 4, key=jr.PRNGKey(1))
+            >>> g(jnp.ones(3)).shape  # (3,) -> (4,)
+            (4,)
+        """
+        gamma = jnp.exp(self.log_gamma)  # positivity via log-param, (H,)
+        # ‖x - μ‖² = ‖x‖² + ‖μ‖² - 2 x·μ, expanded to reuse the einx dot.
+        x_norm_sq = jnp.sum(x**2)  # scalar
+        mu_norm_sq = jnp.sum(self.mu**2, axis=-1)  # (H,)
+        cross = einx.dot("d, h d -> h", x, self.mu)  # (D,)·(H,D) -> (H,)
+        sq_dist = jnp.maximum(x_norm_sq + mu_norm_sq - 2.0 * cross, 0.0)  # (H,)
+        envelope = jnp.exp(-0.5 * gamma * sq_dist)  # Gaussian window, (H,)
+        # Oscillation sin(Ω x + φ): (D,)·(H,D) -> (H,).
         sinusoidal = jnp.sin(einx.dot("d, h d -> h", x, self.Omega) + self.phi)
-        return sinusoidal * envelope
+        return sinusoidal * envelope  # elementwise modulation, (H,)
 
 
 def mfn_forward(
@@ -188,6 +237,13 @@ def mfn_forward(
     ``filters`` and ``linears`` must have the same length :math:`L`.
     ``x`` is a single example of shape ``(in_features,)``; use
     :func:`jax.vmap` for batched application.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.mfn import FourierNet, mfn_forward
+        >>> net = FourierNet.init(2, 4, 3, depth=2, key=jr.PRNGKey(0))
+        >>> mfn_forward(jnp.zeros(2), net.filters, net.linears).shape
+        (3,)
     """
     if len(filters) == 0 or len(linears) == 0:
         raise ValueError(
@@ -199,10 +255,11 @@ def mfn_forward(
             f"filters and linears must have equal length; got "
             f"{len(filters)} and {len(linears)}."
         )
-    z = filters[0](x)
+    z = filters[0](x)  # z_1 = g_1(x): (D,) -> (H,)
     for f, lin in zip(filters[1:], linears[:-1], strict=True):
+        # z_{i+1} = g_{i+1}(x) ⊙ (W_i z_i + b_i): (H,) -> (H,).
         z = f(x) * lin(z)
-    return linears[-1](z)
+    return linears[-1](z)  # readout y = W_L z_L + b_L: (H,) -> (O,)
 
 
 class FourierNet(eqx.Module):
@@ -247,6 +304,15 @@ class FourierNet(eqx.Module):
         key: PRNGKeyArray,
         freq_scale: float = 256.0,
     ) -> FourierNet:
+        """Construct a ``FourierNet`` with ``depth`` filters and readout linears.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.mfn import FourierNet
+            >>> net = FourierNet.init(2, 16, 1, depth=3, key=jr.PRNGKey(0))
+            >>> net(jnp.zeros(2)).shape  # (2,) -> (1,)
+            (1,)
+        """
         if depth < 1:
             raise ValueError(f"depth must be at least 1, got {depth}.")
         keys = jax.random.split(key, 2 * depth)
@@ -276,6 +342,22 @@ class FourierNet(eqx.Module):
         )
 
     def __call__(self, x: Float[Array, " D"]) -> Float[Array, " O"]:
+        """Run the multiplicative Fourier-filter forward pass.
+
+        Args:
+            x: Input vector of shape ``(in_features,)``.
+
+        Returns:
+            Output vector of shape ``(out_features,)``.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.mfn import FourierNet
+            >>> net = FourierNet.init(2, 8, 4, depth=2, key=jr.PRNGKey(0))
+            >>> net(jnp.ones(2)).shape  # (2,) -> (4,)
+            (4,)
+        """
+        # (D,) -> (O,) via multiplicative filter chaining (see mfn_forward).
         return mfn_forward(x, self.filters, self.linears)
 
 
@@ -326,6 +408,15 @@ class GaborNet(eqx.Module):
         gamma_alpha: float = 6.0,
         gamma_beta: float = 1.0,
     ) -> GaborNet:
+        """Construct a ``GaborNet`` with ``depth`` Gabor filters and readouts.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.mfn import GaborNet
+            >>> net = GaborNet.init(2, 16, 1, depth=3, key=jr.PRNGKey(0))
+            >>> net(jnp.zeros(2)).shape  # (2,) -> (1,)
+            (1,)
+        """
         if depth < 1:
             raise ValueError(f"depth must be at least 1, got {depth}.")
         keys = jax.random.split(key, 2 * depth)
@@ -363,6 +454,22 @@ class GaborNet(eqx.Module):
         )
 
     def __call__(self, x: Float[Array, " D"]) -> Float[Array, " O"]:
+        """Run the multiplicative Gabor-filter forward pass.
+
+        Args:
+            x: Input vector of shape ``(in_features,)``.
+
+        Returns:
+            Output vector of shape ``(out_features,)``.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.mfn import GaborNet
+            >>> net = GaborNet.init(2, 8, 4, depth=2, key=jr.PRNGKey(0))
+            >>> net(jnp.ones(2)).shape  # (2,) -> (4,)
+            (4,)
+        """
+        # (D,) -> (O,) via multiplicative filter chaining (see mfn_forward).
         return mfn_forward(x, self.filters, self.linears)
 
 

@@ -42,6 +42,20 @@ class DeepVSSGPCore(eqx.Module):
         n_features: Per-layer Fourier-feature pair count :math:`M`.
         depth: Total number of stacked RFF layers :math:`L`. Must be
             :math:`\ge 1`.
+
+    Examples:
+        >>> import jax.numpy as jnp, jax.random as jr
+        >>> from geonnax.vssgp import DeepVSSGPCore
+        >>> core = DeepVSSGPCore.init(
+        ...     in_features=2,
+        ...     hidden_features=4,
+        ...     out_features=1,
+        ...     depth=3,
+        ...     key=jr.PRNGKey(0),
+        ...     n_features=8,
+        ... )
+        >>> core(jnp.zeros(2)).shape
+        (1,)
     """
 
     W_freqs: list[Float[Array, "d_in n_features"]]
@@ -94,6 +108,22 @@ class DeepVSSGPCore(eqx.Module):
             ValueError: If ``depth``, any feature dimension, or
                 ``n_features`` is :math:`< 1`, or if ``lengthscale`` /
                 ``prior_std`` is :math:`\\le 0`.
+
+        Examples:
+            >>> import jax.random as jr
+            >>> from geonnax.vssgp import DeepVSSGPCore
+            >>> core = DeepVSSGPCore.init(
+            ...     in_features=2,
+            ...     hidden_features=4,
+            ...     out_features=1,
+            ...     depth=3,
+            ...     key=jr.PRNGKey(0),
+            ...     n_features=8,
+            ... )
+            >>> core.W_freqs[0].shape  # (in_features, n_features)
+            (2, 8)
+            >>> core.W_projs[0].shape  # (2 * n_features, hidden_features)
+            (16, 4)
         """
         if depth < 1:
             raise ValueError(f"depth must be >= 1, got {depth}.")
@@ -134,12 +164,33 @@ class DeepVSSGPCore(eqx.Module):
         )
 
     def __call__(self, x: Float[Array, " D_in"]) -> Float[Array, " D_out"]:
+        r"""Compose the ``depth`` RFF-then-project layers on a single input.
+
+        Each layer maps ``z -> Φ_l(z) -> z W_l`` so the running activation
+        flows ``in_features -> hidden_features -> ... -> out_features``.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax.vssgp import DeepVSSGPCore
+            >>> core = DeepVSSGPCore.init(
+            ...     in_features=3,
+            ...     hidden_features=5,
+            ...     out_features=2,
+            ...     depth=1,
+            ...     key=jr.PRNGKey(1),
+            ...     n_features=4,
+            ... )
+            >>> core(jnp.ones(3)).shape
+            (2,)
+        """
         z = x
         for layer_idx in range(self.depth):
             W_freq = self.W_freqs[layer_idx]
             W_proj = self.W_projs[layer_idx]
             ls = self.lengthscales[layer_idx]
+            # Φ_l(z): (d_in_l,) -> (2 * n_features,)
             phi = rff_forward(W_freq, ls, self.n_features, z)
+            # project: (2 * n_features,)·(2 * n_features, d_out_l) -> (d_out_l,)
             z = einx.dot("f, f o -> o", phi, W_proj)
         return z
 
