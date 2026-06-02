@@ -42,6 +42,7 @@ from geonnax import (
     sngp,
     unet,
     vssgp,
+    wno,
 )
 from geonnax.conditioning import (
     AbstractConditioner,
@@ -93,6 +94,7 @@ from geonnax.layers import (
     TTTensor,
     TuckerTensor,
     Upsample,
+    WaveletConv,
     init_factorized_tensor,
 )
 from geonnax.mfn import FourierFilter, FourierNet, GaborFilter, GaborNet, mfn_forward
@@ -116,6 +118,7 @@ from geonnax.slepian import HybridSphericalSlepianEncoder, SlepianEncoder
 from geonnax.sngp import LaplaceRandomFeatureCovariance, RandomFeatureGaussianProcess
 from geonnax.unet import NestedResidualUNet, Stage, UNet, XUNet
 from geonnax.vssgp import DeepVSSGPCore
+from geonnax.wno import WNO, WaveletNeuralOperator, WNOBlock
 
 
 __version__ = "0.0.3"  # x-release-please-version
@@ -124,6 +127,7 @@ __all__ = [
     "FNO",
     "SFNO",
     "SIREN",
+    "WNO",
     "AbstractConditioner",
     "AffineModulation",
     "Attention",
@@ -182,6 +186,9 @@ __all__ = [
     "TuckerTensor",
     "UNet",
     "Upsample",
+    "WNOBlock",
+    "WaveletConv",
+    "WaveletNeuralOperator",
     "XUNet",
     "__version__",
     "apply_rank1_proj",
@@ -211,4 +218,5 @@ __all__ = [
     "sngp",
     "unet",
     "vssgp",
+    "wno",
 ]

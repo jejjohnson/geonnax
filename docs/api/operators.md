@@ -56,3 +56,22 @@ or [`FNO`](#geonnax.fno.FNO).
 ::: geonnax.layers.SphericalSpectralConv
 
 ::: geonnax.layers.SphericalHarmonicTransform
+
+## Wavelet Neural Operator
+
+The WNO swaps the FNO's Fourier transform for a multi-level discrete wavelet
+transform, mixing channels in the wavelet domain. Where Fourier modes are
+global, wavelet subbands are spatially localised across scales — better suited
+to sharp or non-stationary fields. Analysis and synthesis are exact adjoints,
+so an orthonormal wavelet reconstructs perfectly; each spatial extent must be
+divisible by `2 ** level`.
+
+::: geonnax.wno.WNO
+
+::: geonnax.wno.WNOBlock
+
+::: geonnax.layers.WaveletConv
+
+::: geonnax.layers.dwt
+
+::: geonnax.layers.idwt

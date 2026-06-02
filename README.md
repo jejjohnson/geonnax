@@ -28,6 +28,7 @@ For development, see [Contributing](#contributing).
 | `geonnax.unet` | `UNet` / `XUNet` — dimension-flexible (1D/2D/3D) U-Net with weight-standardized convs, ConvNeXt-V2 blocks, squeeze-excitation, cosine attention, and nested residual (U²-Net) stages |
 | `geonnax.fno` | `FNO` — dimension-flexible Fourier Neural Operator with dense/CP/Tucker/TT spectral weights and optional domain padding |
 | `geonnax.sfno` | `SFNO` — Spherical FNO on lat/lon grids via a differentiable spherical-harmonic transform |
+| `geonnax.wno` | `WNO` — Wavelet Neural Operator with multi-level DWT/IDWT (`WaveletConv`); Haar/Daubechies/Symlet, exact reconstruction |
 | `geonnax.layers` | Reusable building blocks: `StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `SpectralConv`, `SphericalHarmonicTransform`, `Downsample`/`Upsample`, … |
 | `geonnax.siren` | `SIREN`, `SirenDense` — sinusoidal representation networks |
 | `geonnax.mfn` | `FourierNet`, `GaborNet` — multiplicative filter networks |
