@@ -259,7 +259,7 @@ class MCSoftmaxDenseFA(HeteroscedasticHead):
             ``b_diag`` (a small negative number keeps initial noise
             small).
 
-    Example:
+    Examples:
         >>> import jax.random as jr
         >>> import jax.numpy as jnp
         >>> layer = MCSoftmaxDenseFA.init(
