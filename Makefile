@@ -61,7 +61,7 @@ check-env-%:
 # ---------------------------------------------------------------------------
 # Phony declarations
 # ---------------------------------------------------------------------------
-.PHONY: help install lint format typecheck test test-cov doctest \
+.PHONY: help install lint format typecheck test test-fast test-cov doctest \
         precommit build clean version docs docs-serve docs-deploy \
         gh-labels gh-sub gh-block gh-show
 
@@ -128,10 +128,15 @@ typecheck: ## 🔬 Type-check with ty
 ##@ Testing
 # ===========================================================================
 
-test: ## 🧪 Run tests with pytest (no coverage)
+test: ## 🧪 Run all tests in parallel (incl. slow + integration, no coverage)
 	@printf "$(YELLOW)>>> Running tests (no coverage)...$(RESET)\n"
-	uv run pytest -v -o addopts=
+	uv run pytest -n auto -o addopts=
 	@printf "$(GREEN)>>> ✅ Tests passed!$(RESET)\n"
+
+test-fast: ## 🏃 Run fast tests only (skip slow + integration — mirrors CI)
+	@printf "$(YELLOW)>>> Running fast tests (no slow, no integration)...$(RESET)\n"
+	uv run pytest -m "not slow and not integration" -n auto -o addopts=
+	@printf "$(GREEN)>>> ✅ Fast tests passed!$(RESET)\n"
 
 test-cov: ## 📊 Run tests with coverage report
 	@printf "$(YELLOW)>>> Running tests with coverage...$(RESET)\n"

@@ -53,6 +53,7 @@ def test_filter_bank_rejects_unknown():
         _filter_bank("bogus")
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("wavelet", WAVELETS)
 @pytest.mark.parametrize("nd,shape", [(1, (3, 64)), (2, (2, 32, 32))])
 @pytest.mark.parametrize("level", [1, 2, 3])
@@ -80,6 +81,7 @@ def test_dwt_subband_shapes():
 # ---- WaveletConv ------------------------------------------------------------
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("wavelet", WAVELETS)
 def test_wavelet_conv_shapes(wavelet):
     conv = geonnax.WaveletConv.init(4, 6, 2, key=KEY, wavelet=wavelet, level=2)
@@ -92,13 +94,14 @@ def test_wavelet_conv_resolution_flexible():
     assert conv(jnp.ones((2, 64, 64))).shape == (2, 64, 64)
 
 
-@pytest.mark.parametrize("nd", [1, 2, 3])
+@pytest.mark.parametrize("nd", [1, 2, pytest.param(3, marks=pytest.mark.slow)])
 def test_wavelet_conv_dimension_flexible(nd):
     conv = geonnax.WaveletConv.init(2, 3, nd, key=KEY, wavelet="db2", level=1)
     x = jnp.ones((2,) + (16,) * nd)
     assert conv(x).shape == (3,) + (16,) * nd
 
 
+@pytest.mark.integration
 def test_wavelet_conv_grad_and_jit():
     conv = geonnax.WaveletConv.init(2, 2, 2, key=KEY, level=2)
     x = jnp.ones((2, 32, 32))
@@ -116,6 +119,7 @@ def test_wavelet_conv_rejects_bad_args():
 # ---- WNO --------------------------------------------------------------------
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("wavelet", WAVELETS)
 def test_wno_wavelets(wavelet):
     m = WNO.init(
@@ -124,6 +128,7 @@ def test_wno_wavelets(wavelet):
     assert m(jnp.ones((3, 64, 64))).shape == (1, 64, 64)
 
 
+@pytest.mark.integration
 def test_wno_vmap_jit_grad():
     m = WNO.init(2, 2, 2, key=KEY, hidden_channels=16, n_layers=2)
     x = jnp.ones((2, 32, 32))
@@ -132,7 +137,7 @@ def test_wno_vmap_jit_grad():
     assert _grads_finite(m, x)
 
 
-@pytest.mark.parametrize("nd", [1, 2, 3])
+@pytest.mark.parametrize("nd", [1, 2, pytest.param(3, marks=pytest.mark.slow)])
 def test_wno_dimension_flexible(nd):
     m = WNO.init(2, 3, nd, key=KEY, hidden_channels=8, n_layers=2, level=1)
     x = jnp.ones((2,) + (16,) * nd)

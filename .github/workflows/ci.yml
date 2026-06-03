@@ -23,7 +23,13 @@ jobs:
       - name: Install dependencies
         run: uv sync --group dev
       - name: Run tests with coverage
-        run: uv run pytest -v
+        # Slow + integration tests never run in CI — they exercise heavyweight
+        # model compilation, broad parametrized sweeps, and end-to-end
+        # jit/vmap/grad smoke checks that are too costly for Actions. Run them
+        # locally with `make test`.
+        # `-n auto` parallelises across runner cores (pytest-xdist); most of the
+        # remaining wall time is per-test JAX compilation, which xdist overlaps.
+        run: uv run pytest -m "not slow and not integration" -n auto
       - name: Upload coverage report
         if: matrix.python-version == '3.12'
         uses: actions/upload-artifact@v7
