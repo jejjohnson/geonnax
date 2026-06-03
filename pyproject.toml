@@ -34,6 +34,7 @@ Repository = "https://github.com/jejjohnson/geonnax"
 dev = [
     "pytest>=9.0.3",
     "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.5.0",
     "pre-commit>=4.6.0",
 ]
 lint = [
@@ -85,7 +86,11 @@ python-version = "3.12"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=src/geonnax --cov-report=term-missing --cov-report=xml:coverage.xml"
+addopts = "-ra --strict-markers --cov=src/geonnax --cov-report=term-missing --cov-report=xml:coverage.xml"
+markers = [
+    "slow: marks tests as slow — heavyweight model compilation or broad parametrized sweeps (deselect with '-m \"not slow\"')",
+    "integration: marks end-to-end tests — full model build → jit/vmap/grad smoke checks (deselect with '-m \"not integration\"')",
+]
 
 [tool.coverage.run]
 source = ["src/geonnax"]

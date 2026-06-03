@@ -105,17 +105,20 @@ def test_nested_residual_unet_rejects_zero_depth():
 # ---- full u-net -------------------------------------------------------------
 
 
+@pytest.mark.slow
 def test_unet_default_preserves_spatial_shape():
     model = UNet.init(16, key=KEY, channels=3, dim_mults=(1, 2, 4))
     x = jnp.ones((3, 32, 32))
     assert model(x).shape == (3, 32, 32)
 
 
+@pytest.mark.slow
 def test_unet_separate_out_channels():
     model = UNet.init(8, key=KEY, channels=2, out_channels=5, dim_mults=(1, 2))
     assert model(jnp.ones((2, 16, 16))).shape == (5, 16, 16)
 
 
+@pytest.mark.integration
 def test_unet_vmaps_over_batch():
     model = UNet.init(8, key=KEY, channels=1, dim_mults=(1, 2))
     out = jax.vmap(model)(jnp.ones((4, 1, 16, 16)))
@@ -135,6 +138,7 @@ def test_unet_nested_stages():
     assert model(jnp.ones((2, 16, 16))).shape == (2, 16, 16)
 
 
+@pytest.mark.slow
 def test_unet_without_consolidation():
     model = UNet.init(
         8, key=KEY, channels=2, dim_mults=(1, 2), consolidate_upsample_fmaps=False
@@ -142,7 +146,7 @@ def test_unet_without_consolidation():
     assert model(jnp.ones((2, 16, 16))).shape == (2, 16, 16)
 
 
-@pytest.mark.parametrize("nd", [1, 2, 3])
+@pytest.mark.parametrize("nd", [1, 2, pytest.param(3, marks=pytest.mark.slow)])
 def test_unet_dimension_flexible(nd):
     model = UNet.init(8, key=KEY, channels=2, num_spatial_dims=nd, dim_mults=(1, 2))
     x = jnp.ones((2,) + (16,) * nd)
@@ -170,6 +174,7 @@ def test_unet_rejects_mismatched_nested_depths():
         UNet.init(8, key=KEY, dim_mults=(1, 2), nested_unet_depths=(1, 1, 1))
 
 
+@pytest.mark.integration
 def test_unet_is_jittable_and_differentiable():
     model = UNet.init(8, key=KEY, channels=2, dim_mults=(1, 2))
     x = jnp.ones((2, 16, 16))

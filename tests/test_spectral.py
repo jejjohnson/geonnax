@@ -41,6 +41,7 @@ def test_factorized_tensor_reconstructs_shape(fac):
     assert t.reconstruct().shape == shape
 
 
+@pytest.mark.slow
 def test_factorizations_reduce_parameters():
     shape = (8, 8, 16, 16, 2)
     dense = init_factorized_tensor(shape, "dense", key=KEY)
@@ -67,7 +68,7 @@ def test_spectral_conv_shapes(fac):
     assert sc(jnp.ones((4, 32, 32))).shape == (6, 32, 32)
 
 
-@pytest.mark.parametrize("nd", [1, 2, 3])
+@pytest.mark.parametrize("nd", [1, 2, pytest.param(3, marks=pytest.mark.slow)])
 def test_spectral_conv_dimension_flexible(nd):
     sc = SpectralConv.init(2, 3, (4,) * nd, key=KEY)
     x = jnp.ones((2,) + (16,) * nd)
@@ -89,6 +90,7 @@ def test_spectral_conv_resolution_invariance():
     assert float(rel) < 0.05
 
 
+@pytest.mark.integration
 def test_spectral_conv_grad_and_jit():
     sc = SpectralConv.init(2, 2, (6, 6), key=KEY)
     x = jnp.ones((2, 32, 32))
@@ -106,6 +108,7 @@ def test_spectral_conv_rejects_bad_modes():
 # ---- FNO --------------------------------------------------------------------
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("fac", FACTORIZATIONS)
 def test_fno_factorizations(fac):
     m = FNO.init(
@@ -121,6 +124,7 @@ def test_fno_factorizations(fac):
     assert m(jnp.ones((3, 32, 32))).shape == (1, 32, 32)
 
 
+@pytest.mark.integration
 def test_fno_vmap_jit_grad():
     m = FNO.init(2, 2, (6, 6), key=KEY, hidden_channels=16, n_layers=2)
     x = jnp.ones((2, 32, 32))
@@ -129,7 +133,7 @@ def test_fno_vmap_jit_grad():
     assert _grads_finite(m, x)
 
 
-@pytest.mark.parametrize("nd", [1, 2, 3])
+@pytest.mark.parametrize("nd", [1, 2, pytest.param(3, marks=pytest.mark.slow)])
 def test_fno_dimension_flexible(nd):
     m = FNO.init(2, 3, (4,) * nd, key=KEY, hidden_channels=8, n_layers=2)
     x = jnp.ones((2,) + (16,) * nd)
@@ -211,6 +215,7 @@ def test_spherical_spectral_conv():
 # ---- SFNO -------------------------------------------------------------------
 
 
+@pytest.mark.integration
 def test_sfno_shapes_vmap_jit_grad():
     m = SFNO.init(
         3, 2, key=KEY, n_lat=16, n_lon=32, l_max=10, hidden_channels=16, n_layers=3
