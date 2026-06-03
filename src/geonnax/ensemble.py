@@ -208,7 +208,7 @@ class DenseRank1(eqx.Module):
         ensemble_size: Number of ensemble members $M$.
         bias: Whether to add the per-member bias in the forward.
 
-    Example:
+    Examples:
         >>> import jax.random as jr
         >>> import jax.numpy as jnp
         >>> layer = DenseRank1.init(
@@ -331,7 +331,7 @@ class LayerNormEnsemble(eqx.Module):
         eps: Small positive constant added to the variance for
             numerical stability.
 
-    Example:
+    Examples:
         >>> import jax.numpy as jnp
         >>> ln = LayerNormEnsemble.init(ensemble_size=3, feature_dim=4)
         >>> x = jnp.ones((3, 4))  # (M, D)
@@ -441,7 +441,7 @@ class MultiHeadAttentionBE(eqx.Module):
         bias: Whether each of the four projections adds a per-member
             bias.
 
-    Example:
+    Examples:
         >>> import jax.random as jr
         >>> import jax.numpy as jnp
         >>> mha = MultiHeadAttentionBE.init(

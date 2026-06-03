@@ -105,7 +105,7 @@ class ConcatConditioner(AbstractConditioner):
         num_features: Output channels ``C``.
         cond_dim: Context dimension ``K``.
 
-    Example:
+    Examples:
         >>> import jax.random as jr, jax.numpy as jnp
         >>> layer = ConcatConditioner.init(num_features=8, cond_dim=4, key=jr.key(0))
         >>> y = layer(jnp.ones(8), jnp.ones(4))
@@ -198,7 +198,7 @@ class AffineModulation(AbstractConditioner):
         cond_dim: Context dimension ``K``.
         gamma_activation: Parameterisation of ``γ`` (see above).
 
-    Example:
+    Examples:
         >>> import jax.random as jr, jax.numpy as jnp
         >>> film = AffineModulation.init(num_features=8, cond_dim=4, key=jr.key(0))
         >>> y = film(jnp.ones(8), jnp.ones(4))
@@ -352,7 +352,7 @@ class HyperLinear(AbstractConditioner):
         cond_dim: Context dimension ``K``.
         num_features: Alias for ``target_out`` (satisfies the protocol).
 
-    Example:
+    Examples:
         >>> import jax.random as jr, jax.numpy as jnp
         >>> hyper = HyperLinear.init(
         ...     target_in=4, target_out=8, cond_dim=3, key=jr.key(0)
@@ -493,7 +493,7 @@ class ConditionedINR(eqx.Module):
         mode: ``"feature"`` for per-layer modulation;
             ``"input"`` for input-side concatenation.
 
-    Example:
+    Examples:
         >>> import jax.random as jr, jax.numpy as jnp
         >>> from geonnax import SIREN
         >>> key = jr.key(0)
