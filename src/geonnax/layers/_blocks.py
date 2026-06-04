@@ -132,6 +132,7 @@ class ResnetBlock(eqx.Module):
     block2: Block
     se: SqueezeExcitation | None
     res_conv: StandardizedConv | None
+    dropout: eqx.nn.Dropout | None
 
     @classmethod
     def init(
@@ -145,8 +146,14 @@ class ResnetBlock(eqx.Module):
         groups: int = 8,
         weight_standardize: bool = False,
         squeeze_excite: bool = True,
+        dropout: float = 0.0,
     ) -> ResnetBlock:
-        """Construct a residual block."""
+        """Construct a residual block.
+
+        Set ``dropout > 0`` to add dropout on the residual branch; the resulting
+        `__call__` then requires a ``key`` (or wrap the module with
+        `equinox.nn.inference_mode` for deterministic evaluation).
+        """
         k1, k2, k3, k4 = jax.random.split(key, 4)
         block1 = Block.init(
             in_channels,
@@ -183,14 +190,23 @@ class ResnetBlock(eqx.Module):
             if in_channels != out_channels
             else None
         )
-        return cls(block1=block1, block2=block2, se=se, res_conv=res_conv)
+        dropout_layer = eqx.nn.Dropout(dropout) if dropout > 0.0 else None
+        return cls(
+            block1=block1,
+            block2=block2,
+            se=se,
+            res_conv=res_conv,
+            dropout=dropout_layer,
+        )
 
     def __call__(
-        self, x: Float[Array, "C_in *spatial"]
+        self, x: Float[Array, "C_in *spatial"], *, key: Array | None = None
     ) -> Float[Array, "C_out *spatial"]:
         h = self.block2(self.block1(x))
         if self.se is not None:
             h = self.se(h)
+        if self.dropout is not None:
+            h = self.dropout(h, key=key)
         res = x if self.res_conv is None else self.res_conv(x)
         return h + res
 
@@ -220,6 +236,7 @@ class ConvNeXtBlock(eqx.Module):
     grn: GlobalResponseNorm
     pw2: StandardizedConv
     res_conv: StandardizedConv | None
+    dropout: eqx.nn.Dropout | None
 
     @classmethod
     def init(
@@ -232,8 +249,14 @@ class ConvNeXtBlock(eqx.Module):
         mult: int = 2,
         groups: int = 8,
         weight_standardize: bool = False,
+        dropout: float = 0.0,
     ) -> ConvNeXtBlock:
-        """Construct a ConvNeXt-V2 block."""
+        """Construct a ConvNeXt-V2 block.
+
+        Set ``dropout > 0`` to add dropout on the residual branch; the resulting
+        `__call__` then requires a ``key`` (or wrap the module with
+        `equinox.nn.inference_mode` for deterministic evaluation).
+        """
         k1, k2, k3, k4 = jax.random.split(key, 4)
         hidden = in_channels * mult
         ds_conv = StandardizedConv.init(
@@ -278,18 +301,27 @@ class ConvNeXtBlock(eqx.Module):
             if in_channels != out_channels
             else None
         )
+        dropout_layer = eqx.nn.Dropout(dropout) if dropout > 0.0 else None
         return cls(
-            ds_conv=ds_conv, norm=norm, pw1=pw1, grn=grn, pw2=pw2, res_conv=res_conv
+            ds_conv=ds_conv,
+            norm=norm,
+            pw1=pw1,
+            grn=grn,
+            pw2=pw2,
+            res_conv=res_conv,
+            dropout=dropout_layer,
         )
 
     def __call__(
-        self, x: Float[Array, "C_in *spatial"]
+        self, x: Float[Array, "C_in *spatial"], *, key: Array | None = None
     ) -> Float[Array, "C_out *spatial"]:
         h = self.norm(self.ds_conv(x))
         h = self.pw1(h)
         h = jax.nn.gelu(h)
         h = self.grn(h)
         h = self.pw2(h)
+        if self.dropout is not None:
+            h = self.dropout(h, key=key)
         res = x if self.res_conv is None else self.res_conv(x)
         return h + res
 
