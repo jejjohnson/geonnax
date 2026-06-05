@@ -12,6 +12,18 @@ from geonnax.layers._norm import GlobalResponseNorm
 from geonnax.layers._utils import act, group_count
 
 
+def _dropout_layer(rate: float) -> eqx.nn.Dropout | None:
+    """Build a dropout layer for ``rate``, or ``None`` when disabled.
+
+    Raises:
+        ValueError: If ``rate`` is outside ``[0, 1)`` (a negative rate would
+            otherwise silently disable dropout and hide a config/sign typo).
+    """
+    if not 0.0 <= rate < 1.0:
+        raise ValueError(f"dropout rate must be in [0, 1), got {rate}.")
+    return eqx.nn.Dropout(rate) if rate > 0.0 else None
+
+
 class SqueezeExcitation(eqx.Module):
     """Squeeze-and-Excitation channel gating (Hu et al., 2018).
 
@@ -190,7 +202,7 @@ class ResnetBlock(eqx.Module):
             if in_channels != out_channels
             else None
         )
-        dropout_layer = eqx.nn.Dropout(dropout) if dropout > 0.0 else None
+        dropout_layer = _dropout_layer(dropout)
         return cls(
             block1=block1,
             block2=block2,
@@ -301,7 +313,7 @@ class ConvNeXtBlock(eqx.Module):
             if in_channels != out_channels
             else None
         )
-        dropout_layer = eqx.nn.Dropout(dropout) if dropout > 0.0 else None
+        dropout_layer = _dropout_layer(dropout)
         return cls(
             ds_conv=ds_conv,
             norm=norm,

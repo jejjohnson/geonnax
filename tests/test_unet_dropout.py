@@ -110,6 +110,17 @@ def test_nested_residual_unet_dropout():
 
 
 @pytest.mark.parametrize("block_cls", [ResnetBlock, ConvNeXtBlock])
+def test_invalid_dropout_rate_rejected(block_cls):
+    # A negative (or >= 1) rate must raise, not silently disable dropout.
+    for bad in (-0.1, 1.0, 1.5):
+        with pytest.raises(ValueError, match="dropout rate must be in"):
+            block_cls.init(4, 4, 2, key=KEY, dropout=bad)
+    # The U-Net surfaces the same validation through its blocks.
+    with pytest.raises(ValueError, match="dropout rate must be in"):
+        UNet.init(8, key=KEY, channels=2, dim_mults=(1, 2), dropout=-0.1)
+
+
+@pytest.mark.parametrize("block_cls", [ResnetBlock, ConvNeXtBlock])
 def test_block_dropout_requires_key_and_is_stochastic(block_cls):
     block = block_cls.init(4, 4, 2, key=KEY, dropout=0.5)
     x = jnp.ones((4, 8, 8))
