@@ -48,6 +48,17 @@ from geonnax.layers import (
 BlockType = Literal["resnet", "convnext"]
 
 
+def _split_keys(key: Array | None, n: int) -> list[Array | None]:
+    """Split ``key`` into ``n`` subkeys, or return ``n`` ``None``s if no key.
+
+    Lets the U-Net thread per-block keys for dropout while staying callable
+    without a key when dropout is disabled.
+    """
+    if key is None:
+        return [None] * n
+    return list(jax.random.split(key, n))
+
+
 class NestedResidualUNet(eqx.Module):
     """A small residual U-Net used as one stage block (Qin et al., 2020, "U²-Net").
 
@@ -93,6 +104,7 @@ class NestedResidualUNet(eqx.Module):
         key: Array,
         groups: int = 8,
         weight_standardize: bool = False,
+        dropout: float = 0.0,
     ) -> NestedResidualUNet:
         """Construct a depth-``depth`` nested residual U-Net at width ``dim``."""
         if depth < 1:
@@ -108,6 +120,7 @@ class NestedResidualUNet(eqx.Module):
                     key=next(keys),
                     groups=groups,
                     weight_standardize=weight_standardize,
+                    dropout=dropout,
                 )
             )
             downsamples.append(
@@ -136,6 +149,7 @@ class NestedResidualUNet(eqx.Module):
                     key=next(keys),
                     groups=groups,
                     weight_standardize=weight_standardize,
+                    dropout=dropout,
                 )
             )
         mid_block = ResnetBlock.init(
@@ -145,6 +159,7 @@ class NestedResidualUNet(eqx.Module):
             key=next(keys),
             groups=groups,
             weight_standardize=weight_standardize,
+            dropout=dropout,
         )
         return cls(
             down_blocks=down_blocks,
@@ -155,20 +170,24 @@ class NestedResidualUNet(eqx.Module):
             skip_scale=2**-0.5,
         )
 
-    def __call__(self, x: Float[Array, "C *spatial"]) -> Float[Array, "C *spatial"]:
+    def __call__(
+        self, x: Float[Array, "C *spatial"], *, key: Array | None = None
+    ) -> Float[Array, "C *spatial"]:
+        n_blocks = len(self.down_blocks) + 1 + len(self.up_blocks)
+        keys = iter(_split_keys(key, n_blocks))
         residual = x
         skips: list[Array] = []
         for block, down in zip(self.down_blocks, self.downsamples, strict=True):
-            x = block(x)
+            x = block(x, key=next(keys))
             skips.append(x)
             x = down(x)
-        x = self.mid_block(x)
+        x = self.mid_block(x, key=next(keys))
         for up, block in zip(
             reversed(self.upsamples), reversed(self.up_blocks), strict=True
         ):
             x = up(x)
             x = (x + skips.pop()) * self.skip_scale
-            x = block(x)
+            x = block(x, key=next(keys))
         return x + residual
 
 
@@ -200,6 +219,7 @@ class Stage(eqx.Module):
         groups: int,
         weight_standardize: bool,
         squeeze_excite: bool,
+        dropout: float = 0.0,
     ) -> Stage:
         """Construct a stage block, optionally wrapping a nested U-Net."""
         k_leaf, k_nested = jax.random.split(key)
@@ -212,6 +232,7 @@ class Stage(eqx.Module):
                 key=k_leaf,
                 groups=groups,
                 weight_standardize=weight_standardize,
+                dropout=dropout,
             )
         elif block_type == "resnet":
             leaf = ResnetBlock.init(
@@ -222,6 +243,7 @@ class Stage(eqx.Module):
                 groups=groups,
                 weight_standardize=weight_standardize,
                 squeeze_excite=squeeze_excite,
+                dropout=dropout,
             )
         else:
             raise ValueError(
@@ -235,6 +257,7 @@ class Stage(eqx.Module):
                 key=k_nested,
                 groups=groups,
                 weight_standardize=weight_standardize,
+                dropout=dropout,
             )
             if nested_depth >= 1
             else None
@@ -242,11 +265,12 @@ class Stage(eqx.Module):
         return cls(leaf=leaf, nested=nested)
 
     def __call__(
-        self, x: Float[Array, "C_in *spatial"]
+        self, x: Float[Array, "C_in *spatial"], *, key: Array | None = None
     ) -> Float[Array, "C_out *spatial"]:
-        x = self.leaf(x)
+        k_leaf, k_nested = _split_keys(key, 2)
+        x = self.leaf(x, key=k_leaf)
         if self.nested is not None:
-            x = self.nested(x)
+            x = self.nested(x, key=k_nested)
         return x
 
 
@@ -334,6 +358,7 @@ class UNet(eqx.Module):
         weight_standardize: bool = True,
         squeeze_excite: bool = True,
         consolidate_upsample_fmaps: bool = True,
+        dropout: float = 0.0,
     ) -> UNet:
         """Construct a U-Net.
 
@@ -356,6 +381,12 @@ class UNet(eqx.Module):
             squeeze_excite: Add SE gating to residual blocks.
             consolidate_upsample_fmaps: Fuse multi-scale decoder maps before
                 the head.
+            dropout: Dropout rate applied on the residual branch of every
+                feature block (encoder/decoder stages, bottleneck, and output
+                block). ``0`` disables it. When ``> 0``, `__call__` requires a
+                ``key`` — pass one each call for Monte-Carlo-dropout ensembles,
+                or wrap the model with `equinox.nn.inference_mode` for
+                deterministic evaluation.
 
         Raises:
             ValueError: If ``dim_mults`` is empty or ``nested_unet_depths``
@@ -406,6 +437,7 @@ class UNet(eqx.Module):
                     groups=groups,
                     weight_standardize=weight_standardize,
                     squeeze_excite=squeeze_excite,
+                    dropout=dropout,
                 )
             )
             downsamples.append(
@@ -427,6 +459,7 @@ class UNet(eqx.Module):
             groups=groups,
             weight_standardize=weight_standardize,
             squeeze_excite=squeeze_excite,
+            dropout=dropout,
         )
         mid_attn = Attention.init(
             mid_dim,
@@ -444,6 +477,7 @@ class UNet(eqx.Module):
             groups=groups,
             weight_standardize=weight_standardize,
             squeeze_excite=squeeze_excite,
+            dropout=dropout,
         )
 
         upsamples: list[Upsample] = []
@@ -472,6 +506,7 @@ class UNet(eqx.Module):
                     groups=groups,
                     weight_standardize=weight_standardize,
                     squeeze_excite=squeeze_excite,
+                    dropout=dropout,
                 )
             )
             up_out_channels.append(d_in)
@@ -497,6 +532,7 @@ class UNet(eqx.Module):
             groups=groups,
             weight_standardize=weight_standardize,
             squeeze_excite=squeeze_excite,
+            dropout=dropout,
         )
         final_conv = StandardizedConv.init(
             num_spatial_dims,
@@ -526,26 +562,30 @@ class UNet(eqx.Module):
         )
 
     def __call__(
-        self, x: Float[Array, "C_in *spatial"]
+        self, x: Float[Array, "C_in *spatial"], *, key: Array | None = None
     ) -> Float[Array, "C_out *spatial"]:
+        # One subkey per feature block: down stages + 2 mid + up stages + final.
+        n_keyed = len(self.down_blocks) + 2 + len(self.up_blocks) + 1
+        keys = iter(_split_keys(key, n_keyed))
+
         x = self.init_conv(x)
 
         skips: list[Array] = []
         for block, down in zip(self.down_blocks, self.downsamples, strict=True):
-            x = block(x)
+            x = block(x, key=next(keys))
             skips.append(x)
             x = down(x)
 
-        x = self.mid_block1(x)
+        x = self.mid_block1(x, key=next(keys))
         x = self.mid_attn(x) + x
-        x = self.mid_block2(x)
+        x = self.mid_block2(x, key=next(keys))
 
         up_fmaps: list[Array] = []
         for up, block in zip(self.upsamples, self.up_blocks, strict=True):
             x = up(x)
             skip = skips.pop() * self.skip_scale
             x = jnp.concatenate([x, skip], axis=0)
-            x = block(x)
+            x = block(x, key=next(keys))
             up_fmaps.append(x)
 
         if self.consolidate_conv is not None:
@@ -556,7 +596,7 @@ class UNet(eqx.Module):
             ]
             x = self.consolidate_conv(jnp.concatenate(resized, axis=0))
 
-        x = self.final_block(x)
+        x = self.final_block(x, key=next(keys))
         return self.final_conv(x)
 
 
