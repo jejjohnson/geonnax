@@ -34,6 +34,7 @@ from geonnax import (
     heteroscedastic,
     layers,
     mfn,
+    mswt,
     ncp,
     randfeat,
     sfno,
@@ -96,10 +97,13 @@ from geonnax.layers import (
     TTTensor,
     TuckerTensor,
     Upsample,
+    WaveletAttention,
     WaveletConv,
+    WindowedAttention,
     init_factorized_tensor,
 )
 from geonnax.mfn import FourierFilter, FourierNet, GaborFilter, GaborNet, mfn_forward
+from geonnax.mswt import MSWT, MSWTBlock, MultiScaleWaveletTransformer
 from geonnax.ncp import NCPContinuousPerturb
 from geonnax.randfeat import (
     OrthogonalRandomFeatures,
@@ -127,6 +131,7 @@ __version__ = "0.0.3"  # x-release-please-version
 
 __all__ = [
     "FNO",
+    "MSWT",
     "SFNO",
     "SIREN",
     "WNO",
@@ -165,7 +170,9 @@ __all__ = [
     "LonLatScale",
     "MCSigmoidDenseFA",
     "MCSoftmaxDenseFA",
+    "MSWTBlock",
     "MultiHeadAttentionBE",
+    "MultiScaleWaveletTransformer",
     "NCPContinuousPerturb",
     "NestedResidualUNet",
     "OrthogonalRandomFeatures",
@@ -191,8 +198,10 @@ __all__ = [
     "UNet",
     "Upsample",
     "WNOBlock",
+    "WaveletAttention",
     "WaveletConv",
     "WaveletNeuralOperator",
+    "WindowedAttention",
     "XUNet",
     "__version__",
     "apply_rank1_proj",
@@ -210,6 +219,7 @@ __all__ = [
     "layers",
     "mfn",
     "mfn_forward",
+    "mswt",
     "ncp",
     "orthogonal_blocks",
     "randfeat",

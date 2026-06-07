@@ -88,3 +88,21 @@ to the planar wavelet transform.
 ::: geonnax.layers.SphericalWaveletTransform
 
 ::: geonnax.layers.SphericalWaveletConv
+
+## Wavelet attention (MSWT)
+
+The Multi-Scale Wavelet Transformer is an *attention-based* operator: it runs
+self-attention inside the wavelet domain so the high-frequency detail bands stay
+explicit and cannot be smoothed away, mitigating the spectral bias of grid-space
+attention on chaotic / long-rollout dynamics (Wang et al., 2026). `MSWT` is a
+patch-tokenised U-net of `WaveletAttention` blocks with wavelet down/up-sampling;
+`WaveletAttention` is the reusable layer. Attention is global (`Attention`) or,
+for large grids, Swin-style `WindowedAttention` (``O(N · window^d)``).
+
+::: geonnax.mswt.MSWT
+
+::: geonnax.mswt.MSWTBlock
+
+::: geonnax.layers.WaveletAttention
+
+::: geonnax.layers.WindowedAttention
