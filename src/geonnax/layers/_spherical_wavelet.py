@@ -40,12 +40,19 @@ def _meyer_nu(t: np.ndarray) -> np.ndarray:
 
 
 def _partition_filters(l_max: int, n_scales: int | None = None) -> np.ndarray:
-    r"""Dyadic harmonic windows with ``sum_j g_j(l)**2 == 1`` over ``0..l_max``.
+    r"""Dyadic harmonic band-pass windows over degrees ``0..l_max``.
 
     Tiles ``x = log2(max(l, 1))`` into unit (octave) bands. Within band
     ``[k, k+1]`` exactly two scales overlap, a cosine taper handing off to a
     sine taper, so their squares sum to one. Scale 0 also captures the lowest
     degrees (a scaling function).
+
+    With the default ``n_scales`` (full octave coverage) the squared windows
+    form a partition of unity, ``sum_j g_j(l)**2 == 1`` for every degree, which
+    is what makes the transform's round-trip exact. Passing a smaller
+    ``n_scales`` drops the highest scales, leaving the finest (high-degree) end
+    of the spectrum uncovered, so the partition (and exact reconstruction) no
+    longer holds.
 
     Returns:
         ``(n_scales, l_max + 1)`` array of non-negative window weights.

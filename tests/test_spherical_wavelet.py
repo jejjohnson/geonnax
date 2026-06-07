@@ -28,6 +28,16 @@ def test_partition_of_unity(l_max):
     assert (filters >= 0).all()
 
 
+def test_instantiated_filters_partition_of_unity():
+    # Guard the *runtime* filters carried by the transform (cast to JAX's
+    # default dtype, typically float32), not just the float64 NumPy windows.
+    sht = SphericalHarmonicTransform.init(16, 32, 12)
+    swt = SphericalWaveletTransform.init(sht)
+    sums = jnp.sum(swt.filters**2, axis=0)
+    assert float(jnp.abs(sums - 1.0).max()) < 1e-5  # float32-appropriate
+    assert swt.filters.shape == (swt.n_scales, sht.l_max + 1)
+
+
 def _band_limited_field(sht, channels):
     coeffs = jr.normal(KEY, (channels, (sht.l_max + 1) ** 2))
     return sht.inverse(coeffs)
@@ -43,12 +53,22 @@ def test_wavelet_round_trip_is_exact():
     assert float(jnp.abs(rec - field).max()) < 1e-4
 
 
-def test_wavelet_scales_partition_the_field():
-    # Summing the raw wavelet maps is NOT the identity, but re-synthesising is;
-    # this guards the per-scale band-pass structure (more than one active scale).
+def test_wavelet_scales_localise_distinct_degrees():
+    # A field with power at two well-separated degrees should light up at least
+    # two different wavelet scales (guards the per-scale band-pass behaviour).
     sht = SphericalHarmonicTransform.init(16, 32, 12)
     swt = SphericalWaveletTransform.init(sht)
-    assert swt.n_scales >= 3
+    degrees = np.asarray(swt.degree_index)
+
+    coeffs = np.zeros((1, degrees.shape[0]))
+    coeffs[0, degrees == 1] = 1.0  # x = log2(1) = 0  -> coarse scale
+    coeffs[0, degrees == 10] = 1.0  # x = log2(10) ~ 3.3 -> fine scale
+    field = sht.inverse(jnp.asarray(coeffs))
+
+    scales = swt.forward(field)  # (n_scales, 1, lat, lon)
+    energy = jnp.sum(scales**2, axis=(1, 2, 3))
+    active = int(jnp.sum(energy / energy.sum() > 0.01))
+    assert active >= 2, (active, energy)
 
 
 def test_n_scales_override():
