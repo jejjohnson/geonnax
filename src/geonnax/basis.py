@@ -32,6 +32,12 @@ import einx
 import jax.numpy as jnp
 from jaxtyping import Array, Float, Int
 
+# Convenience re-exports so localized/overcomplete bases are reachable from
+# ``geonnax.basis`` too; they are documented once under ``geonnax._basis`` (their
+# home), so they are intentionally left out of this module's ``__all__``.
+from geonnax._basis._gabor import gabor_frame, gabor_frame_grid  # noqa: F401
+from geonnax._basis._rbf import rbf_basis, wendland_c2, wendland_c4  # noqa: F401
+
 
 def fourier_features(
     x: Float[Array, " N"],
@@ -182,6 +188,40 @@ def seasonal_features(
     return feats
 
 
+def gaussian_window_features(
+    t: Float[Array, " N"],
+    centers: Float[Array, " M"],
+    widths: Float[Array, " M"],
+) -> Float[Array, "N M"]:
+    r"""Gaussian-window-in-time basis, the temporal analogue of an RBF column.
+
+    $$\chi_a(t) = e^{-(t - \tau_a)^2 / (2 T_a^2)}.$$
+
+    A localized counterpart to `seasonal_features` (Fourier-in-time): each
+    column is a soft gate centred at $\tau_a$ with width $T_a$, for building
+    localized space-time constructions. Returns only the feature matrix; the
+    geometry (``centers``, ``widths``) is the caller's.
+
+    Args:
+        t: Time / index input, shape ``(N,)``.
+        centers: Window centres $\tau_a$, shape ``(M,)``.
+        widths: Window widths $T_a$, shape ``(M,)``.
+
+    Returns:
+        Array of shape ``(N, M)``.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax.basis import gaussian_window_features
+        >>> t = jnp.linspace(0.0, 10.0, 5)
+        >>> c, w = jnp.array([2.0, 8.0]), jnp.array([1.0, 1.0])
+        >>> gaussian_window_features(t, c, w).shape
+        (5, 2)
+    """
+    z = einx.divide("n m, m -> n m", einx.subtract("n, m -> n m", t, centers), widths)
+    return jnp.exp(-0.5 * z**2)
+
+
 def interaction_features(
     x: Float[Array, "N D"],
     pairs: Int[Array, "K 2"],
@@ -252,3 +292,14 @@ def unstandardize(
         True
     """
     return z * std + mu
+
+
+__all__ = [
+    "fourier_features",
+    "gaussian_window_features",
+    "interaction_features",
+    "seasonal_features",
+    "seasonal_frequencies",
+    "standardize",
+    "unstandardize",
+]

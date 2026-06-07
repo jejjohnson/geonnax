@@ -15,6 +15,14 @@ library, since they ``isinstance``-dispatch on kernel classes):
 - `graph_laplacian_eigpairs` — smallest eigenpairs of a graph Laplacian.
 - `SlepianCapBasis` / `slepian_cap_basis` — Slepian eigenfunctions
   on a spherical cap.
+
+Localized / overcomplete bases carry no eigenvalues; they expose the per-atom
+geometry instead (the other half of the basis contract):
+
+- `rbf_basis` / `wendland_c2` / `wendland_c4` — placeable radial
+  bumps with Gaussian or compact (Wendland) support.
+- `gabor_frame` / `gabor_frame_grid` — fixed overcomplete
+  multiscale Gabor frame.
 """
 
 from geonnax._basis._fourier import (
@@ -23,7 +31,9 @@ from geonnax._basis._fourier import (
     fourier_eigenvalues,
     fourier_eigenvalues_1d,
 )
+from geonnax._basis._gabor import gabor_frame, gabor_frame_grid
 from geonnax._basis._laplacian import graph_laplacian_eigpairs
+from geonnax._basis._rbf import rbf_basis, wendland_c2, wendland_c4
 from geonnax._basis._slepian import (
     SlepianCapBasis,
     shannon_number,
@@ -40,11 +50,16 @@ __all__ = [
     "fourier_basis_1d",
     "fourier_eigenvalues",
     "fourier_eigenvalues_1d",
+    "gabor_frame",
+    "gabor_frame_grid",
     "graph_laplacian_eigpairs",
     "harmonic_degrees",
+    "rbf_basis",
     "real_spherical_harmonics",
     "shannon_number",
     "slepian_cap_basis",
     "slepian_cap_eigh_per_m",
     "slepian_concentration_matrix",
+    "wendland_c2",
+    "wendland_c4",
 ]
