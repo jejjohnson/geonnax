@@ -75,3 +75,16 @@ divisible by `2 ** level`.
 ::: geonnax.layers.dwt
 
 ::: geonnax.layers.idwt
+
+## Spherical wavelets
+
+A scale-discretised (needlet) wavelet transform on the sphere, built on the
+spherical harmonic transform above. Each scale is a smooth harmonic band-pass
+window; the squared windows partition unity ($\sum_j g_j(\ell)^2 = 1$), so
+analysis followed by synthesis is exact. These axisymmetric needlets give
+*localised* multi-scale analysis of global fields — the spherical counterpart
+to the planar wavelet transform.
+
+::: geonnax.layers.SphericalWaveletTransform
+
+::: geonnax.layers.SphericalWaveletConv
