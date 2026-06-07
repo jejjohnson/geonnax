@@ -29,6 +29,7 @@ For development, see [Contributing](#contributing).
 | `geonnax.fno` | `FNO` — dimension-flexible Fourier Neural Operator with dense/CP/Tucker/TT spectral weights and optional domain padding |
 | `geonnax.sfno` | `SFNO` — Spherical FNO on lat/lon grids via a differentiable spherical-harmonic transform |
 | `geonnax.wno` | `WNO` — Wavelet Neural Operator with multi-level DWT/IDWT (`WaveletConv`); Haar/Daubechies/Symlet, exact reconstruction |
+| `geonnax.mswt` | `MSWT` — Multi-Scale Wavelet Transformer: attention in the wavelet domain (`WaveletAttention`), global or Swin-windowed, with wavelet down/up-sampling |
 | `geonnax.layers` | Reusable building blocks: `StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `SpectralConv`, `SphericalHarmonicTransform`, `Downsample`/`Upsample`, … |
 | `geonnax.siren` | `SIREN`, `SirenDense` — sinusoidal representation networks |
 | `geonnax.mfn` | `FourierNet`, `GaborNet` — multiplicative filter networks |
