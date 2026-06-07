@@ -33,8 +33,18 @@ import numpy as np
 from jaxtyping import Array, Float
 
 
-# Softening so phase distance has finite gradients where a point hits a centre.
+# Softening for the orientation unit-normalisation (degenerate zero vectors).
 _EPS = 1e-12
+
+
+def _safe_sqrt(sq: Float[Array, "..."]) -> Float[Array, "..."]:
+    """sqrt that is exact (0) at ``sq == 0`` with finite gradients there.
+
+    The double ``where`` keeps the backward pass off the ``sqrt`` singularity at
+    0 without shifting the forward value (unlike adding a fixed epsilon).
+    """
+    positive = sq > 0.0
+    return jnp.where(positive, jnp.sqrt(jnp.where(positive, sq, 1.0)), 0.0)
 
 
 def gabor_frame(
@@ -75,7 +85,7 @@ def gabor_frame(
     sq = einx.sum("n m d -> n m", diff**2)  # squared distance
     env = jnp.exp(-0.5 * einx.divide("n m, m -> n m", sq, scales**2))
     if orientations is None:
-        r = jnp.sqrt(sq + _EPS)
+        r = _safe_sqrt(sq)
         phase = einx.multiply("n m, m -> n m", r, wavenumbers)  # radial
     else:
         unit = orientations / (
@@ -153,7 +163,13 @@ def gabor_frame_grid(
     for s in range(n_scales):
         length = base_scale * 2.0**s
         spacing = length / oversample
-        axes = [np.arange(lo, hi + 0.5 * spacing, spacing) for lo, hi in bounds_np]
+        # Floor the step count so every centre stays inside [lo, hi] even when
+        # the spacing does not divide the interval (the +1e-9 catches an exact
+        # endpoint that floating-point rounds just under).
+        axes = [
+            lo + spacing * np.arange(int(np.floor((hi - lo) / spacing + 1e-9)) + 1)
+            for lo, hi in bounds_np
+        ]
         grid = np.stack(np.meshgrid(*axes, indexing="ij"), axis=-1).reshape(-1, d)
         centers_blocks.append(grid)
         scale_blocks.append(np.full(grid.shape[0], length))

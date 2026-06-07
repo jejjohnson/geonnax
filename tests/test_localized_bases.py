@@ -75,6 +75,25 @@ def test_rbf_grad_finite_at_center():
     assert bool(jnp.isfinite(grad).all())
 
 
+@pytest.mark.parametrize("kernel", ["wendland_c2", "wendland_c4"])
+def test_rbf_narrow_atom_peaks_at_center(kernel):
+    # A point on its centre must peak at 1 even for a width comparable to the
+    # safe-sqrt softening — the value must not be shifted by an additive epsilon.
+    width = 1e-6
+    out = rbf_basis(
+        jnp.zeros((1, 2)), jnp.zeros((1, 2)), jnp.array([width]), kernel=kernel
+    )
+    assert float(out[0, 0]) == pytest.approx(1.0)
+
+    def loss(centers):
+        return jnp.sum(
+            rbf_basis(jnp.zeros((1, 2)), centers, jnp.array([width]), kernel=kernel)
+            ** 2
+        )
+
+    assert bool(jnp.isfinite(jax.grad(loss)(jnp.zeros((1, 2)))).all())
+
+
 def test_rbf_rejects_unknown_kernel():
     with pytest.raises(ValueError, match="unknown kernel"):
         rbf_basis(jnp.zeros((2, 2)), jnp.zeros((1, 2)), jnp.ones(1), kernel="bogus")
@@ -137,6 +156,18 @@ def test_gabor_frame_grid_is_overcomplete_with_geometry():
     # Dyadic scales and matching wavenumbers k = 2 pi / L.
     assert len(np.unique(np.asarray(scales))) == 3
     assert jnp.allclose(wavenumbers, 2.0 * jnp.pi / scales)
+
+
+def test_gabor_frame_grid_centers_stay_within_bounds():
+    # base_scale 0.6 with oversample 1 gives spacing 0.6, which does not divide
+    # the unit box; no generated centre may fall outside [lo, hi].
+    bounds = jnp.array([[0.0, 1.0], [0.0, 1.0]])
+    _, centers, _, _ = gabor_frame_grid(
+        jnp.zeros((4, 2)), bounds, n_scales=2, base_scale=0.6, oversample=1.0
+    )
+    c = np.asarray(centers)
+    assert bool((c[:, 0] >= 0.0).all() and (c[:, 0] <= 1.0).all())
+    assert bool((c[:, 1] >= 0.0).all() and (c[:, 1] <= 1.0).all())
 
 
 @pytest.mark.slow

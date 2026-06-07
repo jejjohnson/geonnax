@@ -26,10 +26,14 @@ import jax.numpy as jnp
 from jaxtyping import Array, Float
 
 
-# Softening added under the square root so that gradients are finite when an
-# evaluation point coincides with a centre (``r = 0``); bare ``sqrt`` has an
-# infinite derivative there, which poisons reverse-mode through ``0 * inf``.
-_EPS = 1e-12
+# A square-root that is exact (returns 0) at ``sq == 0`` yet has finite
+# gradients there: the inner ``where`` keeps the sqrt input away from 0 on the
+# backward pass, while the outer ``where`` restores the exact 0 forward value.
+# Unlike adding a fixed epsilon, this never shifts the value — important for
+# narrow atoms whose width is comparable to a softening constant.
+def _safe_sqrt(sq: Float[Array, "..."]) -> Float[Array, "..."]:
+    positive = sq > 0.0
+    return jnp.where(positive, jnp.sqrt(jnp.where(positive, sq, 1.0)), 0.0)
 
 
 def wendland_c2(r: Float[Array, "..."]) -> Float[Array, "..."]:
@@ -103,7 +107,7 @@ def rbf_basis(
         # Use the squared distance directly — no sqrt, so grads are clean at r=0.
         z2 = einx.divide("n m, m -> n m", sq, widths**2)
         return jnp.exp(-0.5 * z2)
-    r = jnp.sqrt(sq + _EPS)
+    r = _safe_sqrt(sq)
     z = einx.divide("n m, m -> n m", r, widths)
     return wendland_c2(z) if kernel == "wendland_c2" else wendland_c4(z)
 
