@@ -10,9 +10,12 @@ sample / param sites.
 Submodules:
 
 - `geonnax.geo` — lon/lat helpers (``deg2rad``, ``lonlat_scale``, …).
-- `geonnax.basis` — Fourier / seasonal / interaction transforms.
-- `geonnax._basis` — Dirichlet / spherical-harmonic / Slepian /
-  graph-Laplacian eigenpairs.
+- `geonnax.basis` — the public basis surface: Fourier / seasonal /
+  interaction feature transforms, plus the re-exported eigenfunction
+  (Dirichlet, spherical-harmonic, Slepian, graph-Laplacian), localized
+  (RBF), and overcomplete (Gabor frame) spatial bases.
+- `geonnax._basis` — implementation home for the spatial bases above
+  (re-exported through `geonnax.basis`).
 - `geonnax.encoders` — coordinate encoders (``Deg2Rad``, …,
   ``SphericalHarmonicEncoder``).
 - `geonnax.ncp` — ``NCPContinuousPerturb`` input perturbation.

@@ -23,21 +23,35 @@ evaluation points (the rows of $\Phi$), **not** a batch axis — these are pure
 functions of arrays, so `jax.vmap` / `jax.jit` over any extra leading axis as
 needed.
 
+Everything below is importable from the single public `geonnax.basis` module
+(the spatial bases are re-exported there from the `geonnax._basis`
+implementation package), so downstream libraries never import a private
+namespace.
+
 ## Feature transforms
 
 Fourier, seasonal, and interaction feature maps, the localized Gaussian-in-time
 window, and standardisation helpers.
 
-::: geonnax.basis
-
 ## Eigenfunction, localized & overcomplete bases
 
-Closed-form and graph-based eigenpairs — 1D Dirichlet/Fourier modes, real
-spherical harmonics $Y_\ell^m$, Slepian functions on a cap, and graph-Laplacian
-($L = D - A$) eigenvectors — alongside the **placeable** radial bases
-(`rbf_basis`, with Gaussian or compactly-supported Wendland kernels) and the
-fixed **overcomplete** multiscale `gabor_frame` / `gabor_frame_grid`. The
-spectral bases return eigenvalues; the localized and frame bases return per-atom
-geometry instead.
+Closed-form and graph-based eigenpairs — 1D Dirichlet/Fourier modes, the
+divergence-free vector basis `divfree_basis` (skew gradients of the box stream
+functions, for incompressible flow), real spherical harmonics $Y_\ell^m$,
+Slepian functions on a cap, and graph-Laplacian ($L = D - A$) eigenvectors —
+alongside the **placeable** radial bases (`rbf_basis` / `spherical_rbf_basis`,
+with Gaussian or compactly-supported Wendland kernels in Euclidean or geodesic
+distance), the fixed **overcomplete** multiscale `gabor_frame` /
+`gabor_frame_grid`, and the **orthonormal** DWT matrices `wavelet_basis_1d` /
+`wavelet_basis_2d`. The spectral bases return eigenvalues; the localized and
+frame bases return per-atom geometry instead.
 
-::: geonnax._basis
+## Data-driven basis
+
+`eof_basis` returns the empirical orthogonal functions (PCA) of a data matrix —
+the leading right singular vectors with their singular-value spectrum — for a
+basis that adapts to the covariance actually present in the data.
+
+## API
+
+::: geonnax.basis

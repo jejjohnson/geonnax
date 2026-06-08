@@ -1,4 +1,13 @@
-"""Pure-JAX feature helpers for Bayesian-Neural-Field-style models.
+"""The public basis surface: feature transforms + the eigenfunction/frame zoo.
+
+This module is the single public entry point for geonnax's bases. It *defines*
+the pure-JAX feature transforms below and *re-exports* the eigenfunction,
+localized, and overcomplete spatial bases from the ``geonnax._basis``
+implementation package, so a downstream library imports everything it needs
+(``fourier_basis``, ``graph_laplacian_eigpairs``, ``real_spherical_harmonics``,
+``slepian_cap_basis``, ``rbf_basis``, ``gabor_frame_grid``, …) from
+``geonnax.basis`` without reaching into a private namespace. See the basis
+contract in ``docs/api/bases.md``.
 
 All functions are pure, stateless, and take only JAX arrays — no
 ``equinox.Module``, no NumPyro sites, no pandas. ``equinox.Module``
@@ -6,7 +15,7 @@ wrappers built atop these helpers (``Standardization``,
 ``FourierFeatures``, ``SeasonalFeatures``, ``InteractionFeatures``)
 live with the consuming library.
 
-Provides:
+Feature transforms provided directly here:
 
 * `fourier_features` — cos/sin basis at frequencies $2\\pi
   \\cdot 2^d$ for $d = 0, \\dots, D-1$.
@@ -32,11 +41,35 @@ import einx
 import jax.numpy as jnp
 from jaxtyping import Array, Float, Int
 
-# Convenience re-exports so localized/overcomplete bases are reachable from
-# ``geonnax.basis`` too; they are documented once under ``geonnax._basis`` (their
-# home), so they are intentionally left out of this module's ``__all__``.
-from geonnax._basis._gabor import gabor_frame, gabor_frame_grid  # noqa: F401
-from geonnax._basis._rbf import rbf_basis, wendland_c2, wendland_c4  # noqa: F401
+# The eigenfunction, localized, and overcomplete bases live in the
+# ``geonnax._basis`` implementation package; re-export them here so the whole
+# basis zoo — feature transforms (defined in this module) plus the spatial
+# bases — is reachable from the single public ``geonnax.basis`` surface, and
+# downstream libraries never have to import the private namespace.
+from geonnax._basis import (
+    SlepianCapBasis,
+    divfree_basis,
+    eof_basis,
+    fourier_basis,
+    fourier_basis_1d,
+    fourier_eigenvalues,
+    fourier_eigenvalues_1d,
+    gabor_frame,
+    gabor_frame_grid,
+    graph_laplacian_eigpairs,
+    harmonic_degrees,
+    rbf_basis,
+    real_spherical_harmonics,
+    shannon_number,
+    slepian_cap_basis,
+    slepian_cap_eigh_per_m,
+    slepian_concentration_matrix,
+    spherical_rbf_basis,
+    wavelet_basis_1d,
+    wavelet_basis_2d,
+    wendland_c2,
+    wendland_c4,
+)
 
 
 def fourier_features(
@@ -295,11 +328,33 @@ def unstandardize(
 
 
 __all__ = [
+    "SlepianCapBasis",
+    "divfree_basis",
+    "eof_basis",
+    "fourier_basis",
+    "fourier_basis_1d",
+    "fourier_eigenvalues",
+    "fourier_eigenvalues_1d",
     "fourier_features",
+    "gabor_frame",
+    "gabor_frame_grid",
     "gaussian_window_features",
+    "graph_laplacian_eigpairs",
+    "harmonic_degrees",
     "interaction_features",
+    "rbf_basis",
+    "real_spherical_harmonics",
     "seasonal_features",
     "seasonal_frequencies",
+    "shannon_number",
+    "slepian_cap_basis",
+    "slepian_cap_eigh_per_m",
+    "slepian_concentration_matrix",
+    "spherical_rbf_basis",
     "standardize",
     "unstandardize",
+    "wavelet_basis_1d",
+    "wavelet_basis_2d",
+    "wendland_c2",
+    "wendland_c4",
 ]
