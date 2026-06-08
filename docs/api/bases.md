@@ -23,12 +23,15 @@ evaluation points (the rows of $\Phi$), **not** a batch axis — these are pure
 functions of arrays, so `jax.vmap` / `jax.jit` over any extra leading axis as
 needed.
 
+Everything below is importable from the single public `geonnax.basis` module
+(the spatial bases are re-exported there from the `geonnax._basis`
+implementation package), so downstream libraries never import a private
+namespace.
+
 ## Feature transforms
 
 Fourier, seasonal, and interaction feature maps, the localized Gaussian-in-time
 window, and standardisation helpers.
-
-::: geonnax.basis
 
 ## Eigenfunction, localized & overcomplete bases
 
@@ -40,4 +43,6 @@ fixed **overcomplete** multiscale `gabor_frame` / `gabor_frame_grid`. The
 spectral bases return eigenvalues; the localized and frame bases return per-atom
 geometry instead.
 
-::: geonnax._basis
+## API
+
+::: geonnax.basis
