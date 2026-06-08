@@ -112,4 +112,56 @@ def rbf_basis(
     return wendland_c2(z) if kernel == "wendland_c2" else wendland_c4(z)
 
 
-__all__ = ["rbf_basis", "wendland_c2", "wendland_c4"]
+def spherical_rbf_basis(
+    unit_xyz: Float[Array, "N 3"],
+    centers: Float[Array, "M 3"],
+    widths: Float[Array, " M"],
+    *,
+    kernel: Literal["gaussian", "wendland_c2", "wendland_c4"] = "gaussian",
+) -> Float[Array, "N M"]:
+    r"""Placeable radial basis on the unit 2-sphere, in geodesic distance.
+
+    The spherical counterpart of `rbf_basis`: column $a$ is $\varphi_a(x) =
+    K(d(x, c_a) / \ell_a)$ with $d$ the **great-circle** (geodesic) distance
+    $d(x, c) = \arccos(\langle x, c \rangle)$ rather than the Euclidean (chordal)
+    distance, so an atom's support is a geodesic cap and is rotation-invariant on
+    the sphere. Put one at a coastline or an eddy and leave the rest of the globe
+    untouched. Inputs are assumed to lie on the unit sphere (not normalised
+    here). As with `rbf_basis`, only $\Phi$ is returned; the prior variance per
+    centre is a downstream choice.
+
+    Args:
+        unit_xyz: Evaluation directions, shape ``(N, 3)``, on the unit sphere.
+        centers: Atom centres, shape ``(M, 3)``, on the unit sphere.
+        widths: Per-atom width $\ell_a$ (geodesic length scale or Wendland cap
+            radius, in radians), shape ``(M,)``.
+        kernel: ``"gaussian"`` (smooth cap) or ``"wendland_c2"`` /
+            ``"wendland_c4"`` (compact geodesic support).
+
+    Returns:
+        Basis matrix of shape ``(N, M)``.
+
+    Raises:
+        ValueError: If ``kernel`` is not a recognised name.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax.basis import spherical_rbf_basis
+        >>> x = jnp.eye(3)[:2]      # two points on the sphere, (N=2, 3)
+        >>> c = jnp.eye(3)          # three centres, (M=3, 3)
+        >>> spherical_rbf_basis(x, c, jnp.ones(3)).shape
+        (2, 3)
+    """
+    if kernel not in ("gaussian", "wendland_c2", "wendland_c4"):
+        raise ValueError(f"unknown kernel {kernel!r}.")
+    # Great-circle distance; clip guards arccos against tiny out-of-range dots.
+    cos_ang = jnp.clip(einx.dot("n d, m d -> n m", unit_xyz, centers), -1.0, 1.0)
+    dist = jnp.arccos(cos_ang)
+    if kernel == "gaussian":
+        z2 = einx.divide("n m, m -> n m", dist**2, widths**2)
+        return jnp.exp(-0.5 * z2)
+    z = einx.divide("n m, m -> n m", dist, widths)
+    return wendland_c2(z) if kernel == "wendland_c2" else wendland_c4(z)
+
+
+__all__ = ["rbf_basis", "spherical_rbf_basis", "wendland_c2", "wendland_c4"]

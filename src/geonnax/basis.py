@@ -48,6 +48,8 @@ from jaxtyping import Array, Float, Int
 # downstream libraries never have to import the private namespace.
 from geonnax._basis import (
     SlepianCapBasis,
+    divfree_basis,
+    eof_basis,
     fourier_basis,
     fourier_basis_1d,
     fourier_eigenvalues,
@@ -62,6 +64,9 @@ from geonnax._basis import (
     slepian_cap_basis,
     slepian_cap_eigh_per_m,
     slepian_concentration_matrix,
+    spherical_rbf_basis,
+    wavelet_basis_1d,
+    wavelet_basis_2d,
     wendland_c2,
     wendland_c4,
 )
@@ -324,6 +329,8 @@ def unstandardize(
 
 __all__ = [
     "SlepianCapBasis",
+    "divfree_basis",
+    "eof_basis",
     "fourier_basis",
     "fourier_basis_1d",
     "fourier_eigenvalues",
@@ -343,8 +350,11 @@ __all__ = [
     "slepian_cap_basis",
     "slepian_cap_eigh_per_m",
     "slepian_concentration_matrix",
+    "spherical_rbf_basis",
     "standardize",
     "unstandardize",
+    "wavelet_basis_1d",
+    "wavelet_basis_2d",
     "wendland_c2",
     "wendland_c4",
 ]
