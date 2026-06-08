@@ -122,6 +122,30 @@ class TestSphericalRBFBasis:
         rotated = spherical_rbf_basis(x @ rot.T, c @ rot.T, jnp.ones(3))
         np.testing.assert_allclose(base, rotated, atol=1e-5)
 
+    @pytest.mark.parametrize("kernel", ["gaussian", "wendland_c2", "wendland_c4"])
+    def test_finite_gradient_at_coincident_centre(self, kernel):
+        # arccos has an infinite derivative at distance 0; the safe arccos must
+        # keep gradients w.r.t. the evaluation point and the centre finite when
+        # a point sits exactly on a centre.
+        c = jnp.array([[0.0, 0.0, 1.0]])
+
+        def value(x):
+            return spherical_rbf_basis(x[None, :], c, jnp.array([0.5]), kernel=kernel)[
+                0, 0
+            ]
+
+        g_point = jax.grad(value)(jnp.array([0.0, 0.0, 1.0]))  # x == centre
+        assert bool(jnp.all(jnp.isfinite(g_point)))
+
+        def value_c(centre):
+            x = jnp.array([[0.0, 0.0, 1.0]])
+            return spherical_rbf_basis(
+                x, centre[None, :], jnp.array([0.5]), kernel=kernel
+            )[0, 0]
+
+        g_centre = jax.grad(value_c)(jnp.array([0.0, 0.0, 1.0]))
+        assert bool(jnp.all(jnp.isfinite(g_centre)))
+
     def test_rejects_unknown_kernel(self):
         with pytest.raises(ValueError):
             spherical_rbf_basis(jnp.eye(3), jnp.eye(3), jnp.ones(3), kernel="nope")

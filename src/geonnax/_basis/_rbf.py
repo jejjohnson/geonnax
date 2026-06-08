@@ -36,6 +36,18 @@ def _safe_sqrt(sq: Float[Array, "..."]) -> Float[Array, "..."]:
     return jnp.where(positive, jnp.sqrt(jnp.where(positive, sq, 1.0)), 0.0)
 
 
+# arccos whose gradient is finite at the endpoints ``|c| == 1``: ``arccos`` has
+# an infinite derivative there, so a coincident point/centre (``c == 1``, zero
+# geodesic distance) would otherwise produce NaN cotangents even though the
+# forward value is the finite peak. The inner ``where`` keeps the backward pass
+# off the singularity; the outer ``where`` restores the exact value (0 at c=1,
+# pi at c=-1). The spherical analogue of ``_safe_sqrt``.
+def _safe_arccos(c: Float[Array, "..."]) -> Float[Array, "..."]:
+    interior = jnp.abs(c) < 1.0
+    safe_c = jnp.where(interior, c, 0.0)
+    return jnp.where(interior, jnp.arccos(safe_c), jnp.where(c > 0.0, 0.0, jnp.pi))
+
+
 def wendland_c2(r: Float[Array, "..."]) -> Float[Array, "..."]:
     r"""Wendland $C^2$ kernel, positive definite in dimensions $d \le 3$.
 
@@ -154,9 +166,11 @@ def spherical_rbf_basis(
     """
     if kernel not in ("gaussian", "wendland_c2", "wendland_c4"):
         raise ValueError(f"unknown kernel {kernel!r}.")
-    # Great-circle distance; clip guards arccos against tiny out-of-range dots.
-    cos_ang = jnp.clip(einx.dot("n d, m d -> n m", unit_xyz, centers), -1.0, 1.0)
-    dist = jnp.arccos(cos_ang)
+    # Great-circle distance via a gradient-safe arccos: exact at a coincident
+    # centre (dot == 1, distance 0) yet with finite gradients there, and robust
+    # to dot products that float just outside [-1, 1].
+    cos_ang = einx.dot("n d, m d -> n m", unit_xyz, centers)
+    dist = _safe_arccos(cos_ang)
     if kernel == "gaussian":
         z2 = einx.divide("n m, m -> n m", dist**2, widths**2)
         return jnp.exp(-0.5 * z2)
