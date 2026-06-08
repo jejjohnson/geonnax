@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/jejjohnson/geonnax/compare/v0.0.4...v0.0.5) (2026-06-08)
+
+
+### Features
+
+* **basis:** public basis surface + EOF, divergence-free, geodesic-RBF & wavelet bases ([#25](https://github.com/jejjohnson/geonnax/issues/25)) ([9f160d3](https://github.com/jejjohnson/geonnax/commit/9f160d37e455530291e964421271d8079372fd5b))
+
 ## [0.0.4](https://github.com/jejjohnson/geonnax/compare/v0.0.3...v0.0.4) (2026-06-07)
 
 
