@@ -19,6 +19,8 @@ operator lives on the sphere — the right geometry for global lon/lat fields.
 
 ## Fourier Neural Operator
 
+Also exported under the long-form alias `geonnax.FourierNeuralOperator`.
+
 ::: geonnax.fno.FNO
 
 ::: geonnax.fno.FNOBlock
@@ -66,6 +68,8 @@ to sharp or non-stationary fields. Analysis and synthesis are exact adjoints,
 so an orthonormal wavelet reconstructs perfectly; each spatial extent must be
 divisible by `2 ** level`.
 
+Also exported under the long-form alias `geonnax.WaveletNeuralOperator`.
+
 ::: geonnax.wno.WNO
 
 ::: geonnax.wno.WNOBlock
@@ -98,6 +102,9 @@ attention on chaotic / long-rollout dynamics (Wang et al., 2026). `MSWT` is a
 patch-tokenised U-net of `WaveletAttention` blocks with wavelet down/up-sampling;
 `WaveletAttention` is the reusable layer. Attention is global (`Attention`) or,
 for large grids, Swin-style `WindowedAttention` (``O(N · window^d)``).
+
+`MSWT` is also exported under the long-form alias
+`geonnax.MultiScaleWaveletTransformer`.
 
 ::: geonnax.mswt.MSWT
 
