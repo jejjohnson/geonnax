@@ -11,6 +11,8 @@ constituent layers live in [Building Blocks](layers.md).
 
 ## U-Net
 
+Also exported under the long-form alias `geonnax.XUNet`.
+
 ::: geonnax.unet.UNet
 
 ## Nested residual stages
