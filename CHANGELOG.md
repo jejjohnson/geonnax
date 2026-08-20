@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/jejjohnson/geonnax/compare/v0.0.5...v0.0.6) (2026-08-20)
+
+
+### Features
+
+* **encoders:** add GeoContextEncoder for lat/lon/time/covariate context vectors ([#38](https://github.com/jejjohnson/geonnax/issues/38)) ([359be95](https://github.com/jejjohnson/geonnax/commit/359be957332b9841efa4e1335c7aff2727903e26))
+
 ## [0.0.5](https://github.com/jejjohnson/geonnax/compare/v0.0.4...v0.0.5) (2026-06-08)
 
 
