@@ -17,7 +17,8 @@ Submodules:
 - `geonnax._basis` — implementation home for the spatial bases above
   (re-exported through `geonnax.basis`).
 - `geonnax.encoders` — coordinate encoders (``Deg2Rad``, …,
-  ``SphericalHarmonicEncoder``).
+  ``SphericalHarmonicEncoder``) and ``GeoContextEncoder`` for
+  lon/lat/time/covariate context vectors.
 - `geonnax.ncp` — ``NCPContinuousPerturb`` input perturbation.
 - `geonnax.siren` — ``SirenDense``, ``SIREN`` (Sitzmann et al.,
   2020).
@@ -62,6 +63,7 @@ from geonnax.encoders import (
     Cartesian3DEncoder,
     CyclicEncoder,
     Deg2Rad,
+    GeoContextEncoder,
     LonLatScale,
     SphericalHarmonicEncoder,
 )
@@ -162,6 +164,7 @@ __all__ = [
     "GaborFilter",
     "GaborNet",
     "GeneratedSiren",
+    "GeoContextEncoder",
     "GlobalResponseNorm",
     "HeteroscedasticHead",
     "HybridSphericalSlepianEncoder",
