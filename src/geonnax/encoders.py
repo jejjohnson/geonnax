@@ -18,6 +18,7 @@ from jaxtyping import Array, Float, Num
 
 from geonnax._basis import real_spherical_harmonics
 from geonnax.geo import (
+    _promote_to_floating,
     _validate_input_unit,
     _validate_range,
     cyclic_encode,
@@ -25,6 +26,17 @@ from geonnax.geo import (
     lonlat_scale,
     lonlat_to_cartesian3d,
 )
+
+
+def _as_scalar(value: Num[Array, ""] | float, name: str) -> Float[Array, ""]:
+    """Coerce a scalar input to a floating 0-d array, rejecting arrays."""
+    array = jnp.asarray(value)
+    if array.ndim != 0:
+        raise ValueError(
+            f"{name} must be a scalar; got shape {array.shape}. "
+            "Use jax.vmap to encode a batch of observations."
+        )
+    return _promote_to_floating(array)
 
 
 class Deg2Rad(eqx.Module):
@@ -249,10 +261,253 @@ class SphericalHarmonicEncoder(eqx.Module):
         return real_spherical_harmonics(unit_xyz, l_max=self.l_max)[0]
 
 
+class GeoContextEncoder(eqx.Module):
+    r"""Encode geoscience metadata into a single context vector.
+
+    Combines longitude/latitude, day-of-year, and arbitrary physical
+    covariates (wind, retrieval uncertainty, viewing geometry, …) into
+    one feature vector suitable for conditioning a downstream model —
+    for example the ``condition`` argument of a conditional
+    normalizing flow or an anomaly scorer.
+
+    Features are concatenated in the fixed order
+    ``[lon/lat block, time block, extra block]``:
+
+    | Block | Option | Features |
+    | --- | --- | --- |
+    | lon/lat | ``"spherical"`` | ``[cosϕ cosλ, cosϕ sinλ, sinϕ]`` (3) |
+    | lon/lat | ``"sincos"`` | ``[cosλ, sinλ, ϕ/90]`` (3) |
+    | lon/lat | ``"raw"`` | ``[lon, lat]`` rescaled to ``[-1, 1]`` (2) |
+    | time | ``"cyclic"`` | ``[cos(2π d/P), sin(2π d/P)]`` (2) |
+    | time | ``"raw"`` | ``[d/P]`` (1) |
+    | extra | — | covariate values in **sorted key order** |
+
+    where ``λ`` is longitude, ``ϕ`` is latitude, ``d`` is day of year
+    and ``P`` is `period`. The cyclic blocks put cosine before sine,
+    matching `geonnax.geo.cyclic_encode`.
+
+    Inputs are in **degrees** (``lat ∈ [-90, 90]``,
+    ``lon ∈ [-180, 180]``) with ``day_of_year ∈ [0, period)``. Values
+    outside those ranges are *not* clipped — validation is shape-only,
+    so the encoder stays ``jit``-safe. The ``"raw"`` longitude feature
+    is discontinuous at the dateline; use ``"sincos"`` or
+    ``"spherical"`` to avoid the jump.
+
+    Attributes:
+        use_latlon: Whether to encode longitude/latitude.
+        latlon_encoding: One of ``"spherical"``, ``"sincos"``,
+            ``"raw"``.
+        use_time: Whether to encode day of year.
+        time_encoding: One of ``"cyclic"``, ``"raw"``.
+        period: Days in a full seasonal cycle (must be positive).
+        include_extra: Whether to accept an ``extra`` covariate dict.
+
+    Examples:
+        >>> import jax
+        >>> import jax.numpy as jnp
+        >>> from geonnax.encoders import GeoContextEncoder
+        >>> encoder = GeoContextEncoder()
+        >>> # Single example: 3 spherical + 2 cyclic-time features.
+        >>> encoder(lat=45.0, lon=10.0, day_of_year=200.0).shape
+        (5,)
+        >>> # Batch with jax.vmap; `extra` is a pytree of covariates.
+        >>> batched = jax.vmap(
+        ...     lambda lat, lon, doy, extra: encoder(
+        ...         lat=lat, lon=lon, day_of_year=doy, extra=extra
+        ...     )
+        ... )
+        >>> out = batched(
+        ...     jnp.linspace(-60.0, 60.0, 4),
+        ...     jnp.linspace(-120.0, 120.0, 4),
+        ...     jnp.array([1.0, 90.0, 180.0, 270.0]),
+        ...     {"wind": jnp.zeros((4, 2)), "sigma": jnp.ones((4,))},
+        ... )
+        >>> out.shape
+        (4, 8)
+        >>> encoder.output_dim(extra_dim=3)
+        8
+    """
+
+    use_latlon: bool = eqx.field(static=True, default=True)
+    latlon_encoding: Literal["spherical", "sincos", "raw"] = eqx.field(
+        static=True, default="spherical"
+    )
+    use_time: bool = eqx.field(static=True, default=True)
+    time_encoding: Literal["cyclic", "raw"] = eqx.field(static=True, default="cyclic")
+    period: float = eqx.field(static=True, default=365.25)
+    include_extra: bool = eqx.field(static=True, default=True)
+
+    def __post_init__(self) -> None:
+        if self.latlon_encoding not in {"spherical", "sincos", "raw"}:
+            raise ValueError(
+                "latlon_encoding must be one of 'spherical', 'sincos', 'raw'; "
+                f"got {self.latlon_encoding!r}."
+            )
+        if self.time_encoding not in {"cyclic", "raw"}:
+            hint = (
+                " ('fourier' is planned but not yet implemented; compose "
+                "geonnax.basis.seasonal_features for multi-harmonic features.)"
+                if self.time_encoding == "fourier"
+                else ""
+            )
+            raise ValueError(
+                "time_encoding must be one of 'cyclic', 'raw'; "
+                f"got {self.time_encoding!r}.{hint}"
+            )
+        if self.period <= 0.0:
+            raise ValueError(f"period must be positive; got {self.period}.")
+        if not (self.use_latlon or self.use_time or self.include_extra):
+            raise ValueError(
+                "at least one of use_latlon, use_time, include_extra must be "
+                "enabled; got all disabled."
+            )
+
+    def output_dim(self, extra_dim: int = 0) -> int:
+        """Return the number of context features produced by this encoder.
+
+        Args:
+            extra_dim: Total number of features contributed by the
+                ``extra`` covariates. Must be ``0`` when
+                `include_extra` is ``False``.
+
+        Returns:
+            The trailing dimension ``F`` of the encoded context vector.
+
+        Examples:
+            >>> from geonnax.encoders import GeoContextEncoder
+            >>> GeoContextEncoder().output_dim()
+            5
+            >>> GeoContextEncoder(latlon_encoding="raw").output_dim(extra_dim=2)
+            6
+            >>> GeoContextEncoder(use_time=False).output_dim()
+            3
+        """
+        if extra_dim < 0:
+            raise ValueError(f"extra_dim must be non-negative; got {extra_dim}.")
+        if extra_dim and not self.include_extra:
+            raise ValueError(
+                f"extra_dim must be 0 when include_extra=False; got {extra_dim}."
+            )
+
+        n_latlon = 0
+        if self.use_latlon:
+            n_latlon = 2 if self.latlon_encoding == "raw" else 3
+        n_time = 0
+        if self.use_time:
+            n_time = 1 if self.time_encoding == "raw" else 2
+        return n_latlon + n_time + extra_dim
+
+    def _encode_latlon(self, lat: Array, lon: Array) -> Float[Array, " F"]:
+        lonlat = jnp.stack([lon, lat])[None, :]  # () x2 -> (2,) -> (1, 2)
+        if self.latlon_encoding == "raw":
+            return lonlat_scale(lonlat)[0]  # (1, 2) -> (2,)
+        if self.latlon_encoding == "spherical":
+            # (1, 2) degrees -> (1, 3) on the unit sphere -> (3,)
+            return lonlat_to_cartesian3d(lonlat, input_unit="degrees")[0]
+        # "sincos": [cos λ, sin λ] from the shared helper, plus normalized ϕ.
+        lon_cyc = cyclic_encode(deg2rad(lonlat[:, :1]))[0]  # (1, 1) -> (2,)
+        return jnp.concatenate([lon_cyc, (lat / 90.0)[None]])  # (2,) + (1,) -> (3,)
+
+    def _encode_time(self, day_of_year: Array) -> Float[Array, " F"]:
+        scaled = day_of_year / self.period  # () -> () fraction of a cycle
+        if self.time_encoding == "raw":
+            return scaled[None]  # () -> (1,)
+        angle = 2.0 * jnp.pi * scaled  # fraction -> radians
+        return cyclic_encode(angle[None, None])[0]  # (1, 1) -> (1, 2) -> (2,)
+
+    def __call__(
+        self,
+        *,
+        lat: Num[Array, ""] | float | None = None,
+        lon: Num[Array, ""] | float | None = None,
+        day_of_year: Num[Array, ""] | float | None = None,
+        extra: dict[str, Num[Array, "..."]] | None = None,
+    ) -> Float[Array, " F"]:
+        """Encode one observation's metadata into a context vector.
+
+        Args:
+            lat: Scalar latitude in degrees. Required when
+                `use_latlon` is ``True``, forbidden otherwise.
+            lon: Scalar longitude in degrees. Required when
+                `use_latlon` is ``True``, forbidden otherwise.
+            day_of_year: Scalar day of year. Required when `use_time`
+                is ``True``, forbidden otherwise.
+            extra: Optional covariate mapping. Each value is a scalar
+                (one feature) or a ``(k,)`` vector (``k`` features);
+                keys are concatenated in sorted order. Forbidden when
+                `include_extra` is ``False``.
+
+        Returns:
+            Context vector of shape ``(F,)`` where ``F`` is
+            `output_dim` evaluated with the total ``extra`` width.
+
+        Raises:
+            ValueError: If a required input is missing, a disabled
+                input is supplied, or an input has the wrong shape.
+
+        Examples:
+            >>> import jax.numpy as jnp
+            >>> from geonnax.encoders import GeoContextEncoder
+            >>> # Methane-style context: geometry, season, and covariates.
+            >>> encoder = GeoContextEncoder(latlon_encoding="spherical")
+            >>> context = encoder(
+            ...     lat=31.7,
+            ...     lon=-102.1,
+            ...     day_of_year=204.0,
+            ...     extra={"wind": jnp.array([3.2, -1.1]), "sigma": 12.0},
+            ... )
+            >>> context.shape
+            (8,)
+            >>> # Sea-surface context without any covariates.
+            >>> sst = GeoContextEncoder(include_extra=False)
+            >>> sst(lat=-20.0, lon=175.0, day_of_year=15.0).shape
+            (5,)
+        """
+        blocks: list[Array] = []
+
+        if self.use_latlon:
+            if lat is None or lon is None:
+                raise ValueError(
+                    "lat and lon must both be provided when use_latlon=True."
+                )
+            lat_arr = _as_scalar(lat, name="lat")
+            lon_arr = _as_scalar(lon, name="lon")
+            blocks.append(self._encode_latlon(lat_arr, lon_arr))
+        elif lat is not None or lon is not None:
+            raise ValueError("lat and lon must be omitted when use_latlon=False.")
+
+        if self.use_time:
+            if day_of_year is None:
+                raise ValueError("day_of_year must be provided when use_time=True.")
+            blocks.append(self._encode_time(_as_scalar(day_of_year, "day_of_year")))
+        elif day_of_year is not None:
+            raise ValueError("day_of_year must be omitted when use_time=False.")
+
+        if not self.include_extra and extra is not None:
+            raise ValueError("extra must be omitted when include_extra=False.")
+        if self.include_extra and extra is not None:
+            for name in sorted(extra):  # sorted keys keep the layout deterministic
+                value = jnp.asarray(extra[name])
+                if value.ndim > 1:
+                    raise ValueError(
+                        f"extra[{name!r}] must be a scalar or a (k,) vector; "
+                        f"got shape {value.shape}."
+                    )
+                blocks.append(jnp.atleast_1d(_promote_to_floating(value)))
+
+        if not blocks:
+            raise ValueError(
+                "no context features were produced; provide extra covariates "
+                "when use_latlon and use_time are both False."
+            )
+        return jnp.concatenate(blocks)  # blocks of (k_i,) -> (F,)
+
+
 __all__ = [
     "Cartesian3DEncoder",
     "CyclicEncoder",
     "Deg2Rad",
+    "GeoContextEncoder",
     "LonLatScale",
     "SphericalHarmonicEncoder",
 ]
