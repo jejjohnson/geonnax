@@ -132,7 +132,7 @@ from geonnax.vssgp import DeepVSSGPCore
 from geonnax.wno import WNO, WaveletNeuralOperator, WNOBlock
 
 
-__version__ = "0.0.5"  # x-release-please-version
+__version__ = "0.0.6"  # x-release-please-version
 
 __all__ = [
     "FNO",
