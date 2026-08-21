@@ -24,7 +24,9 @@ a network's last layer into a GP via a random-feature basis and a Laplace covari
 ## Lipschitz-bounded layers
 
 Spectral normalisation rescales a linear layer's weight to a fixed spectral norm,
-$\hat W = c\,W / \sigma(W)$, making the layer $c$-Lipschitz. It is the wrapper half of
+$\hat W = c\,W / \hat\sigma(W)$, making the layer approximately $c$-Lipschitz —
+$\hat\sigma$ is a power-iteration estimate that approaches $\sigma(W)$ from below, so
+the bound is the cheap, standard one rather than a provable one. It is the wrapper half of
 the SNGP / DUE recipe: `RandomFeatureGaussianProcess` above supplies the distance-aware
 output head, and spectrally normalising the upstream dense layers is what makes the
 feature extractor distance-preserving enough for that head to be meaningful.

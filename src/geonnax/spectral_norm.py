@@ -2,16 +2,22 @@ r"""Spectral normalisation — $c$-Lipschitz linear layers via power iteration.
 
 `SpectralNormalization` wraps any linear `equinox.Module` exposing a
 ``.weight`` matrix and rescales that matrix to a fixed spectral norm, so the
-wrapped map is $c$-Lipschitz (Miyato et al., 2018). This is the wrapper half
-of the SNGP / DUE recipe: `geonnax.sngp.RandomFeatureGaussianProcess`
-supplies the distance-aware output head, and spectral normalisation of the
-upstream dense layers is what makes the feature extractor distance-preserving
-enough for that head to mean anything.
+wrapped map is (approximately) $c$-Lipschitz (Miyato et al., 2018). This is
+the wrapper half of the SNGP / DUE recipe:
+`geonnax.sngp.RandomFeatureGaussianProcess` supplies the distance-aware
+output head, and spectral normalisation of the upstream dense layers is what
+makes the feature extractor distance-preserving enough for that head to mean
+anything.
 
 The top singular value is estimated by power iteration on state $(u, v)$
 carried as ordinary array fields, so the module stays a plain pytree. The
 forward pass is pure: it returns a *new* module with $(u, v)$ advanced,
 alongside the layer output.
+
+The estimate approaches $\sigma(W)$ from below, so the realised Lipschitz
+constant is $c\,\sigma(W)/\hat\sigma(W) \ge c$ until the iterates converge —
+approximate normalisation, matching the reference implementations rather than
+a provable bound. `SpectralNormalization` documents the contract in full.
 """
 
 from __future__ import annotations
@@ -21,6 +27,11 @@ import jax
 import jax.numpy as jnp
 import jax.random as jr
 from jaxtyping import Array, Float, PRNGKeyArray
+
+
+# Floor for the sigma divisor. An all-zero weight yields sigma == 0, and
+# 0 * (coeff / 0) is NaN; flooring turns that into 0 * (coeff / eps) == 0.
+_SIGMA_FLOOR = 1e-12
 
 
 def _l2_normalize(x: Float[Array, " n"], eps: float = 1e-12) -> Float[Array, " n"]:
@@ -40,9 +51,10 @@ class SpectralNormalization(eqx.Module):
     \sigma(W) = \sup_{\|x\| = 1} \|W x\| ,
     $$
 
-    so $\|\hat W x\| \le c \|x\|$ and a stack of $L$ such layers is
-    $c^L$-Lipschitz. Miyato et al. (2018) and the SNGP / DUE line of work use
-    $c \approx 0.95$.
+    so if $\sigma(W)$ were exact, $\|\hat W x\| \le c \|x\|$ and a stack of
+    $L$ such layers would be $c^L$-Lipschitz. Miyato et al. (2018) and the
+    SNGP / DUE line of work use $c \approx 0.95$. What is actually computed
+    is an *estimate* of $\sigma(W)$ — see the contract note below.
 
     $\sigma(W)$ is estimated by power iteration on persistent state
     $u \in \mathbb{R}^m$, $v \in \mathbb{R}^n$:
@@ -52,7 +64,7 @@ class SpectralNormalization(eqx.Module):
     \qquad
     u \leftarrow \frac{W v}{\|W v\|},
     \qquad
-    \sigma(W) \approx u^{\top} W v .
+    \hat\sigma(W) = |u^{\top} W v| \approx \sigma(W) .
     $$
 
     One iteration per forward pass is the standard setting — the estimate
@@ -60,11 +72,40 @@ class SpectralNormalization(eqx.Module):
     constants by autodiff (`jax.lax.stop_gradient`), so gradients flow
     through $W$ only, exactly as in the reference implementation.
 
+    !!! warning "The bound is approximate, not enforced"
+        Power iteration approaches $\sigma(W)$ **from below**: for any unit
+        $u, v$, $|u^{\top} W v| \le \sigma(W)$. The realised spectral norm of
+        $\hat W$ is therefore
+
+        $$
+        \sigma(\hat W) = c \, \frac{\sigma(W)}{\hat\sigma(W)} \; \ge \; c ,
+        $$
+
+        with equality only once the iterates converge. With the default
+        ``n_power_iterations=1`` and a weight that keeps moving under the
+        optimiser, the layer is *approximately* rather than provably
+        $c$-Lipschitz — the same contract as
+        [`torch.nn.utils.spectral_norm`](https://pytorch.org/docs/stable/generated/torch.nn.utils.spectral_norm.html)
+        and the reference SNGP / DUE implementations, which is what makes the
+        recipe cheap enough to run every step.
+
+        The gap closes at rate $(\sigma_2/\sigma_1)^{2k}$ in the number of
+        iterations $k$, so it is set by the weight's spectral gap. Raise
+        ``n_power_iterations`` if you need a tighter estimate per step. For a
+        hard guarantee, rescale by an exact
+        ``jnp.linalg.svd(W, compute_uv=False)[0]`` yourself — correct, but
+        $\mathcal{O}(mn\min(m,n))$ per forward pass.
+
     !!! note "Rescaling is unconditional"
-        $W$ is multiplied by $c / \sigma(W)$ whether or not $\sigma(W)$
-        exceeds $c$, so the normalised layer has spectral norm exactly $c$.
-        Bias, if the wrapped layer has one, is left untouched: it shifts the
-        output but does not change the Lipschitz constant.
+        $W$ is multiplied by $c / \hat\sigma(W)$ whether or not
+        $\hat\sigma(W)$ exceeds $c$, so the normalisation drives the norm
+        *to* $c$ rather than clipping it at $c$. Bias, if the wrapped layer
+        has one, is left untouched: it shifts the output but does not change
+        the Lipschitz constant.
+
+        An all-zero weight is the one exception — it stays zero instead of
+        producing ``NaN``, since a zero map already satisfies every Lipschitz
+        bound.
 
     Attributes:
         layer: The wrapped layer; must expose ``.weight`` of shape ``(m, n)``.
@@ -172,13 +213,20 @@ class SpectralNormalization(eqx.Module):
         return u, v
 
     def estimated_sigma(self) -> Float[Array, ""]:
-        r"""Current power-iteration estimate $u^{\top} W v$ of $\sigma(W)$.
+        r"""Current power-iteration estimate $|u^{\top} W v|$ of $\sigma(W)$.
 
         Uses the stored $(u, v)$ without advancing them, so repeated calls on
-        the same module agree.
+        the same module agree. The absolute value keeps the estimate
+        non-negative for an unconverged $(u, v)$ — notably the random pair
+        from `init`, before any forward pass has run — without changing
+        anything at convergence, where $u^{\top} W v > 0$ already.
+
+        This is a *lower* bound on $\sigma(W)$ for any unit $u, v$, tight only
+        once the iterates converge; see the class docstring on what that means
+        for the Lipschitz contract.
 
         Returns:
-            Scalar estimate of the top singular value.
+            Scalar estimate of the top singular value, always >= 0.
 
         Examples:
             >>> import equinox as eqx, jax.numpy as jnp, jax.random as jr
@@ -193,16 +241,24 @@ class SpectralNormalization(eqx.Module):
             >>> bool(jnp.abs(sn.estimated_sigma() - true) < 1e-3)
             True
         """
-        return self.u @ self.weight @ self.v
+        return jnp.abs(self.u @ self.weight @ self.v)
 
     def normalized_layer(self) -> eqx.Module:
-        r"""Return the wrapped layer with $W$ replaced by $c\,W / \sigma(W)$.
+        r"""Return the wrapped layer with $W$ replaced by $c\,W/\hat\sigma(W)$.
 
         The rescaling uses the *current* $(u, v)$ — call `__call__` (or
-        rebuild from its returned module) to advance them first.
+        rebuild from its returned module) to advance them first. The realised
+        spectral norm is $c\,\sigma(W)/\hat\sigma(W) \ge c$, reaching $c$ as
+        the iterates converge; see the class docstring.
+
+        A zero weight is passed through unchanged rather than turned into
+        ``NaN``: the divisor is floored at a small epsilon, so ``0 * (c/eps)``
+        stays ``0``.
 
         Returns:
-            A copy of the wrapped layer whose weight has spectral norm $c$.
+            A copy of the wrapped layer whose weight has spectral norm
+            approximately $c$ (exactly $c$ at convergence, ``0`` for a zero
+            weight).
 
         Examples:
             >>> import equinox as eqx, jax.numpy as jnp, jax.random as jr
@@ -220,7 +276,8 @@ class SpectralNormalization(eqx.Module):
             >>> bool(jnp.abs(sigma - 0.95) < 1e-3)
             True
         """
-        sigma = self.estimated_sigma()
+        # Floor the divisor so an all-zero weight scales to 0 rather than NaN.
+        sigma = jnp.maximum(self.estimated_sigma(), _SIGMA_FLOOR)
         return eqx.tree_at(
             lambda m: m.weight,
             self.layer,

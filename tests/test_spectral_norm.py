@@ -70,7 +70,9 @@ def test_spectral_norm_bounds_output_norm():
     xs = jr.normal(k_x, (64, 16))
     xs = xs / jnp.linalg.norm(xs, axis=-1, keepdims=True)
     outs = jax.vmap(lambda x: sn(x)[1])(xs)
-    assert jnp.all(jnp.linalg.norm(outs, axis=-1) <= 0.95 + 1e-5)
+    # Slack covers the residual power-iteration error: sigma is estimated from
+    # below, so the realised norm sits just above `coeff`.
+    assert jnp.all(jnp.linalg.norm(outs, axis=-1) <= 0.95 * (1 + 1e-3))
 
 
 def test_spectral_norm_chain_lipschitz_bound():
@@ -92,7 +94,7 @@ def test_spectral_norm_chain_lipschitz_bound():
 
     a, b = jr.normal(keys[6], (16,)), jr.normal(keys[7], (16,))
     lipschitz = jnp.linalg.norm(chain(a) - chain(b)) / jnp.linalg.norm(a - b)
-    assert lipschitz <= coeff**3 + 1e-5
+    assert lipschitz <= coeff**3 * (1 + 1e-3)
 
 
 def test_spectral_norm_lipschitz_bound_holds_with_bias():
@@ -105,7 +107,7 @@ def test_spectral_norm_lipschitz_bound_holds_with_bias():
     sn = _advance(sn, _N_ITERS_TO_CONVERGE, jnp.ones(16))
     a, b = jr.normal(k_a, (16,)), jr.normal(k_b, (16,))
     ratio = jnp.linalg.norm(sn(a)[1] - sn(b)[1]) / jnp.linalg.norm(a - b)
-    assert ratio <= 0.95 + 1e-5
+    assert ratio <= 0.95 * (1 + 1e-3)
 
 
 def test_spectral_norm_call_returns_updated_state_and_is_pure():
@@ -196,6 +198,74 @@ def test_spectral_norm_scales_up_a_small_weight():
     )
     sigma = jnp.linalg.svd(sn.normalized_layer().weight, compute_uv=False)[0]
     assert jnp.abs(sigma - 1.0) < 1e-3
+
+
+@pytest.mark.parametrize("seed", [0, 1, 2])
+def test_spectral_norm_estimated_sigma_is_a_lower_bound(seed):
+    """Power iteration approaches sigma from below — never overshoots it.
+
+    This is what makes the Lipschitz contract approximate rather than
+    enforced: dividing by an underestimate leaves the realised norm at
+    ``coeff * sigma / sigma_hat >= coeff``.
+    """
+    k_w, k_init = jr.split(jr.PRNGKey(seed))
+    weight = jr.normal(k_w, (16, 12))
+    layer = _linear_from(weight, k_w)
+    true_sigma = jnp.linalg.svd(weight, compute_uv=False)[0]
+    sn = geonnax.SpectralNormalization.init(layer, key=k_init)
+    for _ in range(_N_ITERS_TO_CONVERGE):
+        assert sn.estimated_sigma() <= true_sigma * (1 + 1e-5)
+        sn, _ = sn(jnp.ones(12))
+
+
+def test_spectral_norm_estimated_sigma_is_non_negative_before_convergence():
+    """A fresh random (u, v) must not yield a negative sigma — that would
+    flip the sign of the normalised weight."""
+    for seed in range(8):
+        k_w, k_init = jr.split(jr.PRNGKey(seed))
+        layer = _linear_from(jr.normal(k_w, (8, 8)), k_w)
+        sn = geonnax.SpectralNormalization.init(layer, key=k_init)
+        assert sn.estimated_sigma() >= 0.0
+
+
+def test_spectral_norm_realised_norm_exceeds_coeff_before_convergence():
+    """The documented failure mode, pinned: one iteration from a random start
+    leaves the layer above its nominal bound."""
+    k_w, k_init = jr.split(jr.PRNGKey(11))
+    weight = jr.normal(k_w, (16, 16))
+    sn, _ = geonnax.SpectralNormalization.init(
+        _linear_from(weight, k_w), coeff=0.95, key=k_init
+    )(jnp.ones(16))
+    realised = jnp.linalg.svd(sn.normalized_layer().weight, compute_uv=False)[0]
+    assert realised > 0.95
+    # ... and it is exactly coeff * sigma / sigma_hat.
+    true_sigma = jnp.linalg.svd(weight, compute_uv=False)[0]
+    assert jnp.allclose(realised, 0.95 * true_sigma / sn.estimated_sigma(), rtol=1e-4)
+
+
+def test_spectral_norm_zero_weight_stays_zero_instead_of_nan():
+    """A zero-initialised layer already satisfies every Lipschitz bound."""
+    k_w, k_init = jr.split(jr.PRNGKey(12))
+    layer = _linear_from(jnp.zeros((8, 8)), k_w)
+    sn = geonnax.SpectralNormalization.init(layer, key=k_init)
+    for _ in range(3):
+        sn, out = sn(jnp.ones(8))
+        assert jnp.all(jnp.isfinite(out))
+        assert jnp.all(out == 0.0)
+    assert jnp.all(jnp.isfinite(sn.normalized_layer().weight))
+    assert jnp.all(sn.normalized_layer().weight == 0.0)
+    assert sn.estimated_sigma() == 0.0
+
+
+def test_spectral_norm_zero_weight_gradient_is_finite():
+    """The NaN from ``0 * (coeff / 0)`` would otherwise poison the backward pass."""
+    k_w, k_init = jr.split(jr.PRNGKey(13))
+    sn = geonnax.SpectralNormalization.init(
+        _linear_from(jnp.zeros((4, 4)), k_w), key=k_init
+    )
+    sn, _ = sn(jnp.ones(4))
+    grads = eqx.filter_grad(lambda m, x: jnp.sum(m(x)[1] ** 2))(sn, jnp.ones(4))
+    assert jnp.all(jnp.isfinite(grads.layer.weight))
 
 
 def test_spectral_norm_rejects_layer_without_weight():
