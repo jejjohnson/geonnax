@@ -22,6 +22,13 @@ Submodules:
 - `geonnax.ncp` — ``NCPContinuousPerturb`` input perturbation.
 - `geonnax.siren` — ``SirenDense``, ``SIREN`` (Sitzmann et al.,
   2020).
+- `geonnax.multi_scale_siren` — ``MultiScaleSIREN``, parallel
+  frequency-banded SIRENs summed at the readout.
+- `geonnax.spectral_norm` — ``SpectralNormalization``, the
+  ``c``-Lipschitz power-iteration wrapper for linear layers.
+- `geonnax.mixture` — ``MixtureOfGaussiansDenseHead`` mixture-density
+  output head.
+- `geonnax.crf` — ``LinearChainCRF`` forward algorithm + Viterbi.
 - `geonnax.slepian` — ``SlepianEncoder``,
   ``HybridSphericalSlepianEncoder``.
 - `geonnax.randfeat` — ``OrthogonalRandomFeatures`` +
@@ -31,6 +38,7 @@ Submodules:
 from geonnax import (
     basis,
     conditioning,
+    crf,
     encoders,
     ensemble,
     fno,
@@ -38,13 +46,16 @@ from geonnax import (
     heteroscedastic,
     layers,
     mfn,
+    mixture,
     mswt,
+    multi_scale_siren,
     ncp,
     randfeat,
     sfno,
     siren,
     slepian,
     sngp,
+    spectral_norm,
     unet,
     vssgp,
     wno,
@@ -59,6 +70,7 @@ from geonnax.conditioning import (
     HyperLinear,
     HyperSIREN,
 )
+from geonnax.crf import LinearChainCRF
 from geonnax.encoders import (
     Cartesian3DEncoder,
     CyclicEncoder,
@@ -108,7 +120,9 @@ from geonnax.layers import (
     init_factorized_tensor,
 )
 from geonnax.mfn import FourierFilter, FourierNet, GaborFilter, GaborNet, mfn_forward
+from geonnax.mixture import MixtureOfGaussiansDenseHead
 from geonnax.mswt import MSWT, MSWTBlock, MultiScaleWaveletTransformer
+from geonnax.multi_scale_siren import MultiScaleSIREN, log_spaced_omegas
 from geonnax.ncp import NCPContinuousPerturb
 from geonnax.randfeat import (
     OrthogonalRandomFeatures,
@@ -127,6 +141,7 @@ from geonnax.siren import (
 )
 from geonnax.slepian import HybridSphericalSlepianEncoder, SlepianEncoder
 from geonnax.sngp import LaplaceRandomFeatureCovariance, RandomFeatureGaussianProcess
+from geonnax.spectral_norm import SpectralNormalization
 from geonnax.unet import NestedResidualUNet, Stage, UNet, XUNet
 from geonnax.vssgp import DeepVSSGPCore
 from geonnax.wno import WNO, WaveletNeuralOperator, WNOBlock
@@ -173,11 +188,14 @@ __all__ = [
     "LaplaceRandomFeatureCovariance",
     "LayerNormEnsemble",
     "LinearAttention",
+    "LinearChainCRF",
     "LonLatScale",
     "MCSigmoidDenseFA",
     "MCSoftmaxDenseFA",
     "MSWTBlock",
+    "MixtureOfGaussiansDenseHead",
     "MultiHeadAttentionBE",
+    "MultiScaleSIREN",
     "MultiScaleWaveletTransformer",
     "NCPContinuousPerturb",
     "NestedResidualUNet",
@@ -190,6 +208,7 @@ __all__ = [
     "SirenLayerType",
     "SlepianEncoder",
     "SpectralConv",
+    "SpectralNormalization",
     "SphericalFNOBlock",
     "SphericalHarmonicEncoder",
     "SphericalHarmonicTransform",
@@ -214,6 +233,7 @@ __all__ = [
     "basis",
     "build_siren_specs",
     "conditioning",
+    "crf",
     "encoders",
     "ensemble",
     "fno",
@@ -223,9 +243,12 @@ __all__ = [
     "init_factorized_tensor",
     "init_rank1_proj",
     "layers",
+    "log_spaced_omegas",
     "mfn",
     "mfn_forward",
+    "mixture",
     "mswt",
+    "multi_scale_siren",
     "ncp",
     "orthogonal_blocks",
     "randfeat",
@@ -236,6 +259,7 @@ __all__ = [
     "siren_W_limit",
     "slepian",
     "sngp",
+    "spectral_norm",
     "unet",
     "vssgp",
     "wno",

@@ -21,6 +21,16 @@ a network's last layer into a GP via a random-feature basis and a Laplace covari
 
 ::: geonnax.vssgp
 
+## Lipschitz-bounded layers
+
+Spectral normalisation rescales a linear layer's weight to a fixed spectral norm,
+$\hat W = c\,W / \sigma(W)$, making the layer $c$-Lipschitz. It is the wrapper half of
+the SNGP / DUE recipe: `RandomFeatureGaussianProcess` above supplies the distance-aware
+output head, and spectrally normalising the upstream dense layers is what makes the
+feature extractor distance-preserving enough for that head to be meaningful.
+
+::: geonnax.spectral_norm
+
 ## Deep ensembles
 
 Rank-1 / BatchEnsemble layers that train an efficient ensemble by sharing weights and
@@ -34,6 +44,18 @@ Output heads that model input-dependent observation noise, including Monte-Carlo
 sigmoid/softmax approximations.
 
 ::: geonnax.heteroscedastic
+
+## Mixture-density & structured-prediction heads
+
+Edward2-style output heads. The mixture-density head maps a feature vector to
+$(\pi, \mu, \log\sigma)$ for a diagonal Gaussian mixture — multi-modal regression on
+top of any backbone. The linear-chain CRF supplies the forward algorithm and Viterbi
+decoding for sequence tagging. Both return parameters or decoded values rather than
+distribution objects, so downstream libraries can attach priors.
+
+::: geonnax.mixture
+
+::: geonnax.crf
 
 ## Input perturbation
 
