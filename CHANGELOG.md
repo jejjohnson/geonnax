@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.7](https://github.com/jejjohnson/geonnax/compare/v0.0.6...v0.0.7) (2026-08-21)
+
+
+### Features
+
+* deterministic NN building blocks for the pyrox stack ([#30](https://github.com/jejjohnson/geonnax/issues/30)) ([#40](https://github.com/jejjohnson/geonnax/issues/40)) ([de87394](https://github.com/jejjohnson/geonnax/commit/de87394a2fa60d4462818b470ac8d900ed359d15))
+
 ## [0.0.6](https://github.com/jejjohnson/geonnax/compare/v0.0.5...v0.0.6) (2026-08-20)
 
 
