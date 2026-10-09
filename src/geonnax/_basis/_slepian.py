@@ -23,6 +23,7 @@ from geonnax._basis._legendre import (
     gauss_legendre,
 )
 from geonnax._basis._spherical import real_spherical_harmonics
+from geonnax._frames import rotation_to_pole
 
 
 def _check_l_max(l_max: int) -> None:
@@ -178,30 +179,12 @@ def slepian_cap_eigh_per_m(
     return jnp.clip(vals[order], 0.0, 1.0), coeffs[:, order]
 
 
-def _lonlat_to_unit(lonlat: Float[Array, " 2"]) -> Float[Array, " 3"]:
-    lon, lat = lonlat[0], lonlat[1]
-    cos_lat = jnp.cos(lat)
-    return jnp.asarray([cos_lat * jnp.cos(lon), cos_lat * jnp.sin(lon), jnp.sin(lat)])
-
-
 def _centered_coordinates(
     unit_xyz: Float[Array, "N 3"], lonlat_centre: Float[Array, " 2"]
 ) -> Float[Array, "N 3"]:
-    lon, lat = lonlat_centre[0], lonlat_centre[1]
-    centre = _lonlat_to_unit(lonlat_centre)
-    east = jnp.asarray([-jnp.sin(lon), jnp.cos(lon), 0.0])
-    north = jnp.asarray(
-        [-jnp.sin(lat) * jnp.cos(lon), -jnp.sin(lat) * jnp.sin(lon), jnp.cos(lat)]
-    )
-    # Project each point onto the local (east, north, centre) frame.
-    return jnp.stack(
-        [
-            einx.dot("n d, d -> n", unit_xyz, east),
-            einx.dot("n d, d -> n", unit_xyz, north),
-            einx.dot("n d, d -> n", unit_xyz, centre),
-        ],
-        axis=-1,
-    )
+    # Rotate so the centre sits at the north pole (rows: east, north, up).
+    rotation = rotation_to_pole(lonlat_centre, input_unit="radians")
+    return einx.dot("n d, c d -> n c", unit_xyz, rotation)
 
 
 class SlepianCapBasis(eqx.Module):
