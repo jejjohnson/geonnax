@@ -24,6 +24,7 @@ library, since they ``isinstance``-dispatch on kernel classes):
   building blocks of the spherical bases, and Gauss–Legendre quadrature.
 - `fibonacci_sphere` / `gauss_legendre_grid` / `latlon_grid` — point sets
   and quadrature grids on the sphere, returned with their weights.
+- `icosphere` — the subdivided-icosahedron triangle mesh of the sphere.
 
 Localized / overcomplete bases carry no eigenvalues; they expose the per-atom
 geometry instead (the other half of the basis contract):
@@ -54,6 +55,9 @@ from geonnax._basis._legendre import (
     associated_legendre_indices,
     gauss_legendre,
     legendre_polynomials,
+)
+from geonnax._basis._mesh import (
+    icosphere,
 )
 from geonnax._basis._rbf import (
     rbf_basis,
@@ -94,6 +98,7 @@ __all__ = [
     "gauss_legendre_grid",
     "graph_laplacian_eigpairs",
     "harmonic_degrees",
+    "icosphere",
     "latlon_grid",
     "legendre_polynomials",
     "rbf_basis",
