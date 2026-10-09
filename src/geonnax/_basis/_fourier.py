@@ -179,7 +179,7 @@ def fourier_eigenvalues_1d(
     return (j * jnp.pi / (2.0 * L)) ** 2
 
 
-def _to_tuple(value: int | float | tuple, D: int, name: str) -> tuple:
+def _to_tuple(value: int | float | str | tuple, D: int, name: str) -> tuple:
     """Broadcast a scalar to a length-``D`` tuple, or validate an existing tuple."""
     if isinstance(value, tuple | list):
         out = tuple(value)
