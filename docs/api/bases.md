@@ -46,6 +46,14 @@ distance), the fixed **overcomplete** multiscale `gabor_frame` /
 `wavelet_basis_2d`. The spectral bases return eigenvalues; the localized and
 frame bases return per-atom geometry instead.
 
+## Slepian functions of general regions
+
+`slepian_region_basis` builds Slepian functions for any region from a
+quadrature over it (for example a `gauss_legendre_grid` masked with
+`spherical_polygon_mask`), and `slepian_polar_gap_basis` handles the band
+between two polar caps exactly. Both return a `SlepianBasis` whose
+concentrations sum to the Shannon number $(l_{\max}+1)^2 A/4\pi$.
+
 ## Vector spherical harmonics
 
 `vector_spherical_harmonics` returns the gradient (curl-free)
