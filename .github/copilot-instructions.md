@@ -1,96 +1,45 @@
 # Copilot Instructions
 
-## Project Overview
+Read [`AGENTS.md`](../AGENTS.md) at the repository root first: it is the
+single source of truth for every coding agent working here (the module map,
+the boundaries with pyrox and kernellib, "reuse before you write", the
+contracts, the tests that enforce them, commands, the pre-commit checklist,
+the docs, git and PR rules).
 
-- **Python**: 3.12+
-- **Package Manager**: uv
-- **CLI Framework**: cyclopts
-- **Layout**: `src/` layout (`src/geonnax/`)
-- **Testing**: pytest
-- **Docs**: MkDocs + Material + mkdocstrings + mkdocs-jupyter
+The essentials, in case you only read this file:
 
-## Build & Test Commands
-
-```bash
-make install     # Install all dependencies (uv sync --all-groups)
-make test        # Run tests (uv run pytest -v)
-make lint        # Lint code (ruff check)
-make format      # Format code (ruff format + ruff check --fix)
-make typecheck   # Type check (ty check)
-make precommit   # Run pre-commit on all files
-make docs-serve  # Serve docs locally
-```
-
-## Before Every Commit — Mandatory Checklist
-
-**All four checks must pass before any commit.** CI runs them on the entire repo (`ruff check .`), not just `src/geonnax/`, so always run the commands below from the repo root.
-
-```bash
-# 1. Tests — zero failures required
-uv run pytest -v
-
-# 2. Lint — run on the ENTIRE repo (includes tests/ and scripts/)
-uv run --group lint ruff check .
-
-# 3. Format check — run on the ENTIRE repo
-uv run --group lint ruff format --check .
-
-# 4. Type check — on the package only
-uv run --group typecheck ty check src/geonnax
-```
-
-> **Common pitfall**: Running `ruff check src/geonnax/` instead of `ruff check .` misses import-sorting errors in `tests/` and `scripts/`. The CI workflow runs `ruff check .`. Always use `.` (repo root), not a subdirectory.
-
-## Key Directories
-
-| Path | Purpose |
-|------|---------|
-| `src/geonnax/` | Main package source code |
-| `tests/` | Test suite |
-| `docs/` | Documentation (MkDocs) |
-| `notebooks/` | Jupyter notebooks |
-| `scripts/` | Example scripts |
-
-## Behavioral Guidelines
-
-### Do Not Nitpick
-- Ignore style issues that linters/formatters catch (formatting, import order, quote style)
-- Don't suggest changes to code you weren't asked to modify
-- Match existing patterns even if you'd do it differently
-
-### Always Propose Tests
-When implementing features or fixing bugs:
-1. Write a test that verifies the expected behavior
-2. Implement the change
-3. Verify the test passes
-
-### Never Suggest Without a Proposal
-Bad: "You should add validation here"
-Good: "Add validation here. Proposed implementation:"
-```python
-if value < 0:
-    raise ValueError('Value must be non-negative')
-```
-
-### Simplicity First
-- No abstractions for single-use code
-- No speculative features beyond what was asked
-- If 200 lines could be 50, propose the simpler version
-
-### Surgical Changes
-- Only modify lines directly related to the request
-- Don't refactor adjacent code
-- Don't add docstrings/comments to code you didn't change
-- Remove only imports/functions that YOUR changes made unused
-
-## Plans
-
-Plans and design documents go in `.plans/` (gitignored, never committed). Track work via GitHub issues, not committed plan files.
-
-## PR Review Comments
-
-When addressing PR review comments, always resolve each review thread after fixing it via the GitHub GraphQL API (`resolveReviewThread` mutation). Do not leave addressed comments unresolved. See the "Pull Request Review Comments" section in `AGENTS.md` for the exact GraphQL queries and workflow.
-
-## Code Review
-
-For all code review tasks, follow the guidance in `/CODE_REVIEW.md`.
+- One package, `src/geonnax/`: pure-JAX bases (`_basis/`, public through
+  `geonnax.basis`), lon/lat helpers and encoders (`geo`, `encoders`,
+  `slepian`), building blocks (`layers/`), neural operators (`fno`, `sfno`,
+  `wno`, `mswt`), the U-Net, implicit neural representations (`siren`,
+  `multi_scale_siren`, `mfn`, `conditioning`) and uncertainty-aware cores
+  (`randfeat`, `sngp`, `vssgp`, `spectral_norm`, `ensemble`,
+  `heteroscedastic`, `mixture`, `crf`, `ncp`). Search
+  [`docs/api/capabilities.md`](../docs/api/capabilities.md) before writing a
+  helper.
+- geonnax is deterministic: never import numpyro; priors and sample sites
+  live in pyrox, kernels in kernellib. Both pin geonnax by git tag and use
+  its public names, constructor arguments and parameter field names, so a
+  rename needs a deprecation.
+- Keep the contracts in `AGENTS.md`:
+  - **modules**: `eqx.Module` with array leaves and
+    `eqx.field(static=True)` configuration, built by a classmethod
+    `init(..., *, key)`; one example per call (`(D,)` or `(C, *spatial)`),
+    batched with `jax.vmap`; state updates return a new module; stochastic
+    forward passes take an explicit `key`;
+  - **bases**: pure functions returning `Φ (N, M)` plus eigenvalues or
+    per-atom geometry, implemented in `_basis/` and re-exported from
+    `geonnax.basis`;
+  - **numerics**: published init scales, dtypes that follow the input,
+    no Python control flow on traced values, double-`where` guards at
+    singular points; prefer einx for reshapes, transposes and contractions.
+- Docstrings: Google style, MathJax math, no Sphinx / RST markup, and a
+  plural `Examples:` section with `>>>` doctests (`make doctest`).
+- Before committing, from the repo root: `make test-fast`,
+  `uv run --group lint ruff check .`, `uv run --group lint ruff format --check .`,
+  `make typecheck`; `make capabilities` after a public API change.
+- Behaviour: don't nitpick what ruff or ty catch; propose a test with every
+  fix; never suggest a change without the code for it; keep changes
+  surgical.
+- Path-scoped standards live in `.github/instructions/`; code review follows
+  [`CODE_REVIEW.md`](../CODE_REVIEW.md).
