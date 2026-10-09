@@ -11,8 +11,10 @@ library, since they ``isinstance``-dispatch on kernel classes):
 - `fourier_basis_1d` / `fourier_eigenvalues_1d` — 1D Dirichlet
   eigenpairs of $-d^2/dx^2$ on $[-L, L]$.
 - `fourier_basis` — tensor-product extension to $[-L, L]^D$.
-- `divfree_basis` — divergence-free vector atoms on $[-L, L]^2$
-  (skew gradients of the box-Dirichlet stream functions).
+- `divfree_basis` / `curlfree_basis` — divergence-free and curl-free vector
+  atoms on $[-L, L]^2$ (skew gradients of stream functions and gradients of
+  potentials). The box bases take ``boundary="dirichlet" | "neumann" |
+  "periodic"``.
 - `real_spherical_harmonics` — real SHs on the unit 2-sphere.
 - `graph_laplacian_eigpairs` — smallest eigenpairs of a graph Laplacian.
 - `SlepianCapBasis` / `slepian_cap_basis` — Slepian eigenfunctions
@@ -46,7 +48,10 @@ A data-driven basis stands apart, returning its own spectrum:
 - `eof_basis` — empirical orthogonal functions (PCA) of a data matrix.
 """
 
-from geonnax._basis._divfree import divfree_basis
+from geonnax._basis._divfree import (
+    curlfree_basis,
+    divfree_basis,
+)
 from geonnax._basis._eof import eof_basis
 from geonnax._basis._fourier import (
     fourier_basis,
@@ -105,6 +110,7 @@ __all__ = [
     "SlepianCapBasis",
     "associated_legendre",
     "associated_legendre_indices",
+    "curlfree_basis",
     "divfree_basis",
     "eof_basis",
     "fibonacci_sphere",

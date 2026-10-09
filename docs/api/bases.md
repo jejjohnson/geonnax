@@ -37,7 +37,9 @@ window, and standardisation helpers.
 
 Closed-form and graph-based eigenpairs — 1D Dirichlet/Fourier modes, the
 divergence-free vector basis `divfree_basis` (skew gradients of the box stream
-functions, for incompressible flow), real spherical harmonics $Y_\ell^m$,
+functions, for incompressible flow) and its curl-free companion
+`curlfree_basis` (gradients of potentials) — the box bases accept
+`boundary="dirichlet" | "neumann" | "periodic"`, per axis — real spherical harmonics $Y_\ell^m$,
 Slepian functions on a cap, and graph-Laplacian ($L = D - A$) eigenvectors —
 alongside the **placeable** radial bases (`rbf_basis` / `spherical_rbf_basis`,
 with Gaussian or compactly-supported Wendland kernels in Euclidean or geodesic

@@ -27,7 +27,13 @@ import einx
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from geonnax._basis._fourier import _to_tuple, fourier_eigenvalues
+from geonnax._basis._fourier import (
+    Boundary,
+    _basis_value_and_grad_1d,
+    _check_boundary,
+    _to_tuple,
+    fourier_eigenvalues,
+)
 
 
 def _dirichlet_value_and_grad(
@@ -55,8 +61,14 @@ def divfree_basis(
     xy: Float[Array, "N 2"],
     num_basis_per_dim: int | tuple[int, int],
     L: float | tuple[float, float],
+    *,
+    boundary: Boundary | tuple[Boundary, Boundary] = "dirichlet",
 ) -> tuple[Float[Array, "N M two"], Float[Array, " M"]]:
     r"""Divergence-free vector basis from box-Dirichlet stream functions.
+
+    ``boundary`` swaps the stream functions' boundary condition per axis
+    (``"dirichlet"`` default, ``"neumann"`` or ``"periodic"``; see
+    `fourier_basis`).
 
     Builds the skew-gradient atoms $\mathbf{u} = \nabla^\perp(\phi_j \otimes
     \phi_k)$ over $[-L, L]^2$. Every column is divergence-free analytically.
@@ -67,6 +79,7 @@ def divfree_basis(
             ``int`` is broadcast to both axes. Total atoms
             ``M = prod(num_basis_per_dim)``.
         L: Per-axis half-width; a scalar is broadcast to both axes.
+        boundary: Stream-function boundary condition, one value or one per axis.
 
     Returns:
         ``(Phi, lam)`` with ``Phi`` of shape ``(N, M, 2)`` (the last axis is the
@@ -99,8 +112,79 @@ def divfree_basis(
     v = einx.multiply("n a, n b -> n (a b)", gx, vy)
     phi = jnp.stack([u, v], axis=-1)  # (N, M, 2)
 
-    lam = fourier_eigenvalues(num_basis_per_dim, L, 2, dtype=xy.dtype)
+    lam = fourier_eigenvalues(
+        num_basis_per_dim, L, 2, dtype=xy.dtype, boundary=boundary
+    )
     return phi, lam
 
 
-__all__ = ["divfree_basis"]
+def _axis_bases(
+    xy: Float[Array, "N 2"], m_per: tuple, l_per: tuple, b_per: tuple
+) -> tuple[Float[Array, "N Mx"], ...]:
+    """Per-axis 1D values and derivatives; Dirichlet keeps the original path."""
+    out = []
+    for d in range(2):
+        _check_boundary(b_per[d])
+        if b_per[d] == "dirichlet":
+            out += _dirichlet_value_and_grad(xy[:, d], m_per[d], float(l_per[d]))
+        else:
+            out += _basis_value_and_grad_1d(
+                xy[:, d], m_per[d], float(l_per[d]), b_per[d]
+            )
+    return tuple(out)
+
+
+def curlfree_basis(
+    xy: Float[Array, "N 2"],
+    num_basis_per_dim: int | tuple[int, int],
+    L: float | tuple[float, float],
+    *,
+    boundary: Boundary | tuple[Boundary, Boundary] = "dirichlet",
+) -> tuple[Float[Array, "N M two"], Float[Array, " M"]]:
+    r"""Curl-free vector basis: gradients of the box Laplacian eigenfunctions.
+
+    The companion of `divfree_basis`. Each atom is the gradient of a scalar
+    potential mode $\phi_j \otimes \phi_k$,
+
+    $$
+    \boldsymbol{\varphi}_{j,k}(x, y) =
+    \big(\phi_j'(x)\,\phi_k(y),\; \phi_j(x)\,\phi_k'(y)\big),
+    $$
+
+    so its scalar curl $\partial_x\varphi^{(y)} - \partial_y\varphi^{(x)}$
+    vanishes identically. The eigenvalue tag is the potential's
+    $\lambda_j + \lambda_k$, row-major over ``(j, k)`` as in `fourier_basis`.
+
+    Args:
+        xy: Evaluation points of shape ``(N, 2)`` in $[-L, L]^2$.
+        num_basis_per_dim: Per-axis number of 1D modes; an ``int`` is
+            broadcast to both axes.
+        L: Per-axis half-width; a scalar is broadcast to both axes.
+        boundary: Potential boundary condition, one value or one per axis.
+
+    Returns:
+        ``(Phi, lam)`` with ``Phi`` of shape ``(N, M, 2)`` and ``lam`` of
+        shape ``(M,)``.
+
+    Examples:
+        >>> import jax.numpy as jnp
+        >>> from geonnax.basis import curlfree_basis
+        >>> Phi, lam = curlfree_basis(jnp.zeros((5, 2)), num_basis_per_dim=3, L=1.0)
+        >>> (Phi.shape, lam.shape)
+        ((5, 9, 2), (9,))
+    """
+    if xy.ndim != 2 or xy.shape[-1] != 2:
+        raise ValueError(f"xy must be 2D (N, 2); got shape {xy.shape}.")
+    m_per = _to_tuple(num_basis_per_dim, 2, "num_basis_per_dim")
+    l_per = _to_tuple(L, 2, "L")
+    vx, gx, vy, gy = _axis_bases(xy, m_per, l_per, _to_tuple(boundary, 2, "boundary"))
+    u = einx.multiply("n a, n b -> n (a b)", gx, vy)
+    v = einx.multiply("n a, n b -> n (a b)", vx, gy)
+    phi = jnp.stack([u, v], axis=-1)
+    lam = fourier_eigenvalues(
+        num_basis_per_dim, L, 2, dtype=xy.dtype, boundary=boundary
+    )
+    return phi, lam
+
+
+__all__ = ["curlfree_basis", "divfree_basis"]
