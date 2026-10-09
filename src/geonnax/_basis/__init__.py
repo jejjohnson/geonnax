@@ -33,6 +33,8 @@ library, since they ``isinstance``-dispatch on kernel classes):
   `spherical_polygon_mask` — Slepian functions of general regions.
 - `needlet_window` / `needlet_basis` — spherical needlets, a localised
   multiscale tight frame on the sphere.
+- `shell_basis` — spherical harmonics times radial polynomials on a
+  spherical shell.
 
 Localized / overcomplete bases carry no eigenvalues; they expose the per-atom
 geometry instead (the other half of the basis contract):
@@ -79,6 +81,9 @@ from geonnax._basis._rbf import (
     spherical_rbf_basis,
     wendland_c2,
     wendland_c4,
+)
+from geonnax._basis._shell import (
+    shell_basis,
 )
 from geonnax._basis._slepian import (
     SlepianCapBasis,
@@ -132,6 +137,7 @@ __all__ = [
     "rbf_basis",
     "real_spherical_harmonics",
     "shannon_number",
+    "shell_basis",
     "slepian_cap_basis",
     "slepian_cap_eigh_per_m",
     "slepian_concentration_matrix",

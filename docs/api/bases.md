@@ -63,6 +63,12 @@ over scales $j = 0, \ldots, j_{\max}$, centred on Gauss–Legendre cubature
 nodes and built from the smooth window `needlet_window`: a localised,
 multiscale tight frame on the sphere.
 
+## Spherical shells
+
+`shell_basis` multiplies real spherical harmonics by orthonormal Legendre (or
+Chebyshev) polynomials in radius, a product basis for fields with depth or
+altitude on $r_0 \le \lVert x\rVert \le r_1$.
+
 ## Vector spherical harmonics
 
 `vector_spherical_harmonics` returns the gradient (curl-free)
