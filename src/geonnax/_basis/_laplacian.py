@@ -22,6 +22,13 @@ def graph_laplacian_eigpairs(
 ) -> tuple[Float[Array, " M"], Float[Array, "V M"]]:
     r"""Smallest ``num_basis`` Laplacian eigenpairs of an undirected graph.
 
+    This is a dense eigendecomposition, $O(V^3)$ time and $O(V^2)$ memory,
+    which is practical up to a few thousand nodes. For large or structured
+    graphs use ``kernellib.laplacian_eigpairs``, which accepts sparse graph
+    types and solves by an exact Kronecker product on grid graphs, Lanczos or
+    ARPACK. geonnax keeps this function for small graphs and does not import
+    kernellib (kernellib depends on geonnax).
+
     Args:
         adjacency: Symmetric, non-negative adjacency matrix of shape ``(V, V)``.
             Diagonal is ignored (no self-loops folded into ``D``).
