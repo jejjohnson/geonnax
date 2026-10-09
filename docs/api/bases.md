@@ -46,6 +46,14 @@ distance), the fixed **overcomplete** multiscale `gabor_frame` /
 `wavelet_basis_2d`. The spectral bases return eigenvalues; the localized and
 frame bases return per-atom geometry instead.
 
+## Vector spherical harmonics
+
+`vector_spherical_harmonics` returns the gradient (curl-free)
+$\Psi_{lm} = \nabla_S Y_{lm}$ and toroidal (divergence-free)
+$\Phi_{lm} = \hat r\times\nabla_S Y_{lm}$ fields, an orthonormal basis for
+tangent vector fields on the sphere (e.g. winds and ocean currents), in
+Cartesian or east/north components.
+
 ## Legendre primitives and quadrature
 
 `legendre_polynomials` and `associated_legendre` (orthonormal, Schmidt or
