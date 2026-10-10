@@ -1,0 +1,11 @@
+{
+  "name": "geonnax",
+  "description": "Write geoscientific neural networks in JAX on geonnax — Fourier / spherical / wavelet neural operators, dimension-flexible U-Nets, SIREN and multiplicative filter networks with FiLM and hypernetwork conditioning, lon/lat and spherical-harmonic encoders, spectral and localized bases with their eigenvalues or geometry, random Fourier features, spectral normalisation, SNGP heads and other deterministic cores for uncertainty-aware models — instead of hand-rolling FFT convolutions, spherical harmonics, sine-network inits and random features.",
+  "author": {
+    "name": "jejjohnson"
+  },
+  "homepage": "https://jejjohnson.github.io/geonnax/agents/",
+  "repository": "https://github.com/jejjohnson/geonnax",
+  "license": "MIT",
+  "keywords": ["jax", "equinox", "neural-operators", "fno", "siren", "spherical-harmonics", "random-features", "geoscience"]
+}
