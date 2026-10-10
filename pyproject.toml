@@ -73,6 +73,11 @@ packages = ["src/geonnax"]
 target-version = "py312"
 line-length = 88
 
+[tool.ruff.format]
+# ruff >= 0.16 formats Markdown code blocks; the README's sketches keep an
+# aligned shape column that the formatter would collapse.
+exclude = ["README.md"]
+
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 ignore = ["E402", "E721", "E731", "E741"]
@@ -109,3 +114,5 @@ fail_under = 0
 # Greek/math notation in docstrings + einx specs trips RUF001/2/3.
 "src/geonnax/**" = ["F722", "F821", "UP037", "RUF001", "RUF002", "RUF003"]
 "tests/**" = ["F722", "F821", "UP037", "RUF001", "RUF002", "RUF003"]
+# Greek and math labels in the README figure and diagram scripts.
+"docs/assets/**" = ["RUF001", "RUF002", "RUF003"]
