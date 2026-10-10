@@ -6,6 +6,8 @@ repo_name: jejjohnson/geonnax
 
 theme:
   name: material
+  logo: assets/icon.svg
+  favicon: assets/icon.svg
   features:
     - navigation.tabs
     - navigation.sections
@@ -47,6 +49,9 @@ plugins:
             merge_init_into_class: false
             filters: ["!^_"]
   - mkdocs-jupyter:
+      # Notebooks are committed as .ipynb; without this the plugin also tries
+      # to read the asset scripts under docs/assets/ as jupytext notebooks.
+      include: ["*.ipynb"]
       execute: false
       ignore_h1_titles: true
 

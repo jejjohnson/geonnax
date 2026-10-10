@@ -6,8 +6,10 @@ geoscientific machine learning. Every model is a plain `equinox.Module` with an
 
 ## Installation
 
+geonnax is not on PyPI yet; install it from GitHub with [uv](https://docs.astral.sh/uv/):
+
 ```bash
-pip install geonnax        # or: uv add geonnax
+uv add "geonnax @ git+https://github.com/jejjohnson/geonnax.git"
 ```
 
 ## Quickstart
