@@ -10,3 +10,8 @@ Read "Boundaries", "Reuse before you write" and "The contracts" in
 diff adds, search [`docs/api/capabilities.md`](../../../docs/api/capabilities.md)
 for an existing equivalent; then apply [`CODE_REVIEW.md`](../../../CODE_REVIEW.md)
 and report in its format.
+
+The full procedure, with the reuse and numerics checklists, is the
+`geonnax-review` recipe in
+[`.claude/skills/geonnax-review/SKILL.md`](../../../.claude/skills/geonnax-review/SKILL.md)
+and the two reviewers in [`.claude/agents/`](../../../.claude/agents/).
