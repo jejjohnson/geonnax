@@ -95,6 +95,13 @@ subdivided-icosahedron triangle mesh ($10\cdot4^{\ell} + 2$ vertices,
 outward-oriented triangles) for mesh Laplacians and finite elements on the
 sphere.
 
+!!! note "Large graphs"
+    `graph_laplacian_eigpairs` is a dense eigendecomposition ($O(V^3)$),
+    practical up to a few thousand nodes. For large or structured graphs use
+    [`kernellib.laplacian_eigpairs`](https://github.com/jejjohnson/kernellib),
+    which works on sparse graph types and solves by an exact Kronecker product
+    on grid graphs, Lanczos or ARPACK.
+
 ## Data-driven basis
 
 `eof_basis` returns the empirical orthogonal functions (PCA) of a data matrix —
