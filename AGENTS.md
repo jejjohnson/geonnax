@@ -256,6 +256,7 @@ The basis contract (long form in [`docs/api/bases.md`](docs/api/bases.md)):
 | Test | Enforces |
 |---|---|
 | `tests/test_capabilities.py` | `docs/api/capabilities.md` is current; no name bound to two objects; every listed private helper exists |
+| `tests/test_plugin_skill.py` | The downstream plugin's `geonnax.*` names exist; its worked example runs and its claims hold (slow) |
 | `tests/test_geonnax.py::test_no_numpyro_import_in_package`, `test_*_module_no_numpyro` | No numpyro anywhere in geonnax |
 | `tests/test_docstrings.py`, `tests/test_docstrings_render.py` | No Sphinx / RST markup in source; `Examples:` (plural) with a `>>>` or fenced body |
 | `make doctest` (`--doctest-modules src/geonnax`; not run in CI) | Every docstring example runs |
@@ -291,6 +292,14 @@ agent can read and follow them):
 | Review a change | `geonnax-review` (+ the read-only `.claude/agents/reuse-reviewer.md` and `numerics-reviewer.md`) |
 | Write a squash commit message | `squash-commit` |
 | Open or link GitHub issues | `create-gh-issue`, `link-gh-issues` (templates in `.github/ISSUE_TEMPLATE/`; `make gh-labels`, `gh-sub`, `gh-block`, `gh-show`) |
+
+Downstream users get geonnax's guidance through the Claude Code plugin in
+`plugins/geonnax/` (published by `.claude-plugin/marketplace.json`) and
+`docs/llms.txt` (served at the site root); see `docs/agents.md`. When the
+public API or the headline usage changes, update
+`plugins/geonnax/skills/build-models-with-geonnax/` too:
+`tests/test_plugin_skill.py` checks that every `geonnax.X` it and the plugin
+reviewer name still exists, and runs its worked example (slow tier).
 
 ## Working in the repo
 

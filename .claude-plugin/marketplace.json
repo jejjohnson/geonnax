@@ -1,0 +1,14 @@
+{
+  "name": "geonnax",
+  "owner": {
+    "name": "jejjohnson"
+  },
+  "description": "Claude Code plugins for geoscientific neural networks in JAX / Equinox on geonnax.",
+  "plugins": [
+    {
+      "name": "geonnax",
+      "source": "./plugins/geonnax",
+      "description": "Build geoscience models on geonnax (neural operators, U-Nets, SIREN / MFN, coordinate encoders, spectral bases, random features, SNGP and other uncertainty-aware cores) instead of re-implementing them: a model-building skill and a reuse reviewer."
+    }
+  ]
+}
