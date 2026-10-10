@@ -1,0 +1,3910 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Pure-Equinox neural-network zoo for geoscientific machine learning.">
+      
+      
+        <meta name="author" content="J. Emmanuel Johnson">
+      
+      
+      
+        <link rel="prev" href="../">
+      
+      
+        <link rel="next" href="../operators/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/icon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Capability index - geonnax</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#capability-index" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="geonnax" class="md-header__button md-logo" aria-label="geonnax" data-md-component="logo">
+      
+  <img src="../../assets/icon.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            geonnax
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Capability index
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jejjohnson/geonnax" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jejjohnson/geonnax
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../notebooks/example_demo/" class="md-tabs__link">
+          
+  
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../agents/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building with agents
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CHANGELOG/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="geonnax" class="md-nav__button md-logo" aria-label="geonnax" data-md-component="logo">
+      
+  <img src="../../assets/icon.svg" alt="logo">
+
+    </a>
+    geonnax
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jejjohnson/geonnax" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jejjohnson/geonnax
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../notebooks/example_demo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability index
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#geonnax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="geonnax">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unified-conditioning-primitives-for-geonnax-geonnaxconditioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unified conditioning primitives for geonnax. (geonnax.conditioning)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linear-chain-conditional-random-field-forward-algorithm-and-viterbi-geonnaxcrf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linear-chain conditional random field — forward algorithm and Viterbi. (geonnax.crf)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deterministic-coordinate-encoders-for-lonlat-and-spherical-inputs-geonnaxencoders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deterministic coordinate encoders for lon/lat and spherical inputs. (geonnax.encoders)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ensemble-style-layers-for-geonnax-geonnaxensemble" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ensemble-style layers for geonnax. (geonnax.ensemble)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fourier-neural-operator-li-et-al-2021-and-its-building-blocks-geonnaxfno" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fourier Neural Operator (Li et al., 2021) and its building blocks. (geonnax.fno)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#heteroscedastic-output-layers-collier-et-al-2021-geonnaxheteroscedastic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Heteroscedastic output layers (Collier et al., 2021). (geonnax.heteroscedastic)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#self-attention-layers-over-flattened-spatial-grids-geonnaxlayers_attention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Self-attention layers over flattened spatial grids. (geonnax.layers._attention)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#residual-and-convnext-convolutional-blocks-with-channel-re-calibration-geonnaxlayers_blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Residual and ConvNeXt convolutional blocks with channel re-calibration. (geonnax.layers._blocks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#convolution-primitives-weight-standardized-conv-and-resampling-geonnaxlayers_conv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Convolution primitives: weight-standardized conv and resampling. (geonnax.layers._conv)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#low-rank-tensor-factorizations-for-spectral-operator-weights-geonnaxlayers_factorized" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Low-rank tensor factorizations for spectral-operator weights. (geonnax.layers._factorized)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#normalization-layers-beyond-equinoxs-built-ins-geonnaxlayers_norm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Normalization layers beyond Equinox's built-ins. (geonnax.layers._norm)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fourier-spectral-convolution-the-core-fourier-neural-operator-layer-geonnaxlayers_spectral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fourier spectral convolution (the core Fourier Neural Operator layer). (geonnax.layers._spectral)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spherical-harmonic-transform-and-spherical-spectral-convolution-geonnaxlayers_spherical_transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spherical harmonic transform and spherical spectral convolution. (geonnax.layers._spherical_transform)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spherical-wavelet-scale-discretised-needlet-transform-geonnaxlayers_spherical_wavelet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spherical wavelet (scale-discretised / needlet) transform. (geonnax.layers._spherical_wavelet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discrete-wavelet-transform-layers-the-core-of-the-wavelet-neural-operator-geonnaxlayers_wavelet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discrete wavelet transform layers (the core of the Wavelet Neural Operator). (geonnax.layers._wavelet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wavelet-domain-self-attention-the-mswt-core-wang-et-al-2026-geonnaxlayers_wavelet_attention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wavelet-domain self-attention — the MSWT core (Wang et al., 2026). (geonnax.layers._wavelet_attention)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiplicative-filter-networks-fathony-et-al-iclr-2021-geonnaxmfn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiplicative Filter Networks (Fathony et al., ICLR 2021). (geonnax.mfn)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixture-density-network-output-head-bishop-1994-geonnaxmixture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixture-density-network output head (Bishop, 1994). (geonnax.mixture)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-scale-wavelet-transformer-wang-et-al-2026-a-wavelet-attention-operator-geonnaxmswt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Scale Wavelet Transformer (Wang et al., 2026) — a wavelet-attention operator. (geonnax.mswt)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-scale-frequency-banded-sinusoidal-representation-networks-geonnaxmulti_scale_siren" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-scale (frequency-banded) sinusoidal representation networks. (geonnax.multi_scale_siren)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#noise-contrastive-prior-building-blocks-deterministic-parts-geonnaxncp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Noise Contrastive Prior building blocks (deterministic parts). (geonnax.ncp)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#random-fourier-feature-primitives-geonnaxrandfeat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Random Fourier feature primitives. (geonnax.randfeat)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spherical-fourier-neural-operator-bonev-et-al-2023-geonnaxsfno" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spherical Fourier Neural Operator (Bonev et al., 2023). (geonnax.sfno)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sinusoidal-representation-networks-sitzmann-et-al-neurips-2020-geonnaxsiren" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sinusoidal Representation Networks (Sitzmann et al., NeurIPS 2020). (geonnax.siren)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slepian-positional-encoders-for-localized-spherical-features-geonnaxslepian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slepian positional encoders for localized spherical features. (geonnax.slepian)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spectral-normalized-gaussian-process-sngp-output-layer-geonnaxsngp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spectral-Normalized Gaussian Process (SNGP) output layer. (geonnax.sngp)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spectral-normalisation-c-lipschitz-linear-layers-via-power-iteration-geonnaxspectral_norm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spectral normalisation — \(c\)-Lipschitz linear layers via power iteration. (geonnax.spectral_norm)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern-dimension-flexible-u-net-cores-pure-equinoxmodule-geonnaxunet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modern, dimension-flexible U-Net cores (pure equinox.Module). (geonnax.unet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deterministic-core-for-deep-variational-ssgp-cutajar-et-al-2017-geonnaxvssgp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deterministic core for Deep Variational SSGP (Cutajar et al. 2017). (geonnax.vssgp)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wavelet-neural-operator-tripura-chakraborty-2023-and-its-blocks-geonnaxwno" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wavelet Neural Operator (Tripura &amp; Chakraborty, 2023) and its blocks. (geonnax.wno)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geonnaxbasis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax.basis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="geonnax.basis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#divergence-free-vector-basis-on-the-bounded-box-l-l2-geonnax_basis_divfree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Divergence-free vector basis on the bounded box \([-L, L]^2\). (geonnax._basis._divfree)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#empirical-orthogonal-function-eof-pca-basis-from-a-data-matrix-geonnax_basis_eof" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Empirical-orthogonal-function (EOF / PCA) basis from a data matrix. (geonnax._basis._eof)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#laplacian-eigenfunctions-on-the-bounded-box-l-ld-geonnax_basis_fourier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Laplacian eigenfunctions on the bounded box \([-L, L]^D\). (geonnax._basis._fourier)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed-overcomplete-multiscale-gabor-frame-geonnax_basis_gabor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed overcomplete multiscale Gabor frame. (geonnax._basis._gabor)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graph-laplacian-eigenpairs-for-graphmanifold-inducing-features-geonnax_basis_laplacian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graph Laplacian eigenpairs for graph/manifold inducing features. (geonnax._basis._laplacian)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#legendre-polynomials-associated-legendre-functions-and-gausslegendre-nodes-geonnax_basis_legendre" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legendre polynomials, associated Legendre functions and Gauss–Legendre nodes. (geonnax._basis._legendre)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#triangle-meshes-of-the-sphere-geonnax_basis_mesh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Triangle meshes of the sphere. (geonnax._basis._mesh)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spherical-needlets-a-localised-multiscale-tight-frame-on-the-sphere-geonnax_basis_needlets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spherical needlets: a localised, multiscale tight frame on the sphere. (geonnax._basis._needlets)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placeable-radial-basis-compact-support-wendland-bases-geonnax_basis_rbf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Placeable radial-basis / compact-support (Wendland) bases. (geonnax._basis._rbf)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#product-bases-on-a-spherical-shell-r_0-le-lvert-xrvert-le-r_1-geonnax_basis_shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product bases on a spherical shell \(r_0 \le \lVert x\rVert \le r_1\). (geonnax._basis._shell)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spherical-slepian-functions-for-axisymmetric-caps-on-s2-geonnax_basis_slepian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spherical Slepian functions for axisymmetric caps on \(S^2\). (geonnax._basis._slepian)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slepian-bases-for-general-regions-of-the-sphere-geonnax_basis_slepian_region" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slepian bases for general regions of the sphere. (geonnax._basis._slepian_region)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#point-sets-and-quadrature-grids-on-the-unit-sphere-geonnax_basis_sphere_grids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Point sets and quadrature grids on the unit sphere. (geonnax._basis._sphere_grids)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#real-spherical-harmonics-on-the-unit-2-sphere-geonnax_basis_spherical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real spherical harmonics on the unit 2-sphere. (geonnax._basis._spherical)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vector-spherical-harmonics-a-basis-for-tangent-vector-fields-on-the-sphere-geonnax_basis_vector_spherical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vector spherical harmonics: a basis for tangent vector fields on the sphere. (geonnax._basis._vector_spherical)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orthonormal-discrete-wavelet-transform-dwt-basis-matrices-geonnax_basis_wavelet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orthonormal discrete-wavelet-transform (DWT) basis matrices. (geonnax._basis._wavelet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-public-basis-surface-feature-transforms-the-eigenfunctionframe-zoo-geonnaxbasis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The public basis surface: feature transforms + the eigenfunction/frame zoo. (geonnax.basis)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geonnaxgeo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax.geo
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="geonnax.geo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#coordinate-frames-on-the-earth-ellipsoid-local-tangent-frames-and-rotations-geonnax_frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coordinate frames on the Earth: ellipsoid, local tangent frames and rotations. (geonnax._frames)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pure-jax-geographic-and-spherical-feature-helpers-geonnaxgeo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pure-JAX geographic and spherical feature helpers. (geonnax.geo)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geonnaxlayers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax.layers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="geonnax.layers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#low-rank-tensor-factorizations-for-spectral-operator-weights-geonnaxlayers_factorized_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Low-rank tensor factorizations for spectral-operator weights. (geonnax.layers._factorized)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discrete-wavelet-transform-layers-the-core-of-the-wavelet-neural-operator-geonnaxlayers_wavelet_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discrete wavelet transform layers (the core of the Wavelet Neural Operator). (geonnax.layers._wavelet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geonnaxmswt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax.mswt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geonnaxunet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax.unet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shared-private-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared private helpers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../operators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operators (FNO / SFNO)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../unet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    U-Net
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../layers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../representation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Representation Networks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../encoders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encoders & Geometry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../uncertainty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uncertainty & Bayesian
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../bases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spectral Bases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building with agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#geonnax" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="geonnax">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#unified-conditioning-primitives-for-geonnax-geonnaxconditioning" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Unified conditioning primitives for geonnax. (geonnax.conditioning)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#linear-chain-conditional-random-field-forward-algorithm-and-viterbi-geonnaxcrf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Linear-chain conditional random field — forward algorithm and Viterbi. (geonnax.crf)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deterministic-coordinate-encoders-for-lonlat-and-spherical-inputs-geonnaxencoders" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deterministic coordinate encoders for lon/lat and spherical inputs. (geonnax.encoders)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ensemble-style-layers-for-geonnax-geonnaxensemble" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ensemble-style layers for geonnax. (geonnax.ensemble)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fourier-neural-operator-li-et-al-2021-and-its-building-blocks-geonnaxfno" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fourier Neural Operator (Li et al., 2021) and its building blocks. (geonnax.fno)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#heteroscedastic-output-layers-collier-et-al-2021-geonnaxheteroscedastic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Heteroscedastic output layers (Collier et al., 2021). (geonnax.heteroscedastic)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#self-attention-layers-over-flattened-spatial-grids-geonnaxlayers_attention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Self-attention layers over flattened spatial grids. (geonnax.layers._attention)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#residual-and-convnext-convolutional-blocks-with-channel-re-calibration-geonnaxlayers_blocks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Residual and ConvNeXt convolutional blocks with channel re-calibration. (geonnax.layers._blocks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#convolution-primitives-weight-standardized-conv-and-resampling-geonnaxlayers_conv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Convolution primitives: weight-standardized conv and resampling. (geonnax.layers._conv)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#low-rank-tensor-factorizations-for-spectral-operator-weights-geonnaxlayers_factorized" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Low-rank tensor factorizations for spectral-operator weights. (geonnax.layers._factorized)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#normalization-layers-beyond-equinoxs-built-ins-geonnaxlayers_norm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Normalization layers beyond Equinox's built-ins. (geonnax.layers._norm)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fourier-spectral-convolution-the-core-fourier-neural-operator-layer-geonnaxlayers_spectral" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fourier spectral convolution (the core Fourier Neural Operator layer). (geonnax.layers._spectral)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spherical-harmonic-transform-and-spherical-spectral-convolution-geonnaxlayers_spherical_transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spherical harmonic transform and spherical spectral convolution. (geonnax.layers._spherical_transform)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spherical-wavelet-scale-discretised-needlet-transform-geonnaxlayers_spherical_wavelet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spherical wavelet (scale-discretised / needlet) transform. (geonnax.layers._spherical_wavelet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discrete-wavelet-transform-layers-the-core-of-the-wavelet-neural-operator-geonnaxlayers_wavelet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discrete wavelet transform layers (the core of the Wavelet Neural Operator). (geonnax.layers._wavelet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wavelet-domain-self-attention-the-mswt-core-wang-et-al-2026-geonnaxlayers_wavelet_attention" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wavelet-domain self-attention — the MSWT core (Wang et al., 2026). (geonnax.layers._wavelet_attention)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiplicative-filter-networks-fathony-et-al-iclr-2021-geonnaxmfn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiplicative Filter Networks (Fathony et al., ICLR 2021). (geonnax.mfn)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mixture-density-network-output-head-bishop-1994-geonnaxmixture" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mixture-density-network output head (Bishop, 1994). (geonnax.mixture)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-scale-wavelet-transformer-wang-et-al-2026-a-wavelet-attention-operator-geonnaxmswt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-Scale Wavelet Transformer (Wang et al., 2026) — a wavelet-attention operator. (geonnax.mswt)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multi-scale-frequency-banded-sinusoidal-representation-networks-geonnaxmulti_scale_siren" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multi-scale (frequency-banded) sinusoidal representation networks. (geonnax.multi_scale_siren)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#noise-contrastive-prior-building-blocks-deterministic-parts-geonnaxncp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Noise Contrastive Prior building blocks (deterministic parts). (geonnax.ncp)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#random-fourier-feature-primitives-geonnaxrandfeat" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Random Fourier feature primitives. (geonnax.randfeat)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spherical-fourier-neural-operator-bonev-et-al-2023-geonnaxsfno" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spherical Fourier Neural Operator (Bonev et al., 2023). (geonnax.sfno)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sinusoidal-representation-networks-sitzmann-et-al-neurips-2020-geonnaxsiren" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sinusoidal Representation Networks (Sitzmann et al., NeurIPS 2020). (geonnax.siren)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slepian-positional-encoders-for-localized-spherical-features-geonnaxslepian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slepian positional encoders for localized spherical features. (geonnax.slepian)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spectral-normalized-gaussian-process-sngp-output-layer-geonnaxsngp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spectral-Normalized Gaussian Process (SNGP) output layer. (geonnax.sngp)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spectral-normalisation-c-lipschitz-linear-layers-via-power-iteration-geonnaxspectral_norm" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spectral normalisation — \(c\)-Lipschitz linear layers via power iteration. (geonnax.spectral_norm)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#modern-dimension-flexible-u-net-cores-pure-equinoxmodule-geonnaxunet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Modern, dimension-flexible U-Net cores (pure equinox.Module). (geonnax.unet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deterministic-core-for-deep-variational-ssgp-cutajar-et-al-2017-geonnaxvssgp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deterministic core for Deep Variational SSGP (Cutajar et al. 2017). (geonnax.vssgp)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#wavelet-neural-operator-tripura-chakraborty-2023-and-its-blocks-geonnaxwno" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wavelet Neural Operator (Tripura &amp; Chakraborty, 2023) and its blocks. (geonnax.wno)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geonnaxbasis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax.basis
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="geonnax.basis">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#divergence-free-vector-basis-on-the-bounded-box-l-l2-geonnax_basis_divfree" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Divergence-free vector basis on the bounded box \([-L, L]^2\). (geonnax._basis._divfree)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#empirical-orthogonal-function-eof-pca-basis-from-a-data-matrix-geonnax_basis_eof" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Empirical-orthogonal-function (EOF / PCA) basis from a data matrix. (geonnax._basis._eof)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#laplacian-eigenfunctions-on-the-bounded-box-l-ld-geonnax_basis_fourier" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Laplacian eigenfunctions on the bounded box \([-L, L]^D\). (geonnax._basis._fourier)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixed-overcomplete-multiscale-gabor-frame-geonnax_basis_gabor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixed overcomplete multiscale Gabor frame. (geonnax._basis._gabor)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#graph-laplacian-eigenpairs-for-graphmanifold-inducing-features-geonnax_basis_laplacian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Graph Laplacian eigenpairs for graph/manifold inducing features. (geonnax._basis._laplacian)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#legendre-polynomials-associated-legendre-functions-and-gausslegendre-nodes-geonnax_basis_legendre" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legendre polynomials, associated Legendre functions and Gauss–Legendre nodes. (geonnax._basis._legendre)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#triangle-meshes-of-the-sphere-geonnax_basis_mesh" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Triangle meshes of the sphere. (geonnax._basis._mesh)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spherical-needlets-a-localised-multiscale-tight-frame-on-the-sphere-geonnax_basis_needlets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spherical needlets: a localised, multiscale tight frame on the sphere. (geonnax._basis._needlets)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#placeable-radial-basis-compact-support-wendland-bases-geonnax_basis_rbf" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Placeable radial-basis / compact-support (Wendland) bases. (geonnax._basis._rbf)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#product-bases-on-a-spherical-shell-r_0-le-lvert-xrvert-le-r_1-geonnax_basis_shell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Product bases on a spherical shell \(r_0 \le \lVert x\rVert \le r_1\). (geonnax._basis._shell)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#spherical-slepian-functions-for-axisymmetric-caps-on-s2-geonnax_basis_slepian" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spherical Slepian functions for axisymmetric caps on \(S^2\). (geonnax._basis._slepian)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#slepian-bases-for-general-regions-of-the-sphere-geonnax_basis_slepian_region" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Slepian bases for general regions of the sphere. (geonnax._basis._slepian_region)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#point-sets-and-quadrature-grids-on-the-unit-sphere-geonnax_basis_sphere_grids" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Point sets and quadrature grids on the unit sphere. (geonnax._basis._sphere_grids)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#real-spherical-harmonics-on-the-unit-2-sphere-geonnax_basis_spherical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Real spherical harmonics on the unit 2-sphere. (geonnax._basis._spherical)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vector-spherical-harmonics-a-basis-for-tangent-vector-fields-on-the-sphere-geonnax_basis_vector_spherical" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vector spherical harmonics: a basis for tangent vector fields on the sphere. (geonnax._basis._vector_spherical)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orthonormal-discrete-wavelet-transform-dwt-basis-matrices-geonnax_basis_wavelet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Orthonormal discrete-wavelet-transform (DWT) basis matrices. (geonnax._basis._wavelet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-public-basis-surface-feature-transforms-the-eigenfunctionframe-zoo-geonnaxbasis" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The public basis surface: feature transforms + the eigenfunction/frame zoo. (geonnax.basis)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geonnaxgeo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax.geo
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="geonnax.geo">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#coordinate-frames-on-the-earth-ellipsoid-local-tangent-frames-and-rotations-geonnax_frames" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coordinate frames on the Earth: ellipsoid, local tangent frames and rotations. (geonnax._frames)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pure-jax-geographic-and-spherical-feature-helpers-geonnaxgeo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pure-JAX geographic and spherical feature helpers. (geonnax.geo)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geonnaxlayers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax.layers
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="geonnax.layers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#low-rank-tensor-factorizations-for-spectral-operator-weights-geonnaxlayers_factorized_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Low-rank tensor factorizations for spectral-operator weights. (geonnax.layers._factorized)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#discrete-wavelet-transform-layers-the-core-of-the-wavelet-neural-operator-geonnaxlayers_wavelet_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Discrete wavelet transform layers (the core of the Wavelet Neural Operator). (geonnax.layers._wavelet)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geonnaxmswt" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax.mswt
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#geonnaxunet" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        geonnax.unet
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#shared-private-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Shared private helpers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="capability-index">Capability index<a class="headerlink" href="#capability-index" title="Permanent link">&para;</a></h1>
+<!-- Generated by scripts/capabilities.py — do not edit by hand. -->
+
+<p>Every public name in geonnax (157 of them), each listed once at its
+public home and grouped by the module that defines it, with the first
+sentence of its docstring; names reachable only from a submodule are
+listed under it. Then the shared private helpers. Search this page
+before writing a helper: if what you need is here, compose it; if it is
+almost here, extend it where it lives. Regenerate with
+<code>make capabilities</code> after changing a public API
+(<code>tests/test_capabilities.py</code> checks it is current).</p>
+<h2 id="geonnax"><code>geonnax</code><a class="headerlink" href="#geonnax" title="Permanent link">&para;</a></h2>
+<h3 id="unified-conditioning-primitives-for-geonnax-geonnaxconditioning">Unified conditioning primitives for <code>geonnax</code>. (<code>geonnax.conditioning</code>)<a class="headerlink" href="#unified-conditioning-primitives-for-geonnax-geonnaxconditioning" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AbstractConditioner</code></td>
+<td>class</td>
+<td>Duck-typed protocol for <code>(h, z) -&gt; y</code> conditioning layers.</td>
+</tr>
+<tr>
+<td><code>AffineModulation</code></td>
+<td>class</td>
+<td>Feature-wise Linear Modulation (FiLM): <code>y = γ(z) ⊙ h + β(z)</code>.</td>
+</tr>
+<tr>
+<td><code>ConcatConditioner</code></td>
+<td>class</td>
+<td>Concatenate <code>h</code> and <code>z</code> then apply a single <code>Linear</code>.</td>
+</tr>
+<tr>
+<td><code>ConditionedINR</code></td>
+<td>class</td>
+<td>Wrap an inner network's per-layer activations with conditioners.</td>
+</tr>
+<tr>
+<td><code>FiLM</code></td>
+<td>class</td>
+<td>Alias of <code>AffineModulation</code>.</td>
+</tr>
+<tr>
+<td><code>GeneratedSiren</code></td>
+<td>class</td>
+<td>Wrapper around a SIREN whose layers consume generated weights.</td>
+</tr>
+<tr>
+<td><code>HyperLinear</code></td>
+<td>class</td>
+<td>Generate a target <code>Linear</code>'s <code>(W, b)</code> from <code>z</code>, then apply.</td>
+</tr>
+<tr>
+<td><code>HyperSIREN</code></td>
+<td>function</td>
+<td>NIF-style ShapeNet/ParameterNet composite (Pan, Brunton, Kutz — JMLR 2023).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="linear-chain-conditional-random-field-forward-algorithm-and-viterbi-geonnaxcrf">Linear-chain conditional random field — forward algorithm and Viterbi. (<code>geonnax.crf</code>)<a class="headerlink" href="#linear-chain-conditional-random-field-forward-algorithm-and-viterbi-geonnaxcrf" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LinearChainCRF</code></td>
+<td>class</td>
+<td>Deterministic linear-chain CRF — forward algorithm plus Viterbi decoding.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="deterministic-coordinate-encoders-for-lonlat-and-spherical-inputs-geonnaxencoders">Deterministic coordinate encoders for lon/lat and spherical inputs. (<code>geonnax.encoders</code>)<a class="headerlink" href="#deterministic-coordinate-encoders-for-lonlat-and-spherical-inputs-geonnaxencoders" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Cartesian3DEncoder</code></td>
+<td>class</td>
+<td>Lift a single lon/lat coordinate onto the unit sphere <span class="arithmatex">\(S^2\)</span>.</td>
+</tr>
+<tr>
+<td><code>CyclicEncoder</code></td>
+<td>class</td>
+<td>Encode a single periodic input as concatenated cos/sin features.</td>
+</tr>
+<tr>
+<td><code>Deg2Rad</code></td>
+<td>class</td>
+<td>Element-wise degrees-to-radians conversion.</td>
+</tr>
+<tr>
+<td><code>GeoContextEncoder</code></td>
+<td>class</td>
+<td>Encode geoscience metadata into a single context vector.</td>
+</tr>
+<tr>
+<td><code>LonLatScale</code></td>
+<td>class</td>
+<td>Affine-rescale a single lon/lat pair into <code>[-1, 1]</code>.</td>
+</tr>
+<tr>
+<td><code>SphericalHarmonicEncoder</code></td>
+<td>class</td>
+<td>Real spherical-harmonic features on the unit 2-sphere for a single point.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ensemble-style-layers-for-geonnax-geonnaxensemble">Ensemble-style layers for <code>geonnax</code>. (<code>geonnax.ensemble</code>)<a class="headerlink" href="#ensemble-style-layers-for-geonnax-geonnaxensemble" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DenseRank1</code></td>
+<td>class</td>
+<td>Rank-1 ensemble dense layer (deterministic BatchEnsemble core).</td>
+</tr>
+<tr>
+<td><code>LayerNormEnsemble</code></td>
+<td>class</td>
+<td>Per-ensemble-member LayerNorm (deterministic core).</td>
+</tr>
+<tr>
+<td><code>MultiHeadAttentionBE</code></td>
+<td>class</td>
+<td>Multi-head attention with BatchEnsemble rank-1 projections.</td>
+</tr>
+<tr>
+<td><code>Rank1ProjInit</code></td>
+<td>class</td>
+<td>Per-projection BatchEnsemble inits used by <code>MultiHeadAttentionBE</code>.</td>
+</tr>
+<tr>
+<td><code>apply_rank1_proj</code></td>
+<td>function</td>
+<td>Apply <code>y_i = ((x ⊙ s_i) @ W) ⊙ r_i + b_i</code> per ensemble member.</td>
+</tr>
+<tr>
+<td><code>init_rank1_proj</code></td>
+<td>function</td>
+<td>Glorot-init shared kernel + per-member rank-1 vectors + zero bias.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="fourier-neural-operator-li-et-al-2021-and-its-building-blocks-geonnaxfno">Fourier Neural Operator (Li et al., 2021) and its building blocks. (<code>geonnax.fno</code>)<a class="headerlink" href="#fourier-neural-operator-li-et-al-2021-and-its-building-blocks-geonnaxfno" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DomainPadding</code></td>
+<td>class</td>
+<td>Zero-pad spatial axes by a fraction of their size, then crop back.</td>
+</tr>
+<tr>
+<td><code>FNO</code></td>
+<td>class</td>
+<td>Fourier Neural Operator: lifting → Fourier blocks → projection.</td>
+</tr>
+<tr>
+<td><code>FNOBlock</code></td>
+<td>class</td>
+<td>One Fourier layer: spectral conv + pointwise skip, then an activation.</td>
+</tr>
+<tr>
+<td><code>FourierNeuralOperator</code></td>
+<td>class</td>
+<td>Alias of <code>FNO</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="heteroscedastic-output-layers-collier-et-al-2021-geonnaxheteroscedastic">Heteroscedastic output layers (Collier et al., 2021). (<code>geonnax.heteroscedastic</code>)<a class="headerlink" href="#heteroscedastic-output-layers-collier-et-al-2021-geonnaxheteroscedastic" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HeteroscedasticHead</code></td>
+<td>class</td>
+<td>Shared state and init for the FA-noise heteroscedastic layers.</td>
+</tr>
+<tr>
+<td><code>MCSigmoidDenseFA</code></td>
+<td>class</td>
+<td>Heteroscedastic multi-label output layer (FA noise + sigmoid).</td>
+</tr>
+<tr>
+<td><code>MCSoftmaxDenseFA</code></td>
+<td>class</td>
+<td>Heteroscedastic multi-class output layer (FA noise + softmax).</td>
+</tr>
+<tr>
+<td><code>hetero_noisy_logits</code></td>
+<td>function</td>
+<td>Sample <code>num_mc_samples</code> heteroscedastic logits for one example.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="self-attention-layers-over-flattened-spatial-grids-geonnaxlayers_attention">Self-attention layers over flattened spatial grids. (<code>geonnax.layers._attention</code>)<a class="headerlink" href="#self-attention-layers-over-flattened-spatial-grids-geonnaxlayers_attention" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Attention</code></td>
+<td>class</td>
+<td>Pre-norm multi-head self-attention with cosine (QK-normalised) similarity.</td>
+</tr>
+<tr>
+<td><code>LinearAttention</code></td>
+<td>class</td>
+<td>Pre-norm linear attention — <code>O(n)</code> in the number of spatial positions.</td>
+</tr>
+<tr>
+<td><code>WindowedAttention</code></td>
+<td>class</td>
+<td>Swin-style windowed multi-head self-attention with cosine similarity.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="residual-and-convnext-convolutional-blocks-with-channel-re-calibration-geonnaxlayers_blocks">Residual and ConvNeXt convolutional blocks with channel re-calibration. (<code>geonnax.layers._blocks</code>)<a class="headerlink" href="#residual-and-convnext-convolutional-blocks-with-channel-re-calibration-geonnaxlayers_blocks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Block</code></td>
+<td>class</td>
+<td>Conv → GroupNorm → SiLU, the residual-block primitive.</td>
+</tr>
+<tr>
+<td><code>ConvNeXtBlock</code></td>
+<td>class</td>
+<td>ConvNeXt-V2 block: depthwise conv → norm → MLP with GRN (Woo et al., 2023).</td>
+</tr>
+<tr>
+<td><code>ResnetBlock</code></td>
+<td>class</td>
+<td>Two <code>Block</code>s with squeeze-excitation and a residual skip.</td>
+</tr>
+<tr>
+<td><code>SqueezeExcitation</code></td>
+<td>class</td>
+<td>Squeeze-and-Excitation channel gating (Hu et al., 2018).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="convolution-primitives-weight-standardized-conv-and-resampling-geonnaxlayers_conv">Convolution primitives: weight-standardized conv and resampling. (<code>geonnax.layers._conv</code>)<a class="headerlink" href="#convolution-primitives-weight-standardized-conv-and-resampling-geonnaxlayers_conv" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Downsample</code></td>
+<td>class</td>
+<td>Memory-efficient factor-2 downsample: space-to-depth, then <code>1x1</code> conv.</td>
+</tr>
+<tr>
+<td><code>StandardizedConv</code></td>
+<td>class</td>
+<td>Convolution with optional on-the-fly weight standardization.</td>
+</tr>
+<tr>
+<td><code>Upsample</code></td>
+<td>class</td>
+<td>Factor-2 upsample via pixel-shuffle: <code>1x1</code> conv, then depth-to-space.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="low-rank-tensor-factorizations-for-spectral-operator-weights-geonnaxlayers_factorized">Low-rank tensor factorizations for spectral-operator weights. (<code>geonnax.layers._factorized</code>)<a class="headerlink" href="#low-rank-tensor-factorizations-for-spectral-operator-weights-geonnaxlayers_factorized" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CPTensor</code></td>
+<td>class</td>
+<td>Canonical-Polyadic (CP / PARAFAC) factorization.</td>
+</tr>
+<tr>
+<td><code>DenseTensor</code></td>
+<td>class</td>
+<td>A full, un-factorised tensor.</td>
+</tr>
+<tr>
+<td><code>TTTensor</code></td>
+<td>class</td>
+<td>Tensor-Train (Matrix-Product) factorization.</td>
+</tr>
+<tr>
+<td><code>TuckerTensor</code></td>
+<td>class</td>
+<td>Tucker factorization: a small core contracted with per-mode factor matrices.</td>
+</tr>
+<tr>
+<td><code>init_factorized_tensor</code></td>
+<td>function</td>
+<td>Construct a factorized tensor of the requested kind.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="normalization-layers-beyond-equinoxs-built-ins-geonnaxlayers_norm">Normalization layers beyond Equinox's built-ins. (<code>geonnax.layers._norm</code>)<a class="headerlink" href="#normalization-layers-beyond-equinoxs-built-ins-geonnaxlayers_norm" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GlobalResponseNorm</code></td>
+<td>class</td>
+<td>Global Response Normalization (Woo et al., 2023, "ConvNeXt-V2").</td>
+</tr>
+</tbody>
+</table>
+<h3 id="fourier-spectral-convolution-the-core-fourier-neural-operator-layer-geonnaxlayers_spectral">Fourier spectral convolution (the core Fourier Neural Operator layer). (<code>geonnax.layers._spectral</code>)<a class="headerlink" href="#fourier-spectral-convolution-the-core-fourier-neural-operator-layer-geonnaxlayers_spectral" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SpectralConv</code></td>
+<td>class</td>
+<td>Fourier spectral convolution over <code>num_spatial_dims = len(n_modes)</code> axes.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="spherical-harmonic-transform-and-spherical-spectral-convolution-geonnaxlayers_spherical_transform">Spherical harmonic transform and spherical spectral convolution. (<code>geonnax.layers._spherical_transform</code>)<a class="headerlink" href="#spherical-harmonic-transform-and-spherical-spectral-convolution-geonnaxlayers_spherical_transform" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SphericalHarmonicTransform</code></td>
+<td>class</td>
+<td>Dense, differentiable spherical harmonic analysis/synthesis on a grid.</td>
+</tr>
+<tr>
+<td><code>SphericalSpectralConv</code></td>
+<td>class</td>
+<td>Spherical spectral convolution: per-degree channel mixing in SH space.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="spherical-wavelet-scale-discretised-needlet-transform-geonnaxlayers_spherical_wavelet">Spherical wavelet (scale-discretised / needlet) transform. (<code>geonnax.layers._spherical_wavelet</code>)<a class="headerlink" href="#spherical-wavelet-scale-discretised-needlet-transform-geonnaxlayers_spherical_wavelet" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SphericalWaveletConv</code></td>
+<td>class</td>
+<td>Per-scale channel mixing in the spherical-wavelet domain.</td>
+</tr>
+<tr>
+<td><code>SphericalWaveletTransform</code></td>
+<td>class</td>
+<td>Scale-discretised (needlet) wavelet analysis/synthesis on the sphere.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="discrete-wavelet-transform-layers-the-core-of-the-wavelet-neural-operator-geonnaxlayers_wavelet">Discrete wavelet transform layers (the core of the Wavelet Neural Operator). (<code>geonnax.layers._wavelet</code>)<a class="headerlink" href="#discrete-wavelet-transform-layers-the-core-of-the-wavelet-neural-operator-geonnaxlayers_wavelet" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WaveletConv</code></td>
+<td>class</td>
+<td>Wavelet-domain channel mixing — the wavelet analogue of <code>SpectralConv</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="wavelet-domain-self-attention-the-mswt-core-wang-et-al-2026-geonnaxlayers_wavelet_attention">Wavelet-domain self-attention — the MSWT core (Wang et al., 2026). (<code>geonnax.layers._wavelet_attention</code>)<a class="headerlink" href="#wavelet-domain-self-attention-the-mswt-core-wang-et-al-2026-geonnaxlayers_wavelet_attention" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WaveletAttention</code></td>
+<td>class</td>
+<td>Self-attention performed inside the wavelet domain (Wang et al., 2026).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="multiplicative-filter-networks-fathony-et-al-iclr-2021-geonnaxmfn">Multiplicative Filter Networks (Fathony et al., ICLR 2021). (<code>geonnax.mfn</code>)<a class="headerlink" href="#multiplicative-filter-networks-fathony-et-al-iclr-2021-geonnaxmfn" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FourierFilter</code></td>
+<td>class</td>
+<td>Single Fourier filter: <span class="arithmatex">\(g(x) = \sin(\Omega x + \varphi)\)</span>.</td>
+</tr>
+<tr>
+<td><code>FourierNet</code></td>
+<td>class</td>
+<td>Multiplicative Fourier Filter Network (Fathony et al., ICLR 2021).</td>
+</tr>
+<tr>
+<td><code>GaborFilter</code></td>
+<td>class</td>
+<td>Single Gabor filter: <span class="arithmatex">\(g(x) = \sin(\Omega x + \varphi) \odot \exp(-\tfrac{\gamma}{2}‖x - \mu‖^2)\)</span>.</td>
+</tr>
+<tr>
+<td><code>GaborNet</code></td>
+<td>class</td>
+<td>Multiplicative Gabor Filter Network (Fathony et al., ICLR 2021).</td>
+</tr>
+<tr>
+<td><code>mfn_forward</code></td>
+<td>function</td>
+<td>Pure-JAX MFN forward pass given user-supplied filter and linear callables.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="mixture-density-network-output-head-bishop-1994-geonnaxmixture">Mixture-density-network output head (Bishop, 1994). (<code>geonnax.mixture</code>)<a class="headerlink" href="#mixture-density-network-output-head-bishop-1994-geonnaxmixture" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MixtureOfGaussiansDenseHead</code></td>
+<td>class</td>
+<td>Deterministic mixture-density-network output head.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="multi-scale-wavelet-transformer-wang-et-al-2026-a-wavelet-attention-operator-geonnaxmswt">Multi-Scale Wavelet Transformer (Wang et al., 2026) — a wavelet-attention operator. (<code>geonnax.mswt</code>)<a class="headerlink" href="#multi-scale-wavelet-transformer-wang-et-al-2026-a-wavelet-attention-operator-geonnaxmswt" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MSWT</code></td>
+<td>class</td>
+<td>Multi-Scale Wavelet Transformer operator (Wang et al., 2026).</td>
+</tr>
+<tr>
+<td><code>MSWTBlock</code></td>
+<td>class</td>
+<td>Pre-norm wavelet-attention block: an attention residual, then an FFN residual.</td>
+</tr>
+<tr>
+<td><code>MultiScaleWaveletTransformer</code></td>
+<td>class</td>
+<td>Alias of <code>MSWT</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="multi-scale-frequency-banded-sinusoidal-representation-networks-geonnaxmulti_scale_siren">Multi-scale (frequency-banded) sinusoidal representation networks. (<code>geonnax.multi_scale_siren</code>)<a class="headerlink" href="#multi-scale-frequency-banded-sinusoidal-representation-networks-geonnaxmulti_scale_siren" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MultiScaleSIREN</code></td>
+<td>class</td>
+<td>Parallel frequency-banded SIRENs summed at the readout.</td>
+</tr>
+<tr>
+<td><code>log_spaced_omegas</code></td>
+<td>function</td>
+<td>Return <code>num_scales</code> log-spaced frequencies spanning the closed band.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="noise-contrastive-prior-building-blocks-deterministic-parts-geonnaxncp">Noise Contrastive Prior building blocks (deterministic parts). (<code>geonnax.ncp</code>)<a class="headerlink" href="#noise-contrastive-prior-building-blocks-deterministic-parts-geonnaxncp" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NCPContinuousPerturb</code></td>
+<td>class</td>
+<td>Input perturbation for the Noise Contrastive Prior pattern.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="random-fourier-feature-primitives-geonnaxrandfeat">Random Fourier feature primitives. (<code>geonnax.randfeat</code>)<a class="headerlink" href="#random-fourier-feature-primitives-geonnaxrandfeat" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OrthogonalRandomFeatures</code></td>
+<td>class</td>
+<td>Orthogonal Random Features (Yu et al., 2016) — variance-reduced RFF.</td>
+</tr>
+<tr>
+<td><code>orthogonal_blocks</code></td>
+<td>function</td>
+<td>Build the ORF frequency matrix as <code>[Q_1 S_1, ..., Q_K S_K]</code>.</td>
+</tr>
+<tr>
+<td><code>rff_cosine_forward</code></td>
+<td>function</td>
+<td>Shared single-cosine RFF feature map: <code>sqrt(2/D) cos(xW/l + b)</code>.</td>
+</tr>
+<tr>
+<td><code>rff_forward</code></td>
+<td>function</td>
+<td>Shared RFF feature map: <code>sqrt(1/D) [cos(xW/l), sin(xW/l)]</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="spherical-fourier-neural-operator-bonev-et-al-2023-geonnaxsfno">Spherical Fourier Neural Operator (Bonev et al., 2023). (<code>geonnax.sfno</code>)<a class="headerlink" href="#spherical-fourier-neural-operator-bonev-et-al-2023-geonnaxsfno" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SFNO</code></td>
+<td>class</td>
+<td>Spherical Fourier Neural Operator: lift → spherical blocks → project.</td>
+</tr>
+<tr>
+<td><code>SphericalFNOBlock</code></td>
+<td>class</td>
+<td>One spherical Fourier layer: spherical spectral conv + pointwise skip.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="sinusoidal-representation-networks-sitzmann-et-al-neurips-2020-geonnaxsiren">Sinusoidal Representation Networks (Sitzmann et al., NeurIPS 2020). (<code>geonnax.siren</code>)<a class="headerlink" href="#sinusoidal-representation-networks-sitzmann-et-al-neurips-2020-geonnaxsiren" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SIREN</code></td>
+<td>class</td>
+<td>Multi-layer sinusoidal representation network (Sitzmann et al., NeurIPS 2020).</td>
+</tr>
+<tr>
+<td><code>SirenDense</code></td>
+<td>class</td>
+<td>Sine-activated dense layer: <code>y = sin(ω · (W x + b))</code> or <code>y = W x + b</code>.</td>
+</tr>
+<tr>
+<td><code>SirenLayerSpec</code></td>
+<td>class</td>
+<td>Static per-layer metadata shared by deterministic and Bayesian SIRENs.</td>
+</tr>
+<tr>
+<td><code>SirenLayerType</code></td>
+<td>type</td>
+<td><code>typing.Literal['first', 'hidden', 'last']</code></td>
+</tr>
+<tr>
+<td><code>build_siren_specs</code></td>
+<td>function</td>
+<td>Produce per-layer specs for a depth-<code>depth</code> SIREN, first + hidden… + last.</td>
+</tr>
+<tr>
+<td><code>siren_W_limit</code></td>
+<td>function</td>
+<td>Return the half-width <code>a</code> of the <code>U(-a, a)</code> weight init for a SIREN layer.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="slepian-positional-encoders-for-localized-spherical-features-geonnaxslepian">Slepian positional encoders for localized spherical features. (<code>geonnax.slepian</code>)<a class="headerlink" href="#slepian-positional-encoders-for-localized-spherical-features-geonnaxslepian" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>HybridSphericalSlepianEncoder</code></td>
+<td>class</td>
+<td>Concatenate low-bandwidth global SHs with local Slepian cap modes.</td>
+</tr>
+<tr>
+<td><code>SlepianEncoder</code></td>
+<td>class</td>
+<td>Deterministic Slepian-cap positional encoder on <span class="arithmatex">\(S^2\)</span>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="spectral-normalized-gaussian-process-sngp-output-layer-geonnaxsngp">Spectral-Normalized Gaussian Process (SNGP) output layer. (<code>geonnax.sngp</code>)<a class="headerlink" href="#spectral-normalized-gaussian-process-sngp-output-layer-geonnaxsngp" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LaplaceRandomFeatureCovariance</code></td>
+<td>class</td>
+<td>Laplace-approximation precision for an SNGP output head.</td>
+</tr>
+<tr>
+<td><code>RandomFeatureGaussianProcess</code></td>
+<td>class</td>
+<td>SNGP output layer (Liu et al., 2020) — deterministic core.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="spectral-normalisation-c-lipschitz-linear-layers-via-power-iteration-geonnaxspectral_norm">Spectral normalisation — <span class="arithmatex">\(c\)</span>-Lipschitz linear layers via power iteration. (<code>geonnax.spectral_norm</code>)<a class="headerlink" href="#spectral-normalisation-c-lipschitz-linear-layers-via-power-iteration-geonnaxspectral_norm" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SpectralNormalization</code></td>
+<td>class</td>
+<td>Wrap an Equinox linear layer to be <span class="arithmatex">\(c\)</span>-Lipschitz via power iteration.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="modern-dimension-flexible-u-net-cores-pure-equinoxmodule-geonnaxunet">Modern, dimension-flexible U-Net cores (pure <code>equinox.Module</code>). (<code>geonnax.unet</code>)<a class="headerlink" href="#modern-dimension-flexible-u-net-cores-pure-equinoxmodule-geonnaxunet" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NestedResidualUNet</code></td>
+<td>class</td>
+<td>A small residual U-Net used as one stage block (Qin et al., 2020, "U²-Net").</td>
+</tr>
+<tr>
+<td><code>Stage</code></td>
+<td>class</td>
+<td>One encoder/decoder stage: a leaf block, then an optional nested U-Net.</td>
+</tr>
+<tr>
+<td><code>UNet</code></td>
+<td>class</td>
+<td>Dimension-flexible U-Net with modern blocks, attention, and nested stages.</td>
+</tr>
+<tr>
+<td><code>XUNet</code></td>
+<td>class</td>
+<td>Alias of <code>UNet</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="deterministic-core-for-deep-variational-ssgp-cutajar-et-al-2017-geonnaxvssgp">Deterministic core for Deep Variational SSGP (Cutajar et al. 2017). (<code>geonnax.vssgp</code>)<a class="headerlink" href="#deterministic-core-for-deep-variational-ssgp-cutajar-et-al-2017-geonnaxvssgp" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DeepVSSGPCore</code></td>
+<td>class</td>
+<td>Deterministic deep RFF spectral core.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="wavelet-neural-operator-tripura-chakraborty-2023-and-its-blocks-geonnaxwno">Wavelet Neural Operator (Tripura &amp; Chakraborty, 2023) and its blocks. (<code>geonnax.wno</code>)<a class="headerlink" href="#wavelet-neural-operator-tripura-chakraborty-2023-and-its-blocks-geonnaxwno" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WNO</code></td>
+<td>class</td>
+<td>Wavelet Neural Operator: lifting → wavelet blocks → projection.</td>
+</tr>
+<tr>
+<td><code>WNOBlock</code></td>
+<td>class</td>
+<td>One wavelet layer: wavelet conv + pointwise skip, then an activation.</td>
+</tr>
+<tr>
+<td><code>WaveletNeuralOperator</code></td>
+<td>class</td>
+<td>Alias of <code>WNO</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="geonnaxbasis"><code>geonnax.basis</code><a class="headerlink" href="#geonnaxbasis" title="Permanent link">&para;</a></h2>
+<h3 id="divergence-free-vector-basis-on-the-bounded-box-l-l2-geonnax_basis_divfree">Divergence-free vector basis on the bounded box <span class="arithmatex">\([-L, L]^2\)</span>. (<code>geonnax._basis._divfree</code>)<a class="headerlink" href="#divergence-free-vector-basis-on-the-bounded-box-l-l2-geonnax_basis_divfree" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>curlfree_basis</code></td>
+<td>function</td>
+<td>Curl-free vector basis: gradients of the box Laplacian eigenfunctions.</td>
+</tr>
+<tr>
+<td><code>divfree_basis</code></td>
+<td>function</td>
+<td>Divergence-free vector basis from box-Dirichlet stream functions.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="empirical-orthogonal-function-eof-pca-basis-from-a-data-matrix-geonnax_basis_eof">Empirical-orthogonal-function (EOF / PCA) basis from a data matrix. (<code>geonnax._basis._eof</code>)<a class="headerlink" href="#empirical-orthogonal-function-eof-pca-basis-from-a-data-matrix-geonnax_basis_eof" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>eof_basis</code></td>
+<td>function</td>
+<td>Leading <code>n_modes</code> empirical orthogonal functions of a data matrix.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="laplacian-eigenfunctions-on-the-bounded-box-l-ld-geonnax_basis_fourier">Laplacian eigenfunctions on the bounded box <span class="arithmatex">\([-L, L]^D\)</span>. (<code>geonnax._basis._fourier</code>)<a class="headerlink" href="#laplacian-eigenfunctions-on-the-bounded-box-l-ld-geonnax_basis_fourier" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fourier_basis</code></td>
+<td>function</td>
+<td>Tensor-product Laplacian eigenpairs on <span class="arithmatex">\([-L, L]^D\)</span> (Dirichlet by default).</td>
+</tr>
+<tr>
+<td><code>fourier_basis_1d</code></td>
+<td>function</td>
+<td>Evaluate the first <code>num_basis</code> 1D Laplacian eigenfunctions on <code>[-L, L]</code>.</td>
+</tr>
+<tr>
+<td><code>fourier_eigenvalues</code></td>
+<td>function</td>
+<td>Return the flattened sum-of-squares eigenvalues for a <code>D</code>-dimensional box.</td>
+</tr>
+<tr>
+<td><code>fourier_eigenvalues_1d</code></td>
+<td>function</td>
+<td>Return <span class="arithmatex">\(\lambda_j = (j\pi / (2L))^2\)</span> for <code>j = 1, ..., num_basis</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="fixed-overcomplete-multiscale-gabor-frame-geonnax_basis_gabor">Fixed overcomplete multiscale Gabor frame. (<code>geonnax._basis._gabor</code>)<a class="headerlink" href="#fixed-overcomplete-multiscale-gabor-frame-geonnax_basis_gabor" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>gabor_frame</code></td>
+<td>function</td>
+<td>Evaluate a bank of Gabor atoms (Gaussian envelope times oscillation).</td>
+</tr>
+<tr>
+<td><code>gabor_frame_grid</code></td>
+<td>function</td>
+<td>Build a dyadic radial-Gabor frame over a bounded box.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="graph-laplacian-eigenpairs-for-graphmanifold-inducing-features-geonnax_basis_laplacian">Graph Laplacian eigenpairs for graph/manifold inducing features. (<code>geonnax._basis._laplacian</code>)<a class="headerlink" href="#graph-laplacian-eigenpairs-for-graphmanifold-inducing-features-geonnax_basis_laplacian" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>graph_laplacian_eigpairs</code></td>
+<td>function</td>
+<td>Smallest <code>num_basis</code> Laplacian eigenpairs of an undirected graph.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="legendre-polynomials-associated-legendre-functions-and-gausslegendre-nodes-geonnax_basis_legendre">Legendre polynomials, associated Legendre functions and Gauss–Legendre nodes. (<code>geonnax._basis._legendre</code>)<a class="headerlink" href="#legendre-polynomials-associated-legendre-functions-and-gausslegendre-nodes-geonnax_basis_legendre" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>associated_legendre</code></td>
+<td>function</td>
+<td>Associated Legendre functions <span class="arithmatex">\(P_l^m(t)\)</span> for <span class="arithmatex">\(0 \le m \le l \le l_{\max}\)</span>.</td>
+</tr>
+<tr>
+<td><code>associated_legendre_indices</code></td>
+<td>function</td>
+<td>The <code>(l, m)</code> pair of each column of <code>associated_legendre</code>.</td>
+</tr>
+<tr>
+<td><code>gauss_legendre</code></td>
+<td>function</td>
+<td>Gauss–Legendre nodes and weights on <span class="arithmatex">\([-1, 1]\)</span>.</td>
+</tr>
+<tr>
+<td><code>legendre_polynomials</code></td>
+<td>function</td>
+<td>Legendre polynomials <span class="arithmatex">\(P_0(t), \ldots, P_{l_{\max}}(t)\)</span>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="triangle-meshes-of-the-sphere-geonnax_basis_mesh">Triangle meshes of the sphere. (<code>geonnax._basis._mesh</code>)<a class="headerlink" href="#triangle-meshes-of-the-sphere-geonnax_basis_mesh" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>icosphere</code></td>
+<td>function</td>
+<td>Subdivided icosahedron: a quasi-uniform triangle mesh of the sphere.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="spherical-needlets-a-localised-multiscale-tight-frame-on-the-sphere-geonnax_basis_needlets">Spherical needlets: a localised, multiscale tight frame on the sphere. (<code>geonnax._basis._needlets</code>)<a class="headerlink" href="#spherical-needlets-a-localised-multiscale-tight-frame-on-the-sphere-geonnax_basis_needlets" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>needlet_basis</code></td>
+<td>function</td>
+<td>Spherical needlets for scales <span class="arithmatex">\(j = 0, \ldots, j_{\max}\)</span>, plus the constant.</td>
+</tr>
+<tr>
+<td><code>needlet_window</code></td>
+<td>function</td>
+<td>The needlet window <span class="arithmatex">\(b\)</span>: smooth, supported in <span class="arithmatex">\([1/B, B]\)</span>, a partition of unity.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="placeable-radial-basis-compact-support-wendland-bases-geonnax_basis_rbf">Placeable radial-basis / compact-support (Wendland) bases. (<code>geonnax._basis._rbf</code>)<a class="headerlink" href="#placeable-radial-basis-compact-support-wendland-bases-geonnax_basis_rbf" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rbf_basis</code></td>
+<td>function</td>
+<td>Evaluate a placeable radial basis at given centres and widths.</td>
+</tr>
+<tr>
+<td><code>spherical_rbf_basis</code></td>
+<td>function</td>
+<td>Placeable radial basis on the unit 2-sphere, in geodesic distance.</td>
+</tr>
+<tr>
+<td><code>wendland_c2</code></td>
+<td>function</td>
+<td>Wendland <span class="arithmatex">\(C^2\)</span> kernel, positive definite in dimensions <span class="arithmatex">\(d \le 3\)</span>.</td>
+</tr>
+<tr>
+<td><code>wendland_c4</code></td>
+<td>function</td>
+<td>Wendland <span class="arithmatex">\(C^4\)</span> kernel, positive definite in dimensions <span class="arithmatex">\(d \le 3\)</span>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="product-bases-on-a-spherical-shell-r_0-le-lvert-xrvert-le-r_1-geonnax_basis_shell">Product bases on a spherical shell <span class="arithmatex">\(r_0 \le \lVert x\rVert \le r_1\)</span>. (<code>geonnax._basis._shell</code>)<a class="headerlink" href="#product-bases-on-a-spherical-shell-r_0-le-lvert-xrvert-le-r_1-geonnax_basis_shell" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>shell_basis</code></td>
+<td>function</td>
+<td>Spherical harmonics times radial polynomials on a spherical shell.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="spherical-slepian-functions-for-axisymmetric-caps-on-s2-geonnax_basis_slepian">Spherical Slepian functions for axisymmetric caps on <span class="arithmatex">\(S^2\)</span>. (<code>geonnax._basis._slepian</code>)<a class="headerlink" href="#spherical-slepian-functions-for-axisymmetric-caps-on-s2-geonnax_basis_slepian" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SlepianCapBasis</code></td>
+<td>class</td>
+<td>Precomputed Slepian cap eigendecomposition in the real-SH basis.</td>
+</tr>
+<tr>
+<td><code>shannon_number</code></td>
+<td>function</td>
+<td>Return the spherical-cap Shannon number for a bandlimit and area.</td>
+</tr>
+<tr>
+<td><code>slepian_cap_basis</code></td>
+<td>function</td>
+<td>Construct a Slepian basis for an axisymmetric spherical cap.</td>
+</tr>
+<tr>
+<td><code>slepian_cap_eigh_per_m</code></td>
+<td>function</td>
+<td>Solve the cap Slepian eigenproblem one azimuthal block at a time.</td>
+</tr>
+<tr>
+<td><code>slepian_concentration_matrix</code></td>
+<td>function</td>
+<td>Build the real-SH concentration matrix for a north-pole cap.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="slepian-bases-for-general-regions-of-the-sphere-geonnax_basis_slepian_region">Slepian bases for general regions of the sphere. (<code>geonnax._basis._slepian_region</code>)<a class="headerlink" href="#slepian-bases-for-general-regions-of-the-sphere-geonnax_basis_slepian_region" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SlepianBasis</code></td>
+<td>class</td>
+<td>Slepian functions of a general region, in the real spherical-harmonic basis.</td>
+</tr>
+<tr>
+<td><code>slepian_polar_gap_basis</code></td>
+<td>function</td>
+<td>Slepian functions of the band between two polar caps (a polar gap).</td>
+</tr>
+<tr>
+<td><code>slepian_region_basis</code></td>
+<td>function</td>
+<td>Slepian functions of a region given by a quadrature over it.</td>
+</tr>
+<tr>
+<td><code>spherical_polygon_mask</code></td>
+<td>function</td>
+<td>Which points lie inside a spherical polygon.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="point-sets-and-quadrature-grids-on-the-unit-sphere-geonnax_basis_sphere_grids">Point sets and quadrature grids on the unit sphere. (<code>geonnax._basis._sphere_grids</code>)<a class="headerlink" href="#point-sets-and-quadrature-grids-on-the-unit-sphere-geonnax_basis_sphere_grids" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fibonacci_sphere</code></td>
+<td>function</td>
+<td>The Fibonacci lattice: <code>n</code> near-uniform points on the unit sphere.</td>
+</tr>
+<tr>
+<td><code>gauss_legendre_grid</code></td>
+<td>function</td>
+<td>Gauss–Legendre grid on the sphere with its quadrature weights.</td>
+</tr>
+<tr>
+<td><code>latlon_grid</code></td>
+<td>function</td>
+<td>Regular cell-centred lat/lon grid with exact cell-area weights.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="real-spherical-harmonics-on-the-unit-2-sphere-geonnax_basis_spherical">Real spherical harmonics on the unit 2-sphere. (<code>geonnax._basis._spherical</code>)<a class="headerlink" href="#real-spherical-harmonics-on-the-unit-2-sphere-geonnax_basis_spherical" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>harmonic_degrees</code></td>
+<td>function</td>
+<td>Return the per-harmonic degree <code>l</code> for the flattened <code>(l_max + 1)^2</code> block.</td>
+</tr>
+<tr>
+<td><code>real_spherical_harmonics</code></td>
+<td>function</td>
+<td>Evaluate real spherical harmonics up to degree <code>l_max</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vector-spherical-harmonics-a-basis-for-tangent-vector-fields-on-the-sphere-geonnax_basis_vector_spherical">Vector spherical harmonics: a basis for tangent vector fields on the sphere. (<code>geonnax._basis._vector_spherical</code>)<a class="headerlink" href="#vector-spherical-harmonics-a-basis-for-tangent-vector-fields-on-the-sphere-geonnax_basis_vector_spherical" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>vector_spherical_harmonics</code></td>
+<td>function</td>
+<td>Gradient and toroidal vector spherical harmonics for <span class="arithmatex">\(1 \le l \le l_{\max}\)</span>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="orthonormal-discrete-wavelet-transform-dwt-basis-matrices-geonnax_basis_wavelet">Orthonormal discrete-wavelet-transform (DWT) basis matrices. (<code>geonnax._basis._wavelet</code>)<a class="headerlink" href="#orthonormal-discrete-wavelet-transform-dwt-basis-matrices-geonnax_basis_wavelet" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wavelet_basis_1d</code></td>
+<td>function</td>
+<td>Orthonormal 1D DWT synthesis-basis matrix on a periodic length-<code>n</code> grid.</td>
+</tr>
+<tr>
+<td><code>wavelet_basis_2d</code></td>
+<td>function</td>
+<td>Separable orthonormal 2D DWT basis as a Kronecker product.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-public-basis-surface-feature-transforms-the-eigenfunctionframe-zoo-geonnaxbasis">The public basis surface: feature transforms + the eigenfunction/frame zoo. (<code>geonnax.basis</code>)<a class="headerlink" href="#the-public-basis-surface-feature-transforms-the-eigenfunctionframe-zoo-geonnaxbasis" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fourier_features</code></td>
+<td>function</td>
+<td>Cos/sin Fourier basis at dyadic frequencies.</td>
+</tr>
+<tr>
+<td><code>gaussian_window_features</code></td>
+<td>function</td>
+<td>Gaussian-window-in-time basis, the temporal analogue of an RBF column.</td>
+</tr>
+<tr>
+<td><code>interaction_features</code></td>
+<td>function</td>
+<td>Element-wise products on selected pairs of input columns.</td>
+</tr>
+<tr>
+<td><code>seasonal_features</code></td>
+<td>function</td>
+<td>Cos/sin features at multiples of <span class="arithmatex">\(2\pi / \tau_p\)</span>.</td>
+</tr>
+<tr>
+<td><code>seasonal_frequencies</code></td>
+<td>function</td>
+<td>Flatten <code>(period, harmonic_count)</code> pairs into Python lists.</td>
+</tr>
+<tr>
+<td><code>standardize</code></td>
+<td>function</td>
+<td>Affine standardize: <code>(x - mu) / std</code>.</td>
+</tr>
+<tr>
+<td><code>unstandardize</code></td>
+<td>function</td>
+<td>Inverse of <code>standardize</code>: <code>z * std + mu</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="geonnaxgeo"><code>geonnax.geo</code><a class="headerlink" href="#geonnaxgeo" title="Permanent link">&para;</a></h2>
+<h3 id="coordinate-frames-on-the-earth-ellipsoid-local-tangent-frames-and-rotations-geonnax_frames">Coordinate frames on the Earth: ellipsoid, local tangent frames and rotations. (<code>geonnax._frames</code>)<a class="headerlink" href="#coordinate-frames-on-the-earth-ellipsoid-local-tangent-frames-and-rotations-geonnax_frames" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EARTH_MEAN_RADIUS_M</code></td>
+<td>constant</td>
+<td><code>6371008.8</code></td>
+</tr>
+<tr>
+<td><code>WGS84_A</code></td>
+<td>constant</td>
+<td><code>6378137.0</code></td>
+</tr>
+<tr>
+<td><code>WGS84_F</code></td>
+<td>constant</td>
+<td><code>0.0033528106647474805</code></td>
+</tr>
+<tr>
+<td><code>cartesian_to_tangent</code></td>
+<td>function</td>
+<td>3-D vectors to their east/north components <code>(v · ê, v · n̂)</code>.</td>
+</tr>
+<tr>
+<td><code>ecef_to_lonlat</code></td>
+<td>function</td>
+<td>Earth-centred, Earth-fixed metres to geodetic <code>(lon, lat)</code> and altitude.</td>
+</tr>
+<tr>
+<td><code>enu_basis</code></td>
+<td>function</td>
+<td>Local east/north/up unit vectors at each point.</td>
+</tr>
+<tr>
+<td><code>local_tangent_plane</code></td>
+<td>function</td>
+<td>Project points onto the tangent plane at <code>origin</code> (east, north), on a sphere.</td>
+</tr>
+<tr>
+<td><code>lonlat_to_ecef</code></td>
+<td>function</td>
+<td>Geodetic <code>(lon, lat)</code> plus altitude to Earth-centred, Earth-fixed metres.</td>
+</tr>
+<tr>
+<td><code>rotation_to_pole</code></td>
+<td>function</td>
+<td>The rotation <span class="arithmatex">\(R\)</span> with <span class="arithmatex">\(R\,\hat u(\text{centre}) = (0, 0, 1)\)</span>.</td>
+</tr>
+<tr>
+<td><code>tangent_to_cartesian</code></td>
+<td>function</td>
+<td>East/north components <code>(u, v)</code> to 3-D tangent vectors <span class="arithmatex">\(u\hat e + v\hat n\)</span>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="pure-jax-geographic-and-spherical-feature-helpers-geonnaxgeo">Pure-JAX geographic and spherical feature helpers. (<code>geonnax.geo</code>)<a class="headerlink" href="#pure-jax-geographic-and-spherical-feature-helpers-geonnaxgeo" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cyclic_encode</code></td>
+<td>function</td>
+<td>Encode periodic inputs as concatenated cos/sin features.</td>
+</tr>
+<tr>
+<td><code>deg2rad</code></td>
+<td>function</td>
+<td>Convert degrees to radians element-wise.</td>
+</tr>
+<tr>
+<td><code>lonlat_scale</code></td>
+<td>function</td>
+<td>Affine-rescale lon/lat columns.</td>
+</tr>
+<tr>
+<td><code>lonlat_to_cartesian3d</code></td>
+<td>function</td>
+<td>Lift lon/lat coordinates onto the unit sphere.</td>
+</tr>
+<tr>
+<td><code>spherical_harmonic_encode</code></td>
+<td>function</td>
+<td>Lift lon/lat to <span class="arithmatex">\(S^2\)</span> and evaluate real spherical harmonics.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="geonnaxlayers"><code>geonnax.layers</code><a class="headerlink" href="#geonnaxlayers" title="Permanent link">&para;</a></h2>
+<h3 id="low-rank-tensor-factorizations-for-spectral-operator-weights-geonnaxlayers_factorized_1">Low-rank tensor factorizations for spectral-operator weights. (<code>geonnax.layers._factorized</code>)<a class="headerlink" href="#low-rank-tensor-factorizations-for-spectral-operator-weights-geonnaxlayers_factorized_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Factorization</code></td>
+<td>type</td>
+<td><code>typing.Literal['dense', 'cp', 'tucker', 'tt']</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="discrete-wavelet-transform-layers-the-core-of-the-wavelet-neural-operator-geonnaxlayers_wavelet_1">Discrete wavelet transform layers (the core of the Wavelet Neural Operator). (<code>geonnax.layers._wavelet</code>)<a class="headerlink" href="#discrete-wavelet-transform-layers-the-core-of-the-wavelet-neural-operator-geonnaxlayers_wavelet_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Wavelet</code></td>
+<td>type</td>
+<td><code>typing.Literal['haar', 'db1', 'db2', 'db3', 'db4', 'db5', 'sym4', 'sym5', 'sym6', 'coif1', 'coif2']</code></td>
+</tr>
+<tr>
+<td><code>dwt</code></td>
+<td>function</td>
+<td>Multi-level separable DWT over <code>axes</code>.</td>
+</tr>
+<tr>
+<td><code>idwt</code></td>
+<td>function</td>
+<td>Invert <code>dwt</code> (exact for orthonormal wavelets).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="geonnaxmswt"><code>geonnax.mswt</code><a class="headerlink" href="#geonnaxmswt" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WaveletDownsample</code></td>
+<td>class</td>
+<td>Halve resolution by a single-level DWT, carrying all sub-bands forward.</td>
+</tr>
+<tr>
+<td><code>WaveletUpsample</code></td>
+<td>class</td>
+<td>Double resolution with a single-level inverse DWT (mirror of the downsampler).</td>
+</tr>
+</tbody>
+</table>
+<h2 id="geonnaxunet"><code>geonnax.unet</code><a class="headerlink" href="#geonnaxunet" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>BlockType</code></td>
+<td>type</td>
+<td><code>typing.Literal['resnet', 'convnext']</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="shared-private-helpers">Shared private helpers<a class="headerlink" href="#shared-private-helpers" title="Permanent link">&para;</a></h2>
+<p>Not public API: downstream code must not import these. Inside geonnax,
+reuse them instead of writing another copy.</p>
+<table>
+<thead>
+<tr>
+<th>Helper</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>geonnax.layers._utils.act</code></td>
+<td>SiLU, the default nonlinearity of the layers</td>
+</tr>
+<tr>
+<td><code>geonnax.layers._utils.group_count</code></td>
+<td>a valid GroupNorm group count for any channel width (gcd-clamped)</td>
+</tr>
+<tr>
+<td><code>geonnax.layers._utils.shuffle_patterns</code></td>
+<td>einx patterns for the factor-2 space-to-depth / depth-to-space shuffle in any number of spatial dims</td>
+</tr>
+<tr>
+<td><code>geonnax.layers._utils.shuffle_kwargs</code></td>
+<td>patch sizes for <code>shuffle_patterns</code></td>
+</tr>
+<tr>
+<td><code>geonnax.layers._blocks._dropout_layer</code></td>
+<td>an <code>eqx.nn.Dropout</code>, or <code>None</code> when the rate is 0</td>
+</tr>
+<tr>
+<td><code>geonnax.unet._split_keys</code></td>
+<td>split an optional key into n subkeys, or n <code>None</code>s (dropout threading)</td>
+</tr>
+<tr>
+<td><code>geonnax.layers._factorized._resolve_rank</code></td>
+<td>a fractional or absolute rank resolved against the full size</td>
+</tr>
+<tr>
+<td><code>geonnax.layers._spectral._corner_slices</code></td>
+<td>the corner slices of the retained Fourier modes along each axis</td>
+</tr>
+<tr>
+<td><code>geonnax.layers._wavelet._filter_bank</code></td>
+<td>the orthonormal analysis filters (low, high) of a <code>Wavelet</code></td>
+</tr>
+<tr>
+<td><code>geonnax.fno._pointwise</code></td>
+<td>a 1x1 (pointwise) <code>eqx.nn.Conv</code> channel mix</td>
+</tr>
+<tr>
+<td><code>geonnax.ensemble._glorot_uniform</code></td>
+<td>Glorot-uniform <code>(D_in, D_out)</code> init</td>
+</tr>
+<tr>
+<td><code>geonnax.sngp._glorot_normal</code></td>
+<td>Glorot-normal <code>(F_in, F_out)</code> init</td>
+</tr>
+<tr>
+<td><code>geonnax.siren._require_positive</code></td>
+<td>raise <code>ValueError</code> if any keyword value is not positive</td>
+</tr>
+<tr>
+<td><code>geonnax.spectral_norm._l2_normalize</code></td>
+<td><code>x / max(‖x‖, eps)</code>, finite gradients at 0 (power iteration)</td>
+</tr>
+<tr>
+<td><code>geonnax._basis._rbf._safe_sqrt</code></td>
+<td>double-<code>where</code> sqrt: exact 0 at 0 with finite gradients</td>
+</tr>
+<tr>
+<td><code>geonnax._basis._rbf._safe_arccos</code></td>
+<td>double-<code>where</code> arccos: finite gradients at c = ±1 (geodesic distance)</td>
+</tr>
+<tr>
+<td><code>geonnax.geo._validate_lonlat_shape</code></td>
+<td>require an <code>(N, 2)</code> lon/lat array</td>
+</tr>
+<tr>
+<td><code>geonnax.geo._validate_range</code></td>
+<td>require <code>min &lt; max</code> for a range argument</td>
+</tr>
+<tr>
+<td><code>geonnax.geo._validate_input_unit</code></td>
+<td>require <code>'degrees'</code> or <code>'radians'</code></td>
+</tr>
+<tr>
+<td><code>geonnax.geo._promote_to_floating</code></td>
+<td>promote integer arrays to float before affine maps</td>
+</tr>
+<tr>
+<td><code>geonnax.encoders._as_scalar</code></td>
+<td>coerce a scalar argument to a float 0-d array, rejecting batches</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
