@@ -25,6 +25,8 @@ library, since they ``isinstance``-dispatch on kernel classes):
 - `fibonacci_sphere` / `gauss_legendre_grid` / `latlon_grid` — point sets
   and quadrature grids on the sphere, returned with their weights.
 - `icosphere` — the subdivided-icosahedron triangle mesh of the sphere.
+- `vector_spherical_harmonics` — gradient and toroidal vector harmonics, a
+  basis for tangent vector fields on the sphere.
 
 Localized / overcomplete bases carry no eigenvalues; they expose the per-atom
 geometry instead (the other half of the basis contract):
@@ -78,6 +80,9 @@ from geonnax._basis._sphere_grids import (
     latlon_grid,
 )
 from geonnax._basis._spherical import harmonic_degrees, real_spherical_harmonics
+from geonnax._basis._vector_spherical import (
+    vector_spherical_harmonics,
+)
 from geonnax._basis._wavelet import wavelet_basis_1d, wavelet_basis_2d
 
 
@@ -108,6 +113,7 @@ __all__ = [
     "slepian_cap_eigh_per_m",
     "slepian_concentration_matrix",
     "spherical_rbf_basis",
+    "vector_spherical_harmonics",
     "wavelet_basis_1d",
     "wavelet_basis_2d",
     "wendland_c2",
