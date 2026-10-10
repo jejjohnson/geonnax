@@ -41,5 +41,9 @@ The essentials, in case you only read this file:
 - Behaviour: don't nitpick what ruff or ty catch; propose a test with every
   fix; never suggest a change without the code for it; keep changes
   surgical.
+- Step-by-step recipes (add a layer, model, basis, encoder, uncertainty
+  core, conditioner, notebook; pre-PR check; review; squash commit; GitHub
+  issues) are plain Markdown in `.claude/skills/<name>/SKILL.md`, and the two
+  review checklists in `.claude/agents/`; follow them as written.
 - Path-scoped standards live in `.github/instructions/`; code review follows
   [`CODE_REVIEW.md`](../CODE_REVIEW.md).

@@ -272,6 +272,26 @@ The closed-form eigenbases (`fourier_basis`, `real_spherical_harmonics`,
 `slepian_cap_basis`, `graph_laplacian_eigpairs`) are covered only by their
 doctests and a smoke import; a change to them needs tests.
 
+## Recipes
+
+Step-by-step recipes for the common jobs live as plain Markdown in
+`.claude/skills/<name>/SKILL.md` (Claude Code loads them automatically; any
+agent can read and follow them):
+
+| Job | Recipe |
+|---|---|
+| Add a building block to `geonnax.layers` (conv, block, norm, attention, spectral / spherical / wavelet transform) | `add-layer` |
+| Add a model (neural operator, U-Net variant, implicit neural representation) | `add-model` |
+| Add a basis or feature transform (`_basis/`, re-exported from `geonnax.basis`) | `add-basis` |
+| Add a coordinate encoder or lon/lat helper (`geo`, `encoders`, `slepian`) | `add-encoder` |
+| Add the deterministic core of an uncertainty-aware layer (random features, GP heads, spectral norm, ensembles, output heads) | `add-uncertainty-core` |
+| Add a conditioner or a conditioned INR (`conditioning`) | `add-conditioner` |
+| Add or update an example notebook | `add-notebook` |
+| Verify before a PR | `pre-pr-check` |
+| Review a change | `geonnax-review` (+ the read-only `.claude/agents/reuse-reviewer.md` and `numerics-reviewer.md`) |
+| Write a squash commit message | `squash-commit` |
+| Open or link GitHub issues | `create-gh-issue`, `link-gh-issues` (templates in `.github/ISSUE_TEMPLATE/`; `make gh-labels`, `gh-sub`, `gh-block`, `gh-show`) |
+
 ## Working in the repo
 
 Always run Python tools through `uv run` (never the system Python); `git`,
