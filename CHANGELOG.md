@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.8](https://github.com/jejjohnson/geonnax/compare/v0.0.7...v0.0.8) (2026-10-10)
+
+
+### Features
+
+* **basis:** add icosphere triangle mesh (GN3) ([#58](https://github.com/jejjohnson/geonnax/issues/58)) ([3f382a4](https://github.com/jejjohnson/geonnax/commit/3f382a4e57afe6a090922960c7d379c92eae8eb4))
+* **basis:** add Legendre and Gauss–Legendre primitives (GN1) ([#56](https://github.com/jejjohnson/geonnax/issues/56)) ([5225bbf](https://github.com/jejjohnson/geonnax/commit/5225bbf6f413879aa6c3ab6d171fbc54da3e7fd4))
+* **basis:** add Neumann/periodic box bases and curlfree_basis (GN8) ([#64](https://github.com/jejjohnson/geonnax/issues/64)) ([4687645](https://github.com/jejjohnson/geonnax/commit/4687645930b863e920f732d9837cfc1765721b9b))
+* **basis:** add Slepian bases for general regions and polar gaps (GN6) ([#62](https://github.com/jejjohnson/geonnax/issues/62)) ([32cc758](https://github.com/jejjohnson/geonnax/commit/32cc758fa990a22c6a95524cc999cdcd5f86c020))
+* **basis:** add sphere point sets and quadrature grids (GN2) ([#57](https://github.com/jejjohnson/geonnax/issues/57)) ([348f590](https://github.com/jejjohnson/geonnax/commit/348f590c860c5aed76e3653d7dbf2b55885f6670))
+* **basis:** add spherical needlets (GN7) ([#63](https://github.com/jejjohnson/geonnax/issues/63)) ([9e055c6](https://github.com/jejjohnson/geonnax/commit/9e055c6c481c78714da45516ea2ce90ef85f49c2))
+* **basis:** add spherical-shell basis (GN9) ([#65](https://github.com/jejjohnson/geonnax/issues/65)) ([2b420c9](https://github.com/jejjohnson/geonnax/commit/2b420c95d53ae14c5f1e02f74b37d5c3023eaa66))
+* **basis:** add vector spherical harmonics (GN5) ([#61](https://github.com/jejjohnson/geonnax/issues/61)) ([871face](https://github.com/jejjohnson/geonnax/commit/871facedfcfe5be63cc7c39a587f617d56d9ff81))
+* **geo:** add coordinate frames — WGS84/ECEF, ENU, tangent vectors, tangent plane, rotation to pole (GN4) ([#60](https://github.com/jejjohnson/geonnax/issues/60)) ([2084677](https://github.com/jejjohnson/geonnax/commit/20846771693e6e8356ecad751c8b702b1ba7769f))
+
 ## [0.0.7](https://github.com/jejjohnson/geonnax/compare/v0.0.6...v0.0.7) (2026-08-21)
 
 
