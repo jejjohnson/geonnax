@@ -22,6 +22,8 @@ library, since they ``isinstance``-dispatch on kernel classes):
 - `legendre_polynomials` / `associated_legendre` /
   `associated_legendre_indices` / `gauss_legendre` — the 1-D Legendre
   building blocks of the spherical bases, and Gauss–Legendre quadrature.
+- `fibonacci_sphere` / `gauss_legendre_grid` / `latlon_grid` — point sets
+  and quadrature grids on the sphere, returned with their weights.
 
 Localized / overcomplete bases carry no eigenvalues; they expose the per-atom
 geometry instead (the other half of the basis contract):
@@ -66,6 +68,11 @@ from geonnax._basis._slepian import (
     slepian_cap_eigh_per_m,
     slepian_concentration_matrix,
 )
+from geonnax._basis._sphere_grids import (
+    fibonacci_sphere,
+    gauss_legendre_grid,
+    latlon_grid,
+)
 from geonnax._basis._spherical import harmonic_degrees, real_spherical_harmonics
 from geonnax._basis._wavelet import wavelet_basis_1d, wavelet_basis_2d
 
@@ -76,6 +83,7 @@ __all__ = [
     "associated_legendre_indices",
     "divfree_basis",
     "eof_basis",
+    "fibonacci_sphere",
     "fourier_basis",
     "fourier_basis_1d",
     "fourier_eigenvalues",
@@ -83,8 +91,10 @@ __all__ = [
     "gabor_frame",
     "gabor_frame_grid",
     "gauss_legendre",
+    "gauss_legendre_grid",
     "graph_laplacian_eigpairs",
     "harmonic_degrees",
+    "latlon_grid",
     "legendre_polynomials",
     "rbf_basis",
     "real_spherical_harmonics",

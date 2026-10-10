@@ -54,6 +54,13 @@ building blocks of the spherical bases, evaluated by stable recurrences.
 `gauss_legendre` returns the Gauss–Legendre nodes and weights on $[-1, 1]$ used
 for exact polynomial quadrature.
 
+## Sphere grids and quadrature
+
+`fibonacci_sphere` (near-uniform points), `gauss_legendre_grid` (exact for
+spherical-harmonic products up to a stated degree) and `latlon_grid` (regular
+cells with exact area weights) return points on the unit sphere together with
+quadrature weights that sum to $4\pi$.
+
 ## Data-driven basis
 
 `eof_basis` returns the empirical orthogonal functions (PCA) of a data matrix —
