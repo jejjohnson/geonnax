@@ -27,6 +27,8 @@ library, since they ``isinstance``-dispatch on kernel classes):
 - `icosphere` — the subdivided-icosahedron triangle mesh of the sphere.
 - `vector_spherical_harmonics` — gradient and toroidal vector harmonics, a
   basis for tangent vector fields on the sphere.
+- `SlepianBasis` / `slepian_region_basis` / `slepian_polar_gap_basis` /
+  `spherical_polygon_mask` — Slepian functions of general regions.
 
 Localized / overcomplete bases carry no eigenvalues; they expose the per-atom
 geometry instead (the other half of the basis contract):
@@ -74,6 +76,12 @@ from geonnax._basis._slepian import (
     slepian_cap_eigh_per_m,
     slepian_concentration_matrix,
 )
+from geonnax._basis._slepian_region import (
+    SlepianBasis,
+    slepian_polar_gap_basis,
+    slepian_region_basis,
+    spherical_polygon_mask,
+)
 from geonnax._basis._sphere_grids import (
     fibonacci_sphere,
     gauss_legendre_grid,
@@ -87,6 +95,7 @@ from geonnax._basis._wavelet import wavelet_basis_1d, wavelet_basis_2d
 
 
 __all__ = [
+    "SlepianBasis",
     "SlepianCapBasis",
     "associated_legendre",
     "associated_legendre_indices",
@@ -112,6 +121,9 @@ __all__ = [
     "slepian_cap_basis",
     "slepian_cap_eigh_per_m",
     "slepian_concentration_matrix",
+    "slepian_polar_gap_basis",
+    "slepian_region_basis",
+    "spherical_polygon_mask",
     "spherical_rbf_basis",
     "vector_spherical_harmonics",
     "wavelet_basis_1d",

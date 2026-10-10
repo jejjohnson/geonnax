@@ -47,6 +47,7 @@ from jaxtyping import Array, Float, Int
 # bases — is reachable from the single public ``geonnax.basis`` surface, and
 # downstream libraries never have to import the private namespace.
 from geonnax._basis import (
+    SlepianBasis,
     SlepianCapBasis,
     associated_legendre,
     associated_legendre_indices,
@@ -72,6 +73,9 @@ from geonnax._basis import (
     slepian_cap_basis,
     slepian_cap_eigh_per_m,
     slepian_concentration_matrix,
+    slepian_polar_gap_basis,
+    slepian_region_basis,
+    spherical_polygon_mask,
     spherical_rbf_basis,
     vector_spherical_harmonics,
     wavelet_basis_1d,
@@ -337,6 +341,7 @@ def unstandardize(
 
 
 __all__ = [
+    "SlepianBasis",
     "SlepianCapBasis",
     "associated_legendre",
     "associated_legendre_indices",
@@ -367,6 +372,9 @@ __all__ = [
     "slepian_cap_basis",
     "slepian_cap_eigh_per_m",
     "slepian_concentration_matrix",
+    "slepian_polar_gap_basis",
+    "slepian_region_basis",
+    "spherical_polygon_mask",
     "spherical_rbf_basis",
     "standardize",
     "unstandardize",

@@ -187,6 +187,30 @@ def _centered_coordinates(
     return einx.dot("n d, c d -> n c", unit_xyz, rotation)
 
 
+def _select_modes(
+    vals: Float[Array, " M"],
+    coeffs: Float[Array, "M M"],
+    n_modes: int | None,
+    eig_threshold: float | None,
+) -> tuple[Float[Array, " K"], Float[Array, "M K"]]:
+    """Trim modes (sorted by decreasing concentration) by threshold, then count."""
+    if eig_threshold is not None:
+        keep = jnp.nonzero(vals > eig_threshold, size=vals.shape[0], fill_value=-1)[0]
+        keep = keep[keep >= 0]
+        if n_modes is not None and int(keep.shape[0]) < n_modes:
+            raise ValueError(
+                f"eig_threshold={eig_threshold} retains only {int(keep.shape[0])} "
+                f"modes but n_modes={n_modes} was requested; lower the threshold "
+                f"or reduce n_modes to break the conflict."
+            )
+        vals = vals[keep]
+        coeffs = coeffs[:, keep]
+    if n_modes is not None:
+        vals = vals[:n_modes]
+        coeffs = coeffs[:, :n_modes]
+    return vals, coeffs
+
+
 class SlepianCapBasis(eqx.Module):
     r"""Precomputed Slepian cap eigendecomposition in the real-SH basis.
 
@@ -318,20 +342,7 @@ def slepian_cap_basis(
     vals, coeffs = slepian_cap_eigh_per_m(
         l_max, cap_radius, num_quadrature=num_quadrature
     )
-    if eig_threshold is not None:
-        keep = jnp.nonzero(vals > eig_threshold, size=vals.shape[0], fill_value=-1)[0]
-        keep = keep[keep >= 0]
-        if n_modes is not None and int(keep.shape[0]) < n_modes:
-            raise ValueError(
-                f"eig_threshold={eig_threshold} retains only {int(keep.shape[0])} "
-                f"modes but n_modes={n_modes} was requested; lower the threshold "
-                f"or reduce n_modes to break the conflict."
-            )
-        vals = vals[keep]
-        coeffs = coeffs[:, keep]
-    if n_modes is not None:
-        vals = vals[:n_modes]
-        coeffs = coeffs[:, :n_modes]
+    vals, coeffs = _select_modes(vals, coeffs, n_modes, eig_threshold)
 
     centre = (
         jnp.asarray([0.0, 0.5 * jnp.pi])
