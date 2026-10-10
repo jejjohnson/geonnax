@@ -29,6 +29,8 @@ library, since they ``isinstance``-dispatch on kernel classes):
   basis for tangent vector fields on the sphere.
 - `SlepianBasis` / `slepian_region_basis` / `slepian_polar_gap_basis` /
   `spherical_polygon_mask` — Slepian functions of general regions.
+- `needlet_window` / `needlet_basis` — spherical needlets, a localised
+  multiscale tight frame on the sphere.
 
 Localized / overcomplete bases carry no eigenvalues; they expose the per-atom
 geometry instead (the other half of the basis contract):
@@ -62,6 +64,10 @@ from geonnax._basis._legendre import (
 )
 from geonnax._basis._mesh import (
     icosphere,
+)
+from geonnax._basis._needlets import (
+    needlet_basis,
+    needlet_window,
 )
 from geonnax._basis._rbf import (
     rbf_basis,
@@ -115,6 +121,8 @@ __all__ = [
     "icosphere",
     "latlon_grid",
     "legendre_polynomials",
+    "needlet_basis",
+    "needlet_window",
     "rbf_basis",
     "real_spherical_harmonics",
     "shannon_number",

@@ -54,6 +54,13 @@ quadrature over it (for example a `gauss_legendre_grid` masked with
 between two polar caps exactly. Both return a `SlepianBasis` whose
 concentrations sum to the Shannon number $(l_{\max}+1)^2 A/4\pi$.
 
+## Needlets
+
+`needlet_basis` returns spherical needlets (Narcowich, Petrushev & Ward 2006)
+over scales $j = 0, \ldots, j_{\max}$, centred on Gauss–Legendre cubature
+nodes and built from the smooth window `needlet_window`: a localised,
+multiscale tight frame on the sphere.
+
 ## Vector spherical harmonics
 
 `vector_spherical_harmonics` returns the gradient (curl-free)
