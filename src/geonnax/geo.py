@@ -16,6 +16,18 @@ import jax.numpy as jnp
 from jaxtyping import Array, Float, Num
 
 from geonnax._basis import real_spherical_harmonics
+from geonnax._frames import (
+    EARTH_MEAN_RADIUS_M,
+    WGS84_A,
+    WGS84_F,
+    cartesian_to_tangent,
+    ecef_to_lonlat,
+    enu_basis,
+    local_tangent_plane,
+    lonlat_to_ecef,
+    rotation_to_pole,
+    tangent_to_cartesian,
+)
 
 
 def _validate_lonlat_shape(lonlat: Float[Array, ...], *, name: str = "lonlat") -> None:
@@ -244,9 +256,19 @@ def spherical_harmonic_encode(
 
 
 __all__ = [
+    "EARTH_MEAN_RADIUS_M",
+    "WGS84_A",
+    "WGS84_F",
+    "cartesian_to_tangent",
     "cyclic_encode",
     "deg2rad",
+    "ecef_to_lonlat",
+    "enu_basis",
+    "local_tangent_plane",
     "lonlat_scale",
     "lonlat_to_cartesian3d",
+    "lonlat_to_ecef",
+    "rotation_to_pole",
     "spherical_harmonic_encode",
+    "tangent_to_cartesian",
 ]

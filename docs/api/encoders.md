@@ -46,6 +46,11 @@ alternative to global spherical harmonics.
 ## Geometry helpers
 
 Pure functions for lon/lat math: degree conversion, rescaling, lon/lat → cartesian,
-cyclic encoding, and spherical-harmonic evaluation.
+cyclic encoding, and spherical-harmonic evaluation; plus coordinate frames —
+WGS84 ↔ ECEF (`lonlat_to_ecef` / `ecef_to_lonlat`), the local east/north/up
+basis (`enu_basis`), east/north ↔ 3-D tangent vectors
+(`tangent_to_cartesian` / `cartesian_to_tangent`), tangent-plane projections
+(`local_tangent_plane`) and the rotation taking a centre to the pole
+(`rotation_to_pole`).
 
 ::: geonnax.geo
