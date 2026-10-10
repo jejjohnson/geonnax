@@ -48,6 +48,8 @@ from jaxtyping import Array, Float, Int
 # downstream libraries never have to import the private namespace.
 from geonnax._basis import (
     SlepianCapBasis,
+    associated_legendre,
+    associated_legendre_indices,
     divfree_basis,
     eof_basis,
     fourier_basis,
@@ -56,8 +58,10 @@ from geonnax._basis import (
     fourier_eigenvalues_1d,
     gabor_frame,
     gabor_frame_grid,
+    gauss_legendre,
     graph_laplacian_eigpairs,
     harmonic_degrees,
+    legendre_polynomials,
     rbf_basis,
     real_spherical_harmonics,
     shannon_number,
@@ -329,6 +333,8 @@ def unstandardize(
 
 __all__ = [
     "SlepianCapBasis",
+    "associated_legendre",
+    "associated_legendre_indices",
     "divfree_basis",
     "eof_basis",
     "fourier_basis",
@@ -338,10 +344,12 @@ __all__ = [
     "fourier_features",
     "gabor_frame",
     "gabor_frame_grid",
+    "gauss_legendre",
     "gaussian_window_features",
     "graph_laplacian_eigpairs",
     "harmonic_degrees",
     "interaction_features",
+    "legendre_polynomials",
     "rbf_basis",
     "real_spherical_harmonics",
     "seasonal_features",

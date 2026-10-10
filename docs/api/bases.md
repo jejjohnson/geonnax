@@ -46,6 +46,14 @@ distance), the fixed **overcomplete** multiscale `gabor_frame` /
 `wavelet_basis_2d`. The spectral bases return eigenvalues; the localized and
 frame bases return per-atom geometry instead.
 
+## Legendre primitives and quadrature
+
+`legendre_polynomials` and `associated_legendre` (orthonormal, Schmidt or
+classical normalisation, ordered by `associated_legendre_indices`) are the 1-D
+building blocks of the spherical bases, evaluated by stable recurrences.
+`gauss_legendre` returns the Gauss–Legendre nodes and weights on $[-1, 1]$ used
+for exact polynomial quadrature.
+
 ## Data-driven basis
 
 `eof_basis` returns the empirical orthogonal functions (PCA) of a data matrix —

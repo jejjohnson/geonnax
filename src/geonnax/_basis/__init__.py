@@ -19,6 +19,9 @@ library, since they ``isinstance``-dispatch on kernel classes):
   on a spherical cap.
 - `wavelet_basis_1d` / `wavelet_basis_2d` — orthonormal DWT basis
   matrices (Haar / Daubechies, periodic, power-of-two).
+- `legendre_polynomials` / `associated_legendre` /
+  `associated_legendre_indices` / `gauss_legendre` — the 1-D Legendre
+  building blocks of the spherical bases, and Gauss–Legendre quadrature.
 
 Localized / overcomplete bases carry no eigenvalues; they expose the per-atom
 geometry instead (the other half of the basis contract):
@@ -44,6 +47,12 @@ from geonnax._basis._fourier import (
 )
 from geonnax._basis._gabor import gabor_frame, gabor_frame_grid
 from geonnax._basis._laplacian import graph_laplacian_eigpairs
+from geonnax._basis._legendre import (
+    associated_legendre,
+    associated_legendre_indices,
+    gauss_legendre,
+    legendre_polynomials,
+)
 from geonnax._basis._rbf import (
     rbf_basis,
     spherical_rbf_basis,
@@ -63,6 +72,8 @@ from geonnax._basis._wavelet import wavelet_basis_1d, wavelet_basis_2d
 
 __all__ = [
     "SlepianCapBasis",
+    "associated_legendre",
+    "associated_legendre_indices",
     "divfree_basis",
     "eof_basis",
     "fourier_basis",
@@ -71,8 +82,10 @@ __all__ = [
     "fourier_eigenvalues_1d",
     "gabor_frame",
     "gabor_frame_grid",
+    "gauss_legendre",
     "graph_laplacian_eigpairs",
     "harmonic_degrees",
+    "legendre_polynomials",
     "rbf_basis",
     "real_spherical_harmonics",
     "shannon_number",

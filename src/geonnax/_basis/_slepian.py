@@ -17,6 +17,11 @@ import equinox as eqx
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
+from geonnax._basis._legendre import (
+    associated_legendre,
+    associated_legendre_indices,
+    gauss_legendre,
+)
 from geonnax._basis._spherical import real_spherical_harmonics
 
 
@@ -36,50 +41,13 @@ def _sh_index(ell: int, m: int) -> int:
     return ell * ell + (m + ell)
 
 
-def _normalization(ell: int, m_abs: int) -> float:
-    log_ratio = math.lgamma(ell - m_abs + 1) - math.lgamma(ell + m_abs + 1)
-    return math.sqrt((2.0 * ell + 1.0) * math.exp(log_ratio) / (4.0 * math.pi))
-
-
-def _associated_legendre_values(
-    z: Float[Array, " Q"], l_max: int, m_abs: int
-) -> list[Float[Array, " Q"]]:
-    r"""Evaluate $P_l^m(z)$ for ``l=m,...,l_max`` by recurrence."""
-    one_minus_z2 = jnp.maximum(1.0 - z**2, 0.0)
-    p_mm = jnp.ones_like(z)
-    if m_abs > 0:
-        double_factorial = 1.0
-        for k in range(1, 2 * m_abs, 2):
-            double_factorial *= float(k)
-        p_mm = ((-1.0) ** m_abs) * double_factorial * one_minus_z2 ** (0.5 * m_abs)
-
-    values = [p_mm]
-    if m_abs == l_max:
-        return values
-
-    p_m1m = (2.0 * m_abs + 1.0) * z * p_mm
-    values.append(p_m1m)
-    p_lm2 = p_mm
-    p_lm1 = p_m1m
-    for ell in range(m_abs + 2, l_max + 1):
-        p_l = ((2.0 * ell - 1.0) * z * p_lm1 - (ell + m_abs - 1.0) * p_lm2) / (
-            ell - m_abs
-        )
-        values.append(p_l)
-        p_lm2, p_lm1 = p_lm1, p_l
-    return values
-
-
 def _cap_quadrature(
     cap_radius: float | Float[Array, ""], num_quadrature: int
 ) -> tuple[Float[Array, " Q"], Float[Array, " Q"]]:
-    # Gauss-Legendre nodes/weights come from NumPy on the host: this is a
-    # one-shot setup constant for the cap eigenproblem and is identical for
+    # Gauss-Legendre nodes/weights are host-side setup constants, identical for
     # every call with the same ``num_quadrature``. Everything downstream
     # (cap_radius scaling, Legendre recurrence, eigensolve) stays in JAX.
-    import numpy as np
-
-    nodes, weights = np.polynomial.legendre.leggauss(num_quadrature)
+    nodes, weights = gauss_legendre(num_quadrature)
     nodes = jnp.asarray(nodes)
     weights = jnp.asarray(weights)
     z_min = jnp.cos(jnp.asarray(cap_radius))
@@ -96,14 +64,15 @@ def _slepian_block(
 ) -> Float[Array, "B B"]:
     m_abs = abs(m)
     z, w = _cap_quadrature(cap_radius, num_quadrature)
-    p_values = _associated_legendre_values(z, l_max, m_abs)
-    rows = []
-    for ell, p_lm in zip(range(m_abs, l_max + 1), p_values, strict=True):
-        factor = _normalization(ell, m_abs)
-        if m_abs > 0:
-            factor *= math.sqrt(2.0)
-        rows.append(factor * p_lm)
-    basis = jnp.stack(rows, axis=0)  # (B, Q) Legendre values per node
+    # Orthonormal P̄_l^m (unit L² norm on [-1, 1]) for l = m_abs..l_max. The
+    # real-SH normalisation is P̄ / √(2π) for m = 0 and √2 · P̄ / √(2π) otherwise.
+    columns = [
+        i for i, (_, mm) in enumerate(associated_legendre_indices(l_max)) if mm == m_abs
+    ]
+    p_bar = associated_legendre(z, l_max)[:, jnp.asarray(columns)]  # (Q, B)
+    factor = (math.sqrt(2.0) if m_abs > 0 else 1.0) / math.sqrt(2.0 * math.pi)
+    rows = factor * jnp.moveaxis(p_bar, -1, 0)
+    basis = rows  # (B, Q) Legendre values per node
     weighted = einx.multiply("b q, q -> b q", basis, w)
     phi_factor = 2.0 * jnp.pi if m_abs == 0 else jnp.pi
     # Quadrature inner products ∫ Pᵦ Pᵧ dz: contract the node axis q → (B, B).
