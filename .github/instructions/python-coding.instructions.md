@@ -12,7 +12,7 @@ applyTo: "src/**/*.py,tests/**/*.py,scripts/**/*.py"
 - Built-in generics: `list[int]`, `dict[str, Any]` not `List[int]`, `Dict[str, Any]`
 - `pathlib.Path` over `os.path`
 - f-strings for string formatting
-- `dataclasses` or `attrs` for data containers
+- `equinox.Module` for anything that holds arrays (immutable pytrees; a dataclass is not one), with configuration in `eqx.field(static=True)`; `NamedTuple` for small static records
 - `Enum` for fixed sets of constants
 - Context managers (`with` statements) for resource handling
 - Specific exception types (never bare `except:`)
@@ -21,14 +21,17 @@ applyTo: "src/**/*.py,tests/**/*.py,scripts/**/*.py"
 
 ## Package Preferences
 
+No new runtime dependency without discussion; build on what geonnax already
+depends on (see "Boundaries" in `AGENTS.md`). geonnax never imports numpyro.
+
 | Purpose | Preferred Package |
 |---------|-------------------|
-| Logging | `loguru` |
-| CLI | `cyclopts` |
-| Data containers | `dataclasses` (stdlib) or `attrs` |
-| Configuration | `hydra-core` / `omegaconf` |
+| Modules / pytrees, standard layers | `equinox` (`eqx.nn.Conv`, `Linear`, `GroupNorm`, `Dropout`) |
+| Arrays, randomness, transforms | `jax` (`jax.random` with explicit keys) |
+| Axis-naming array ops | `einx` |
+| Shape annotations | `jaxtyping` |
+| Construction-time tables (eager only) | `numpy` |
 | Path handling | `pathlib` (stdlib) |
-| HTTP | `httpx` |
 | Testing | `pytest` |
 
 ## Documentation
@@ -37,4 +40,4 @@ applyTo: "src/**/*.py,tests/**/*.py,scripts/**/*.py"
 - Function/method docstrings for all public APIs (Google style)
 - Inline comments explaining *why*, not *what*
 - Scientific algorithms should include Unicode equations in docstrings (e.g. `# σ² = Σ(xᵢ − μ)² / N`)
-- Public classes and functions should include 2–3 example use cases in docstrings
+- Public classes and functions include a plural `Examples:` section with `>>>` doctests (run by `make doctest`; print shapes or rounded values); math in `$…$`, never Sphinx / RST markup (`tests/test_docstrings.py`)

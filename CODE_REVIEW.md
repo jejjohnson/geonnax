@@ -1,6 +1,15 @@
 # Code Review Agent Instructions
 
-Standing instructions for **all** agents performing code reviews on this repository.
+Standing instructions for **all** agents performing code reviews on this
+repository. geonnax is a zoo of deterministic Equinox network cores and bases
+that pyrox and kernellib build on: most defects worth finding are about
+**modules and numerics** (an array in a static field, a reused key, a batch
+axis baked into a layer, an init scale off by ω, a NaN gradient at a
+coincident point, a grid that under-resolves the band limit) or
+**boundaries** (a numpyro import, a re-implemented layer or basis, a renamed
+field pyrox swaps), not style. Read "Boundaries", "Reuse before you write"
+and "The contracts" in [`AGENTS.md`](AGENTS.md) first; this file is the
+checklist and the report format.
 
 ---
 
@@ -32,212 +41,171 @@ git --no-pager diff --no-prefix --unified=100000 --minimal "$BASE_BRANCH"...HEAD
 
 ## Review Checklist
 
-### 1. Code Style and Readability
+Skip anything ruff, ty or the tests already enforce (formatting, import
+order, `__all__` ordering, RST markup in docstrings); review what they cannot
+see.
 
-- Clear, descriptive naming (variables, functions, classes, modules)
-- Appropriate function/method length (single responsibility)
-- Logical code organization and flow
-- Avoidance of deeply nested structures
-- Linting via **ruff** (`uv run --group lint ruff check .`) — lint the **entire repo**, not just the package
-- Type-hint checking via **ty** (`uv run --group typecheck ty check src/geonnax`)
+### 1. Reuse and boundaries
 
-> **Rule of thumb**: Sacrifice *cleverness* for *clarity*. Sacrifice *brevity* for *explicitness*.
-> Don't worry about formatting — our CI pipeline (ruff format, pre-commit) handles that automatically.
+- Every function, class or module the diff **adds** has been checked against
+  [`docs/api/capabilities.md`](docs/api/capabilities.md) and its shared
+  private helpers. A re-implemented layer, attention block, spectral or
+  wavelet transform, basis, encoder, init rule, random-feature map or helper
+  (Glorot init, safe `sqrt`, shuffle pattern, key splitting) is a **High**
+  finding, with the existing name to use.
+- No `numpyro` (or any PPL) anywhere: priors, sample sites and KL terms
+  belong in pyrox; kernels and spectral densities in kernellib.
+- Imports keep pointing one way (`_basis` ← `geo` / `layers` ← models); a
+  new model-to-model import is justified.
+- No new runtime dependency; NumPy only for eager construction-time tables.
 
-### 2. Modern Python Idioms (Python ≥ 3.12)
+### 2. Modules and `init`
 
-- `from __future__ import annotations` at the top of every module
-- Type hints on **all** public functions, methods, and module-level variables
-- `pathlib.Path` over `os.path`
-- f-strings for string formatting
-- Walrus operator (`:=`) only when it genuinely improves readability
-- `match` statements for pattern matching where appropriate
-- Structural pattern matching for complex conditionals
-- Context managers (`with` statements) for resource handling
-- `dataclasses` or `attrs` for data containers
-- `Enum` for fixed sets of constants
-- Modern union syntax (`X | Y` instead of `Union[X, Y]`)
-- Modern optional syntax (`X | None` instead of `Optional[X]`)
-- Built-in generics (`list[int]`, `dict[str, Any]` instead of `List[int]`, `Dict[str, Any]`)
+- `eqx.Module` with array leaves and configuration in
+  `eqx.field(static=True)`; no array in a static field, no dataclass or
+  mutable container holding arrays.
+- A classmethod `init(..., *, key, ...)` that validates its arguments with a
+  `ValueError` naming the bad value, splits the key once per draw, and
+  returns `cls(...)`; parameter-free modules take no key.
+- One example per call (`(D,)` or `(C, *spatial)`), batched by `jax.vmap`;
+  no batch axis baked into `__call__`.
+- Dimension-flexible layers take `num_spatial_dims` (or `len(n_modes)`) and
+  are tested in 1-D, 2-D and 3-D (3-D marked `slow`).
+- State updates return a new module (`eqx.tree_at`); frozen arrays are
+  leaves read through `jax.lax.stop_gradient`.
+- Stochastic forward passes take an explicit `key` (optional where the
+  randomness is, like dropout, and then `eqx.nn.inference_mode` works).
 
-### 3. Packaging and Project Structure
+### 3. Bases
 
-- Proper `pyproject.toml` configuration (PEP 621)
-- Appropriate use of `__init__.py` exports
-- Clear module boundaries and dependencies
-- Correct use of relative vs absolute imports
-- Entry points defined properly for CLI tools
-- `src/` layout enforced
+- Evaluation returns `Φ (N, M)` from `N` points, plus eigenvalues, the
+  spectrum or per-atom geometry — the basis contract in `docs/api/bases.md`.
+- Implemented in `_basis/_<name>.py`, re-exported from `_basis/__init__.py`
+  and `geonnax.basis` (`__all__`); no PRNG, no kernel, no `eqx.Module`
+  unless it caches a decomposition.
+- Orthonormality, eigen-equations or exact reconstruction checked against a
+  closed form in the tests.
 
-### 4. Documentation
+### 4. Numerics and initialisation
 
-- Module-level docstrings explaining purpose
-- Function/method docstrings for **all** public APIs (Google style — be consistent)
-- Inline comments explaining *why*, not *what* — except for complex logic or function calls where a brief *what* comment aids comprehension
-- Complex algorithms should have step-by-step explanations
-- All scientific algorithms should include Unicode equations in docstrings and inline where appropriate (e.g. `# σ² = Σ(xᵢ − μ)² / N`)
-- All docstrings for public classes and functions should include 2–3 example use cases
-- Type hints serve as documentation — ensure they are accurate and complete
+- The published init (SIREN regimes via `siren_W_limit`, Glorot, small
+  head scales) with a citation; any change to an init scale is justified
+  with the variance argument.
+- Dtypes follow the input (`jnp.zeros(n, dtype=x.dtype)`); integer
+  coordinates promoted before affine maps.
+- No Python `if` / `float()` / `.item()` on traced values; shapes depend only
+  on static fields and input shapes.
+- Finite gradients at singular points (`_safe_sqrt`, `_safe_arccos`,
+  `_l2_normalize`, log-space recursions); symmetrise and jitter before a
+  Cholesky.
+- Spectral layers keep `n_modes` below half of each extent; grid-bound
+  tables (SHT) validate the grid in `init`.
+- einx for named-axis contractions, transposes, reshapes and inserted-axis
+  broadcasts in new code (house style; not lint-enforced).
 
-### 5. Error Handling
+### 5. Public API and downstream compatibility
 
-- Specific exception types (never bare `except:`)
-- Custom exceptions for domain-specific errors
-- Helpful error messages with context
-- Proper exception chaining (`raise ... from ...`)
-- Early returns / guard clauses to reduce nesting
+- New names in the module's `__all__` and, unless submodule-only, in
+  `src/geonnax/__init__.py`; a `::: geonnax.<module>.<Name>` entry on pages
+  that list classes one by one; `docs/api/capabilities.md` regenerated.
+- A rename or removal of a public name, constructor argument or parameter
+  field (`W`, `b`, `proj`, `generator`, `Omega`, `layers`, …) keeps the old
+  spelling working with a `DeprecationWarning` naming the replacement:
+  pyrox and kernellib pin geonnax by tag and use them. Missing this is
+  **Critical** for a field pyrox swaps, **High** otherwise.
+- Docstrings: Google style, the formula, shapes, a reference for a
+  published method, and a plural `Examples:` section whose `>>>` lines pass
+  under `make doctest` (CI does not run it).
 
-### 6. Testing Considerations
+### 6. Tests
 
-- Functions should be easily testable (pure functions where possible)
-- Dependencies should be injectable
-- Side effects should be isolated and explicit
-- Consider edge cases and boundary conditions
+- Against a closed form, a brute-force reference (as the CRF tests do) or a
+  published value; shapes alone are not enough for numerics.
+- `jit`, `vmap` and `grad` exercised for a new model (`integration`), finite
+  gradients at the singular points.
+- Incidental randomness pinned (`jr.PRNGKey(0)`); sampling behaviour bounded
+  by its own distribution, with the bound's source in a comment.
+- Tier markers right: unmarked for fast checks, `slow` for heavy compilation
+  or broad sweeps, `integration` for end-to-end `jit` / `vmap` / `grad`.
 
-### 7. Performance (when relevant)
+### 7. Modern Python
 
-- Appropriate data structures for the use case
-- Generator expressions for large sequences
-- Avoid premature optimization
-- Note O(n) implications for critical paths
-
-### 8. Security
-
-- No hardcoded secrets or credentials
-- Input validation and sanitization
-- Safe handling of file paths (no path traversal vulnerabilities)
-- Appropriate use of `subprocess` (avoid `shell=True`)
+- Type hints on every public function; `X | None`; `from __future__ import
+  annotations`; specific exceptions with `raise ... from ...`; guard clauses
+  over deep nesting.
 
 ---
 
-## Package Preferences
+## geonnax-Specific Checks
 
-When reviewing dependency choices or suggesting alternatives, prefer these libraries:
-
-| Purpose | Preferred Package |
-|---------|-------------------|
-| Logging | `loguru` |
-| CLI | `cyclopts` |
-| Data containers | `dataclasses` (stdlib) or `attrs` |
-| Configuration | `hydra-core` / `omegaconf` |
-| Path handling | `pathlib` (stdlib) |
-| HTTP | `httpx` |
-| Testing | `pytest` |
-
----
-
-## Python-Specific Checks
-
-When reviewing, specifically verify the patterns below.
-
-### Type Hints
+### Arrays are leaves, configuration is static
 
 ```python
-# ❌ Missing type hints
-def process_data(items, threshold):
-    ...
+# ❌ An array in a static field: equinox warns, and eqx.filter / jax.grad
+#    never see it, so it is silently never trained
+class Scale(eqx.Module):
+    weight: Array = eqx.field(static=True)
 
-# ✅ Complete type hints
-def process_data(items: list[DataItem], threshold: float) -> ProcessedResult:
-    ...
+
+# ✅ Array leaf, static configuration, built by init(..., *, key)
+class Scale(eqx.Module):
+    weight: Float[Array, " D"]
+    features: int = eqx.field(static=True)
+
+    @classmethod
+    def init(cls, features: int, *, key: Array) -> Scale:
+        if features <= 0:
+            raise ValueError(f"features must be > 0, got {features}.")
+        return cls(weight=1.0 + 0.1 * jr.normal(key, (features,)), features=features)
 ```
 
-### Modern Syntax
+### One key per draw
 
 ```python
-# ❌ Old-style
-from typing import Optional, Union, List, Dict
+# ❌ The same key twice: b equals the first row of W
+W = jr.normal(key, (4, 8))
+b = jr.normal(key, (8,))
 
-def fetch(id: Optional[int] = None) -> Union[Data, None]:
-    result: Dict[str, List[int]] = {}
-
-# ✅ Modern (Python 3.12+)
-from __future__ import annotations
-
-def fetch(id: int | None = None) -> Data | None:
-    result: dict[str, list[int]] = {}
+# ✅
+k_w, k_b = jr.split(key)
+W, b = jr.normal(k_w, (4, 8)), jr.normal(k_b, (8,))
 ```
 
-### Dataclasses for Data Containers
+### One example per call
 
 ```python
-# ❌ Plain class with boilerplate
-class Config:
-    def __init__(self, host: str, port: int, timeout: float = 30.0):
-        self.host = host
-        self.port = port
-        self.timeout = timeout
+# ❌ A batch axis baked into the layer
+def __call__(self, x: Float[Array, "B D_in"]) -> Float[Array, "B D_out"]:
+    return x @ self.W + self.b
 
-# ✅ Dataclass
-from __future__ import annotations
 
-from dataclasses import dataclass
-
-@dataclass
-class Config:
-    host: str
-    port: int
-    timeout: float = 30.0
+# ✅ Per example; callers batch with jax.vmap(layer)(xs)
+def __call__(self, x: Float[Array, " D_in"]) -> Float[Array, " D_out"]:
+    return einx.dot("i, i o -> o", x, self.W) + self.b
 ```
 
-### Path Handling
+### Finite gradients at coincident points
 
 ```python
-# ❌ os.path
-import os
-path = os.path.join(base_dir, "data", filename)
-if os.path.exists(path):
-    with open(path) as f:
-        ...
+# ❌ d/dx sqrt(‖x − c‖²) is NaN at x = c
+r = jnp.sqrt(jnp.sum((x - c) ** 2))
 
-# ✅ pathlib
-from pathlib import Path
-path = base_dir / "data" / filename
-if path.exists():
-    content = path.read_text()
+# ✅ Same value everywhere, zero gradient at x = c
+from geonnax._basis._rbf import _safe_sqrt
+
+r = _safe_sqrt(jnp.sum((x - c) ** 2))
 ```
 
-### Exception Handling
+### State updates return a new module
 
 ```python
-# ❌ Bare except, poor chaining
-try:
-    result = parse(data)
-except:
-    raise RuntimeError("Failed")
+# ❌ eqx.Module is frozen: this raises FrozenInstanceError
+self.state = self.state + x
 
-# ✅ Specific exceptions, proper chaining
-try:
-    result = parse(data)
-except json.JSONDecodeError as e:
-    raise ParseError(f"Invalid JSON in {source}") from e
-```
 
-### Explanatory Comments for Complex Logic
-
-```python
-# ❌ No explanation for non-obvious algorithm
-def calculate_score(items):
-    return sum(i.weight * (1 - i.age / 365) for i in items if i.active)
-
-# ✅ Clear explanation of the logic
-def calculate_score(items: list[Item]) -> float:
-    """Calculate weighted score with time decay.
-
-    Score computation:
-        1. Filter to only active items
-        2. Apply time decay: items lose relevance linearly over one year
-        3. Weight each item's contribution by its assigned weight
-        4. Sum all weighted, decayed values
-    """
-    total = 0.0
-    for item in items:
-        if not item.active:
-            continue
-        # Time decay factor: 1.0 for new items → 0.0 after 365 days
-        decay_factor = 1 - (item.age / 365)
-        total += item.weight * decay_factor
-    return total
+# ✅
+def update(self, x: Float[Array, " D"]) -> Counter:
+    return eqx.tree_at(lambda m: m.state, self, self.state + x)
 ```
 
 ---
