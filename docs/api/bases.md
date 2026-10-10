@@ -59,7 +59,10 @@ for exact polynomial quadrature.
 `fibonacci_sphere` (near-uniform points), `gauss_legendre_grid` (exact for
 spherical-harmonic products up to a stated degree) and `latlon_grid` (regular
 cells with exact area weights) return points on the unit sphere together with
-quadrature weights that sum to $4\pi$.
+quadrature weights that sum to $4\pi$. `icosphere(level)` returns the
+subdivided-icosahedron triangle mesh ($10\cdot4^{\ell} + 2$ vertices,
+outward-oriented triangles) for mesh Laplacians and finite elements on the
+sphere.
 
 ## Data-driven basis
 
