@@ -112,6 +112,33 @@ Also exported under the long-form alias `geonnax.ConvolutionalNeuralOperator`.
 
 ::: geonnax.cno.CNOResBlock
 
+## Local Neural Operator
+
+The LNO (Li et al., CMAME 2024) is a *usage pattern* for a local operator: a
+fully convolutional core with a bounded receptive field, applied
+autoregressively as an explicit time-stepper. Each step pads the field by the
+halo $p$ with a boundary treatment (`"periodic"`, `"reflect"` or `"zero"`),
+applies the core and crops back,
+
+$$u_{t+\Delta t} = \mathrm{crop}_p\big(N(\mathrm{pad}_{p}(u_t))\big),$$
+
+and `rollout` iterates it with `jax.lax.scan`. Because the core is local and
+shift-equivariant, one trained LNO runs on domains of any size. The default
+core is a shallow [`CNO`](#geonnax.cno.CNO) on its input grid, whose
+*effective* receptive radius `cno_receptive_radius` counts the convolution
+stencils on its deepest path, $r = h[(5 + 2n)2^L - 3]$ for stencil
+half-width $h$, depth $L$ and $n$ residual blocks; the Fourier resampling adds
+small global tails, so it is not a hard bound. The receptive range should
+match one step's domain of dependence (Ye et al., CMAME 2024): too small
+causes oscillation, too large costs accuracy. `receptive_range=` raises when
+$r$ exceeds it.
+
+Also exported under the long-form alias `geonnax.LocalNeuralOperator`.
+
+::: geonnax.lno.LNO
+
+::: geonnax.lno.cno_receptive_radius
+
 ## Wavelet Neural Operator
 
 The WNO swaps the FNO's Fourier transform for a multi-level discrete wavelet

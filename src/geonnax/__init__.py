@@ -36,6 +36,8 @@ Submodules:
   latent torus (Li et al., JMLR 2023).
 - `geonnax.cno` — ``CNO``, the convolutional neural operator (a
   band-limited, discretisation-invariant U-Net; Raonić et al., NeurIPS 2023).
+- `geonnax.lno` — ``LNO``, the local neural operator: a local core marched
+  in time with a boundary treatment (Li et al., CMAME 2024).
 - `geonnax.randfeat` — ``OrthogonalRandomFeatures`` +
   ``rff_forward`` / ``rff_cosine_forward`` helpers.
 """
@@ -52,6 +54,7 @@ from geonnax import (
     geofno,
     heteroscedastic,
     layers,
+    lno,
     manifold_no,
     mfn,
     mixture,
@@ -133,6 +136,7 @@ from geonnax.layers import (
     band_limited_resize,
     init_factorized_tensor,
 )
+from geonnax.lno import LNO, LocalNeuralOperator, cno_receptive_radius
 from geonnax.manifold_no import ManifoldNO, ManifoldNOBlock
 from geonnax.mfn import FourierFilter, FourierNet, GaborFilter, GaborNet, mfn_forward
 from geonnax.mixture import MixtureOfGaussiansDenseHead
@@ -167,6 +171,7 @@ __version__ = "0.0.8"  # x-release-please-version
 __all__ = [
     "CNO",
     "FNO",
+    "LNO",
     "MSWT",
     "SFNO",
     "SIREN",
@@ -213,6 +218,7 @@ __all__ = [
     "LearnedDeformation",
     "LinearAttention",
     "LinearChainCRF",
+    "LocalNeuralOperator",
     "LonLatScale",
     "MCSigmoidDenseFA",
     "MCSoftmaxDenseFA",
@@ -260,6 +266,7 @@ __all__ = [
     "basis",
     "build_siren_specs",
     "cno",
+    "cno_receptive_radius",
     "conditioning",
     "crf",
     "encoders",
@@ -272,6 +279,7 @@ __all__ = [
     "init_factorized_tensor",
     "init_rank1_proj",
     "layers",
+    "lno",
     "log_spaced_omegas",
     "manifold_no",
     "mfn",
