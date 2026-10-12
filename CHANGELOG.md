@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.0.9](https://github.com/jejjohnson/geonnax/compare/v0.0.8...v0.0.9) (2026-10-12)
+
+
+### Features
+
+* **basis:** add cotangent_laplacian_eigpairs and mesh_vertex_areas ([#96](https://github.com/jejjohnson/geonnax/issues/96)) ([09f40b9](https://github.com/jejjohnson/geonnax/commit/09f40b97ac8e3c04712d5864246ba87618aa0057))
+* **cno:** add CNO, a convolutional neural operator ([#115](https://github.com/jejjohnson/geonnax/issues/115)) ([24c5404](https://github.com/jejjohnson/geonnax/commit/24c5404641244db8f008d3d7a70a5db6e05b16b3)), closes [#33](https://github.com/jejjohnson/geonnax/issues/33)
+* **geofno:** add GeoFNO, a fourier neural operator on point clouds ([#106](https://github.com/jejjohnson/geonnax/issues/106)) ([03eca2b](https://github.com/jejjohnson/geonnax/commit/03eca2ba3c468f9c30eeebb488b183f62fd7a68d))
+* **geofno:** add LearnedDeformation, a learned chart onto the latent torus ([#100](https://github.com/jejjohnson/geonnax/issues/100)) ([25733e5](https://github.com/jejjohnson/geonnax/commit/25733e594945c1415d9ae64999430d553c07608e))
+* **layers:** add band-limited resampling and an anti-aliased activation ([#111](https://github.com/jejjohnson/geonnax/issues/111)) ([e12bf0b](https://github.com/jejjohnson/geonnax/commit/e12bf0b76dc8dbba9e6cbd598ab22387f50e4abf)), closes [#32](https://github.com/jejjohnson/geonnax/issues/32)
+* **layers:** add BasisTransform and BasisSpectralConv ([#99](https://github.com/jejjohnson/geonnax/issues/99)) ([26d77b1](https://github.com/jejjohnson/geonnax/commit/26d77b15bacf1c02f7df5b1cefa090393f7387d1)), closes [#87](https://github.com/jejjohnson/geonnax/issues/87)
+* **layers:** add nonuniform_rfft and nonuniform_irfft ([#97](https://github.com/jejjohnson/geonnax/issues/97)) ([e99be3c](https://github.com/jejjohnson/geonnax/commit/e99be3c6de231efa21fccf91724838916bb22904))
+* **layers:** add SpectralConv.from_points and to_points ([#101](https://github.com/jejjohnson/geonnax/issues/101)) ([e7cc3cb](https://github.com/jejjohnson/geonnax/commit/e7cc3cb198bf1b29264668238cdbb7c0d997069b))
+* **lno:** add LNO, a local neural operator time-marching harness ([#117](https://github.com/jejjohnson/geonnax/issues/117)) ([54fdda7](https://github.com/jejjohnson/geonnax/commit/54fdda78e530e0817227d121bd57bf5fd42dc2cf)), closes [#34](https://github.com/jejjohnson/geonnax/issues/34)
+* **manifold_no:** add ManifoldNO, a neural operator in a domain's own basis ([#102](https://github.com/jejjohnson/geonnax/issues/102)) ([7724884](https://github.com/jejjohnson/geonnax/commit/77248847042a0931824b8edfe7ef6ba41079d630))
+
+
+### Bug Fixes
+
+* **layers:** use the plain region-weighted analysis in BasisTransform.from_slepian ([#109](https://github.com/jejjohnson/geonnax/issues/109)) ([560151a](https://github.com/jejjohnson/geonnax/commit/560151a2f3c8bf688567ecde251f6647cdfa4942))
+
+
+### Performance Improvements
+
+* **basis:** compile real_spherical_harmonics with an o(l) recurrence ([#113](https://github.com/jejjohnson/geonnax/issues/113)) ([84cb04c](https://github.com/jejjohnson/geonnax/commit/84cb04c71fd94334a203526fff3cec4455d678ac)), closes [#73](https://github.com/jejjohnson/geonnax/issues/73)
+
 ## [0.0.8](https://github.com/jejjohnson/geonnax/compare/v0.0.7...v0.0.8) (2026-10-10)
 
 
