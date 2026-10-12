@@ -44,3 +44,16 @@ uniform grid with weights $1/S$ they reproduce `rfftn / S` and `irfftn`.
 ::: geonnax.layers.nonuniform_rfft
 
 ::: geonnax.layers.nonuniform_irfft
+
+## Spectral convolution in a precomputed basis
+
+The FNO / SFNO pattern for any basis $\Phi$ sampled at $N$ points with
+quadrature weights $w$ — region Slepians, EOFs, graph- or mesh-Laplacian
+eigenvectors. `BasisTransform` holds the frozen analysis
+$\Phi^\top \operatorname{diag}(w)$ and synthesis $\Phi_{\text{out}}$ tables;
+`BasisSpectralConv` mixes channels with one matrix per mode. Each acts on a
+single `(C, N)` example of point values.
+
+::: geonnax.layers.BasisTransform
+
+::: geonnax.layers.BasisSpectralConv

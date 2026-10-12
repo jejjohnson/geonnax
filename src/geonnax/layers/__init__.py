@@ -21,6 +21,8 @@ leading channel axis and ``num_spatial_dims`` trailing spatial axes — shape
   spectrum).
 - `geonnax.layers._factorized` — `DenseTensor` / `CPTensor`
   / `TuckerTensor` / `TTTensor` low-rank weight parameterisations.
+- `geonnax.layers._basis_conv` — `BasisTransform`,
+  `BasisSpectralConv` (spectral convolution in any precomputed basis).
 - `geonnax.layers._spherical_transform` —
   `SphericalHarmonicTransform`, `SphericalSpectralConv`.
 - `geonnax.layers._spherical_wavelet` —
@@ -36,6 +38,7 @@ from geonnax.layers._attention import (
     LinearAttention,
     WindowedAttention,
 )
+from geonnax.layers._basis_conv import BasisSpectralConv, BasisTransform
 from geonnax.layers._blocks import (
     Block,
     ConvNeXtBlock,
@@ -68,6 +71,8 @@ from geonnax.layers._wavelet_attention import WaveletAttention
 
 __all__ = [
     "Attention",
+    "BasisSpectralConv",
+    "BasisTransform",
     "Block",
     "CPTensor",
     "ConvNeXtBlock",
