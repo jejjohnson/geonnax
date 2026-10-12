@@ -1,5 +1,6 @@
 """Tests for spectral convolutions, FNO, the SHT, and SFNO."""
 
+import einx
 import equinox as eqx
 import jax
 import jax.image as jimage
@@ -103,6 +104,151 @@ def test_spectral_conv_rejects_bad_modes():
         SpectralConv.init(2, 2, (), key=KEY)
     with pytest.raises(ValueError, match="all n_modes must be"):
         SpectralConv.init(2, 2, (4, 0), key=KEY)
+
+
+# ---- SpectralConv on point clouds ---------------------------------------------
+
+
+def _grid_nodes(grid):
+    """The ``S = prod(grid)`` nodes ``j / s`` of a uniform grid on [0, 1)^d, (S, d)."""
+    axes = jnp.meshgrid(*[jnp.arange(s) / s for s in grid], indexing="ij")
+    return einx.id("a... d -> (a...) d", jnp.stack(axes, -1))
+
+
+def _with_random_bias(sc):
+    return eqx.tree_at(lambda m: m.bias, sc, jr.normal(KEY, sc.bias.shape))
+
+
+def _band_limited(xi):
+    """A smooth field inside a (6, 6)-mode band, (1, N) from xi (N, 2)."""
+    a, b = xi[:, 0], xi[:, 1]
+    two_pi = 2 * jnp.pi
+    return (
+        jnp.sin(two_pi * a)
+        + jnp.cos(two_pi * (a + 2 * b))
+        + 0.5 * jnp.sin(two_pi * 3 * b)
+    )[None]
+
+
+_SLOW_FACS = [
+    fac if fac == "dense" else pytest.param(fac, marks=pytest.mark.slow)
+    for fac in FACTORIZATIONS
+]
+
+
+@pytest.mark.parametrize("fac", _SLOW_FACS)
+def test_spectral_conv_from_points_matches_call(fac):
+    # On the grid nodes with w = 1/S the quadrature is the DFT itself, so the
+    # point path reproduces __call__ up to float32 round-off.
+    grid = (16, 12)
+    sc = _with_random_bias(
+        SpectralConv.init(3, 4, (4, 3), key=KEY, factorization=fac, rank=0.5)
+    )
+    x = jr.normal(jr.PRNGKey(1), (3, *grid))
+    s = x[0].size
+    u = einx.id("c a... -> c (a...)", x)
+    y = sc.from_points(u, _grid_nodes(grid), jnp.full((s,), 1.0 / s), grid)
+    assert y.shape == (4, *grid)
+    assert jnp.allclose(y, sc(x), atol=1e-5)
+
+
+@pytest.mark.parametrize("fac", _SLOW_FACS)
+def test_spectral_conv_to_points_matches_call(fac):
+    grid = (16, 12)
+    sc = _with_random_bias(
+        SpectralConv.init(3, 4, (4, 3), key=KEY, factorization=fac, rank=0.5)
+    )
+    x = jr.normal(jr.PRNGKey(1), (3, *grid))
+    y = sc.to_points(x, _grid_nodes(grid))
+    assert y.shape == (4, x[0].size)
+    assert jnp.allclose(y, einx.id("c a... -> c (a...)", sc(x)), atol=1e-5)
+
+
+@pytest.mark.parametrize("nd", [1, 2, pytest.param(3, marks=pytest.mark.slow)])
+def test_spectral_conv_points_dimension_flexible(nd):
+    grid = (10,) * nd
+    sc = _with_random_bias(SpectralConv.init(2, 3, (3,) * nd, key=KEY))
+    x = jr.normal(jr.PRNGKey(1), (2, *grid))
+    s = x[0].size
+    nodes = _grid_nodes(grid)
+    u = einx.id("c a... -> c (a...)", x)
+    y_from = sc.from_points(u, nodes, jnp.full((s,), 1.0 / s), grid)
+    y_to = sc.to_points(x, nodes)
+    assert jnp.allclose(y_from, sc(x), atol=1e-5)
+    assert jnp.allclose(y_to, einx.id("c a... -> c (a...)", sc(x)), atol=1e-5)
+
+
+def test_spectral_conv_from_points_padding():
+    # Zero-weight points contribute exact zeros, so padding a cloud with
+    # arbitrary finite points leaves the output unchanged.
+    sc = _with_random_bias(SpectralConv.init(2, 3, (4, 4), key=KEY))
+    k1, k2, k3, k4 = jr.split(jr.PRNGKey(1), 4)
+    n, n_pad = 300, 80
+    xi = jr.uniform(k1, (n, 2))
+    u = jr.normal(k2, (2, n))
+    w = jnp.full((n,), 1.0 / n)
+    xi_pad = jnp.concatenate([xi, jr.uniform(k3, (n_pad, 2))])
+    u_pad = jnp.hstack([u, jr.normal(k4, (2, n_pad))])
+    w_pad = jnp.concatenate([w, jnp.zeros((n_pad,))])
+    y = sc.from_points(u, xi, w, (16, 16))
+    y_pad = sc.from_points(u_pad, xi_pad, w_pad, (16, 16))
+    assert jnp.array_equal(y, y_pad)
+
+
+def test_spectral_conv_point_resolution_invariance():
+    # Jittered stratified clouds (one uniform point per cell of an s x s grid,
+    # w = 1/N) against the 64 x 64 grid reference. Stratified quadrature
+    # converges ~N^-1: the theme-epic (#75) prototype measured 0.11 / 0.024 at
+    # N = 2025 / 8100, and four seeds here give at most 0.115 / 0.026.
+    sc = SpectralConv.init(1, 1, (6, 6), key=KEY, bias=False)
+    grid = (64, 64)
+    reference = sc(einx.id("c (a b) -> c a b", _band_limited(_grid_nodes(grid)), a=64))
+    for s, tol in ((45, 0.15), (90, 0.05)):
+        n = s * s
+        xi = _grid_nodes((s, s)) + jr.uniform(jr.PRNGKey(s), (n, 2)) / s
+        y = sc.from_points(_band_limited(xi), xi, jnp.full((n,), 1.0 / n), grid)
+        rel = jnp.linalg.norm(y - reference) / jnp.linalg.norm(reference)
+        assert float(rel) < tol, (s, float(rel))
+
+
+def test_spectral_conv_from_points_rejects_underresolved_grid():
+    sc = SpectralConv.init(2, 2, (4, 4), key=KEY)
+    xi = jr.uniform(KEY, (10, 2))
+    u, w = jnp.ones((2, 10)), jnp.full((10,), 0.1)
+    with pytest.raises(ValueError, match="grid must have 2 extents"):
+        sc.from_points(u, xi, w, (8, 16))
+    with pytest.raises(ValueError, match="grid must have 2 extents"):
+        sc.from_points(u, xi, w, (16, 16, 16))
+    with pytest.raises(ValueError, match="grid must have 2 extents"):
+        sc.to_points(jnp.ones((2, 16, 8)), xi)
+
+
+@pytest.mark.integration
+def test_spectral_conv_points_vmap_jit_grad():
+    sc = SpectralConv.init(2, 2, (4, 4), key=KEY)
+    batch, n = 3, 200
+    k1, k2 = jr.split(jr.PRNGKey(1))
+    xi = jr.uniform(k1, (batch, n, 2))
+    u = jr.normal(k2, (batch, 2, n))
+    # Ragged clouds of 200, 150 and 120 real points, zero-weight padded to 200.
+    n_real = jnp.array([200, 150, 120])
+    real = einx.less("n, b -> b n", jnp.arange(n), n_real)
+    w = einx.where("b n, b, -> b n", real, 1.0 / n_real, 0.0)
+
+    def apply(m, u, xi, w):
+        return m.to_points(m.from_points(u, xi, w, (16, 16)), xi)
+
+    y = eqx.filter_jit(jax.vmap(apply, in_axes=(None, 0, 0, 0)))(sc, u, xi, w)
+    assert y.shape == (batch, 2, n)
+    assert bool(jnp.isfinite(y).all())
+
+    def loss(m, xi):
+        return jnp.mean(apply(m, u[0], xi, w[0]) ** 2)
+
+    g_m = eqx.filter_grad(loss)(sc, xi[0])
+    leaves = jax.tree_util.tree_leaves(eqx.filter(g_m, eqx.is_array))
+    assert leaves and all(bool(jnp.isfinite(g).all()) for g in leaves)
+    assert bool(jnp.isfinite(jax.grad(loss, argnums=1)(sc, xi[0])).all())
 
 
 # ---- FNO --------------------------------------------------------------------
