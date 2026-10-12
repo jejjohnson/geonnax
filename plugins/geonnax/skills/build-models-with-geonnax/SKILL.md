@@ -1,6 +1,6 @@
 ---
 name: build-models-with-geonnax
-description: Build geoscientific neural networks in JAX / Equinox on geonnax — Fourier, spherical and wavelet neural operators (FNO, SFNO, WNO, MSWT), dimension-flexible U-Nets, SIREN and multiplicative filter networks with FiLM / hypernetwork conditioning, lon/lat and spherical-harmonic encoders, spectral and localized bases with their eigenvalues or geometry, random Fourier features, spectral normalisation, SNGP / VSSGP heads, BatchEnsemble and heteroscedastic layers. Use whenever a task builds or trains a neural network on gridded, spherical or coordinate data, writes an FFT / spherical-harmonic / wavelet layer, encodes lon/lat or time, evaluates a basis, or needs a deterministic core for an uncertainty-aware model, in a project that uses (or could use) geonnax.
+description: Build geoscientific neural networks in JAX / Equinox on geonnax — Fourier, spherical and wavelet neural operators (FNO, SFNO, WNO, MSWT) and Geo-FNO on point clouds (GeoFNO), dimension-flexible U-Nets, SIREN and multiplicative filter networks with FiLM / hypernetwork conditioning, lon/lat and spherical-harmonic encoders, spectral and localized bases with their eigenvalues or geometry, random Fourier features, spectral normalisation, SNGP / VSSGP heads, BatchEnsemble and heteroscedastic layers. Use whenever a task builds or trains a neural network on gridded, spherical or coordinate data, writes an FFT / spherical-harmonic / wavelet layer, encodes lon/lat or time, evaluates a basis, or needs a deterministic core for an uncertainty-aware model, in a project that uses (or could use) geonnax.
 ---
 
 # Geoscience models on geonnax
@@ -39,6 +39,7 @@ it up:
 | You need… | Use |
 |---|---|
 | A neural operator on a grid | `geonnax.FNO` (dense / CP / Tucker / TT spectral weights, `domain_padding` for non-periodic fields), `geonnax.WNO` (wavelets), `geonnax.MSWT` (wavelet-domain attention) |
+| A neural operator on per-sample point clouds (ragged, irregular geometry) | `geonnax.GeoFNO` (Geo-FNO: a learned chart `geonnax.LearnedDeformation` onto a latent torus, FNO blocks on a latent grid; `model(u (C, N), x (N, d), w (N,), x_out=…)`, batch ragged clouds by padding with `w = 0` and `jax.vmap`) |
 | An operator on the sphere (lat/lon grid) | `geonnax.SFNO`, `geonnax.SphericalHarmonicTransform`, `geonnax.SphericalSpectralConv`, `geonnax.SphericalWaveletTransform` |
 | An operator on a fixed irregular domain (mesh, region on the sphere) | `geonnax.ManifoldNO` with a shared `geonnax.BasisTransform` (`from_mesh` Laplace–Beltrami eigenvectors, `from_slepian` region Slepians, `from_matrix` any basis) |
 | A U-Net (1-D / 2-D / 3-D) | `geonnax.UNet` (ResNet or ConvNeXt blocks, attention, nested U²-Net stages, MC dropout) |
