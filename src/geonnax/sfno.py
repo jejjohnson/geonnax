@@ -24,17 +24,7 @@ from geonnax.layers._spherical_transform import (
     SphericalHarmonicTransform,
     SphericalSpectralConv,
 )
-
-
-def _pointwise(in_channels: int, out_channels: int, *, key: Array) -> eqx.nn.Conv:
-    """A ``1x1`` convolution over the ``(n_lat, n_lon)`` grid."""
-    return eqx.nn.Conv(
-        num_spatial_dims=2,
-        in_channels=in_channels,
-        out_channels=out_channels,
-        kernel_size=1,
-        key=key,
-    )
+from geonnax.layers._utils import pointwise
 
 
 class SphericalFNOBlock(eqx.Module):
@@ -76,10 +66,10 @@ class SphericalFNOBlock(eqx.Module):
         """Construct a spherical Fourier block at fixed width ``channels``."""
         k_sp, k_pw = jax.random.split(key)
         spectral = SphericalSpectralConv.init(channels, channels, l_max, key=k_sp)
-        pointwise = _pointwise(channels, channels, key=k_pw)
+        skip = pointwise(2, channels, channels, key=k_pw)
         return cls(
             spectral=spectral,
-            pointwise=pointwise,
+            pointwise=skip,
             activation=activation,
             use_activation=use_activation,
         )
@@ -171,7 +161,7 @@ class SFNO(eqx.Module):
 
         sht = SphericalHarmonicTransform.init(n_lat, n_lon, l_max)
         k_lift, k_p1, k_p2, k_blocks = jax.random.split(key, 4)
-        lifting = _pointwise(in_channels, hidden_channels, key=k_lift)
+        lifting = pointwise(2, in_channels, hidden_channels, key=k_lift)
         bkeys = jax.random.split(k_blocks, n_layers)
         blocks = [
             SphericalFNOBlock.init(
@@ -183,8 +173,8 @@ class SFNO(eqx.Module):
             )
             for i in range(n_layers)
         ]
-        proj1 = _pointwise(hidden_channels, projection_channels, key=k_p1)
-        proj2 = _pointwise(projection_channels, out_channels, key=k_p2)
+        proj1 = pointwise(2, hidden_channels, projection_channels, key=k_p1)
+        proj2 = pointwise(2, projection_channels, out_channels, key=k_p2)
         return cls(
             sht=sht,
             lifting=lifting,

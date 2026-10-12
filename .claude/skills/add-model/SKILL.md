@@ -36,7 +36,7 @@ Read "1. Modules", "3. Numerics and initialisation" and "The public API" in
   operators and U-Nets, `(D_in,) -> (D_out,)` for INRs. Read grid extents at
   call time (resolution invariance), unless the model is bound to a grid it
   validated in `init` (as `SFNO` is to its SHT grid).
-- Reuse: lift / project with 1×1 `eqx.nn.Conv` (`fno._pointwise`; don't add
+- Reuse: lift / project with 1×1 `eqx.nn.Conv` (`layers._utils.pointwise`; don't add
   a fourth copy), `layers` blocks, `DomainPadding` for non-periodic inputs,
   `siren_W_limit` / `build_siren_specs` for SIREN-style inits.
 - Optional randomness (dropout) takes `key: Array | None = None` and works

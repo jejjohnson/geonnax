@@ -27,7 +27,7 @@ in `AGENTS.md`.
      `group_count`, `shuffle_patterns`, `shuffle_kwargs`);
      `layers._blocks._dropout_layer`; `unet._split_keys`;
      `layers._factorized._resolve_rank`; `layers._spectral._corner_slices`;
-     `layers._wavelet._filter_bank`; `fno._pointwise`;
+     `layers._wavelet._filter_bank`; `layers._utils.pointwise`;
      `ensemble._glorot_uniform`, `ensemble._rs_init`, `sngp._glorot_normal`;
      `siren._require_positive`; `spectral_norm._l2_normalize`;
      `_basis._rbf._safe_sqrt` / `_safe_arccos`; the `geo._validate_*`
@@ -36,7 +36,7 @@ in `AGENTS.md`.
      `jnp.linalg.qr`, `jnp.cos(`, `arccos`, `group_count`, `einx.dot`, …).
 3. Also flag, wherever they appear in the diff:
    - a 1×1 conv helper, conv → GroupNorm → SiLU stack, residual or ConvNeXt
-     block, squeeze-excitation, pixel shuffle → `fno._pointwise` (or
+     block, squeeze-excitation, pixel shuffle → `layers._utils.pointwise` (or
      `eqx.nn.Conv` directly), `geonnax.layers.Block`, `ResnetBlock`,
      `ConvNeXtBlock`, `SqueezeExcitation`, `Downsample` / `Upsample`;
    - self-attention over a grid, windowed or wavelet-domain attention →

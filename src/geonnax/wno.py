@@ -21,20 +21,8 @@ import equinox as eqx
 import jax
 from jaxtyping import Array, Float
 
+from geonnax.layers._utils import pointwise
 from geonnax.layers._wavelet import Wavelet, WaveletConv
-
-
-def _pointwise(
-    num_spatial_dims: int, in_channels: int, out_channels: int, *, key: Array
-) -> eqx.nn.Conv:
-    """A ``1x1`` (pointwise) convolution — a per-position channel-wise linear map."""
-    return eqx.nn.Conv(
-        num_spatial_dims=num_spatial_dims,
-        in_channels=in_channels,
-        out_channels=out_channels,
-        kernel_size=1,
-        key=key,
-    )
 
 
 class WNOBlock(eqx.Module):
@@ -85,10 +73,10 @@ class WNOBlock(eqx.Module):
             wavelet=wavelet,
             level=level,
         )
-        pointwise = _pointwise(num_spatial_dims, channels, channels, key=k_pw)
+        skip = pointwise(num_spatial_dims, channels, channels, key=k_pw)
         return cls(
             wavelet_conv=wavelet_conv,
-            pointwise=pointwise,
+            pointwise=skip,
             activation=activation,
             use_activation=use_activation,
         )
@@ -178,7 +166,7 @@ class WNO(eqx.Module):
         projection_channels = projection_channels or hidden_channels
 
         k_lift, k_p1, k_p2, k_blocks = jax.random.split(key, 4)
-        lifting = _pointwise(d, in_channels, hidden_channels, key=k_lift)
+        lifting = pointwise(d, in_channels, hidden_channels, key=k_lift)
         bkeys = jax.random.split(k_blocks, n_layers)
         blocks = [
             WNOBlock.init(
@@ -193,8 +181,8 @@ class WNO(eqx.Module):
             )
             for i in range(n_layers)
         ]
-        proj1 = _pointwise(d, hidden_channels, projection_channels, key=k_p1)
-        proj2 = _pointwise(d, projection_channels, out_channels, key=k_p2)
+        proj1 = pointwise(d, hidden_channels, projection_channels, key=k_p1)
+        proj2 = pointwise(d, projection_channels, out_channels, key=k_p2)
         return cls(
             lifting=lifting,
             blocks=blocks,
