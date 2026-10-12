@@ -70,6 +70,15 @@ Read "1. Modules", "3. Numerics and initialisation" and "The public API" in
   grids (`test_spectral_conv_resolution_invariance` resizes with
   `jax.image.resize` and bounds the relative error, with a comment on why),
   exact reconstruction, identity at init, agreement with a published value.
+- **Point-set operators** (anything that reads a point cloud with quadrature
+  weights, e.g. `SpectralConv.from_points`, Geo-FNO): also refine the cloud
+  with `tests/_point_invariance.py`. `assert_point_refinement_converges(apply,
+  field, reference, sizes, d=..., key=..., max_rel_err=...)` evaluates the
+  operator on jittered `stratified_cloud`s (`w = 1/N`) and bounds the
+  relative error against the dense-grid `reference` at each size (state where
+  each tolerance came from). Add the negative control too: the same call with
+  `w ≡ 1` must raise `AssertionError`
+  (`test_spectral_conv_point_refinement_unweighted_fails`).
 - `@pytest.mark.integration`: `jax.vmap` over a batch, `eqx.filter_jit`,
   finite `eqx.filter_grad` of a mean-squared loss.
 - `@pytest.mark.slow` on broad sweeps (every factorization, every block type).

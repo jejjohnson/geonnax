@@ -7,6 +7,7 @@ import jax.image as jimage
 import jax.numpy as jnp
 import jax.random as jr
 import pytest
+from _point_invariance import assert_point_refinement_converges, grid_nodes
 
 import geonnax
 from geonnax.fno import FNO, DomainPadding, FNOBlock, FourierNeuralOperator
@@ -109,12 +110,6 @@ def test_spectral_conv_rejects_bad_modes():
 # ---- SpectralConv on point clouds ---------------------------------------------
 
 
-def _grid_nodes(grid):
-    """The ``S = prod(grid)`` nodes ``j / s`` of a uniform grid on [0, 1)^d, (S, d)."""
-    axes = jnp.meshgrid(*[jnp.arange(s) / s for s in grid], indexing="ij")
-    return einx.id("a... d -> (a...) d", jnp.stack(axes, -1))
-
-
 def _with_random_bias(sc):
     return eqx.tree_at(lambda m: m.bias, sc, jr.normal(KEY, sc.bias.shape))
 
@@ -147,7 +142,7 @@ def test_spectral_conv_from_points_matches_call(fac):
     x = jr.normal(jr.PRNGKey(1), (3, *grid))
     s = x[0].size
     u = einx.id("c a... -> c (a...)", x)
-    y = sc.from_points(u, _grid_nodes(grid), jnp.full((s,), 1.0 / s), grid)
+    y = sc.from_points(u, grid_nodes(grid), jnp.full((s,), 1.0 / s), grid)
     assert y.shape == (4, *grid)
     assert jnp.allclose(y, sc(x), atol=1e-5)
 
@@ -159,7 +154,7 @@ def test_spectral_conv_to_points_matches_call(fac):
         SpectralConv.init(3, 4, (4, 3), key=KEY, factorization=fac, rank=0.5)
     )
     x = jr.normal(jr.PRNGKey(1), (3, *grid))
-    y = sc.to_points(x, _grid_nodes(grid))
+    y = sc.to_points(x, grid_nodes(grid))
     assert y.shape == (4, x[0].size)
     assert jnp.allclose(y, einx.id("c a... -> c (a...)", sc(x)), atol=1e-5)
 
@@ -170,7 +165,7 @@ def test_spectral_conv_points_dimension_flexible(nd):
     sc = _with_random_bias(SpectralConv.init(2, 3, (3,) * nd, key=KEY))
     x = jr.normal(jr.PRNGKey(1), (2, *grid))
     s = x[0].size
-    nodes = _grid_nodes(grid)
+    nodes = grid_nodes(grid)
     u = einx.id("c a... -> c (a...)", x)
     y_from = sc.from_points(u, nodes, jnp.full((s,), 1.0 / s), grid)
     y_to = sc.to_points(x, nodes)
@@ -195,20 +190,45 @@ def test_spectral_conv_from_points_padding():
     assert jnp.array_equal(y, y_pad)
 
 
-def test_spectral_conv_point_resolution_invariance():
-    # Jittered stratified clouds (one uniform point per cell of an s x s grid,
-    # w = 1/N) against the 64 x 64 grid reference. Stratified quadrature
-    # converges ~N^-1: the theme-epic (#75) prototype measured 0.11 / 0.024 at
-    # N = 2025 / 8100, and four seeds here give at most 0.115 / 0.026.
+def _from_points_setup():
     sc = SpectralConv.init(1, 1, (6, 6), key=KEY, bias=False)
     grid = (64, 64)
-    reference = sc(einx.id("c (a b) -> c a b", _band_limited(_grid_nodes(grid)), a=64))
-    for s, tol in ((45, 0.15), (90, 0.05)):
-        n = s * s
-        xi = _grid_nodes((s, s)) + jr.uniform(jr.PRNGKey(s), (n, 2)) / s
-        y = sc.from_points(_band_limited(xi), xi, jnp.full((n,), 1.0 / n), grid)
-        rel = jnp.linalg.norm(y - reference) / jnp.linalg.norm(reference)
-        assert float(rel) < tol, (s, float(rel))
+    reference = sc(einx.id("c (a b) -> c a b", _band_limited(grid_nodes(grid)), a=64))
+    return sc, grid, reference
+
+
+def test_spectral_conv_point_resolution_invariance():
+    # Jittered stratified clouds at N = 2025 / 8100 against the 64 x 64 grid
+    # reference. Stratified quadrature converges ~N^-1: the theme-epic (#75)
+    # prototype measured 0.11 / 0.024, and eight harness keys here give at
+    # most 0.105 / 0.028.
+    sc, grid, reference = _from_points_setup()
+    assert_point_refinement_converges(
+        lambda u, xi, w: sc.from_points(u, xi, w, grid),
+        _band_limited,
+        reference,
+        (45, 90),
+        d=2,
+        key=KEY,
+        max_rel_err=(0.15, 0.05),
+    )
+
+
+def test_spectral_conv_point_refinement_unweighted_fails():
+    # Negative control: the reference Geo-FNO transform sums without
+    # quadrature weights (w = 1), so its output grows ~N (rel. error ~2000 /
+    # ~8000 here) instead of converging. This is why from_points takes weights.
+    sc, grid, reference = _from_points_setup()
+    with pytest.raises(AssertionError, match="does not converge"):
+        assert_point_refinement_converges(
+            lambda u, xi, w: sc.from_points(u, xi, jnp.ones_like(w), grid),
+            _band_limited,
+            reference,
+            (45, 90),
+            d=2,
+            key=KEY,
+            max_rel_err=(0.15, 0.05),
+        )
 
 
 def test_spectral_conv_from_points_rejects_underresolved_grid():
