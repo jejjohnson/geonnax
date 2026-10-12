@@ -23,7 +23,12 @@
       "bump-patch-for-minor-pre-major": true,
       "extra-files": [
         "pyproject.toml",
-        "src/geonnax/__init__.py"
+        "src/geonnax/__init__.py",
+        {
+          "type": "toml",
+          "path": "uv.lock",
+          "jsonpath": "$.package[?(@.name.value=='geonnax')].version"
+        }
       ]
     }
   }
