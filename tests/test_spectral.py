@@ -260,3 +260,31 @@ def test_public_exports_present():
         assert hasattr(geonnax, name), name
     assert hasattr(geonnax, "fno")
     assert hasattr(geonnax, "sfno")
+
+
+def test_fno_curvilinear_grid_with_coordinate_channels():
+    """Case A: plain FNO on a 30x20 curvilinear grid with (x, y) channels."""
+    from geonnax import FNO
+    from geonnax.geo import local_tangent_plane
+
+    n1, n2 = 30, 20
+    s = jnp.linspace(0.0, 1.0, n1)[:, None]
+    p = jnp.linspace(-1.0, 1.0, n2)[None, :]
+    lon = 5.0 + 2.0 * s + 0.5 * p
+    lat = 45.0 + 3.0 * s - 0.1 * p
+    lonlat = jnp.stack([lon.ravel(), lat.ravel()], -1)
+    enu = local_tangent_plane(lonlat, jnp.array([lon.mean(), lat.mean()]))
+    coords = enu.T.reshape(2, n1, n2) / 100.0
+    x = jnp.concatenate([jnp.sin(3.0 * s * p)[None], coords], axis=0)
+    op = FNO.init(
+        3,
+        1,
+        (4, 4),
+        key=jr.PRNGKey(0),
+        hidden_channels=8,
+        n_layers=2,
+        domain_padding=0.1,
+    )
+    y = op(x)
+    assert y.shape == (1, n1, n2)
+    assert bool(jnp.isfinite(y).all())

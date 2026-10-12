@@ -59,6 +59,8 @@ nav:
   - Home: index.md
   - Examples:
       - Demo: notebooks/example_demo.ipynb
+  - Guides:
+      - FNO on curvilinear grids: guides/irregular-geometry.md
   - API Reference:
       - Overview: api/index.md
       - Capability index: api/capabilities.md
