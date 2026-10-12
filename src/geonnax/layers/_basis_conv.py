@@ -79,7 +79,7 @@ class BasisTransform(eqx.Module):
 
     Attributes:
         analysis: ``(M, N)`` analysis matrix $\Phi^\top \operatorname{diag}(w)$
-            (possibly row-normalised, see `from_slepian`).
+            (see `from_slepian` for the non-orthonormal Slepian case).
         synthesis: ``(N_out, M)`` basis evaluated at the output points.
         n_modes: Number of modes ``M`` (static).
 
@@ -176,19 +176,21 @@ class BasisTransform(eqx.Module):
         functions are orthonormal over the whole sphere but only orthogonal
         over the region, with $\sum_n w_n g_k(x_n) g_j(x_n) = \lambda_k
         \delta_{kj}$ (their concentrations; Simons et al. 2006). The analysis
-        therefore divides each row by the region Gram diagonal
-        $\lambda_k = \sum_n w_n g_k(x_n)^2$,
+        is the plain region-weighted projection,
 
         $$
-        A = \operatorname{diag}(\lambda)^{-1}\,\Phi^\top \operatorname{diag}(w),
+        A = \Phi^\top \operatorname{diag}(w),
+        \qquad
+        A\Phi = \operatorname{diag}(\lambda),
         $$
 
-        which makes ``inverse(forward(u))`` the region-orthogonal projection
-        onto the Slepian span: exact for fields in that span. Energy of ``u``
-        outside the span (or outside the region's band limit) leaks into the
-        poorly concentrated modes, which the $1/\lambda_k$ factor amplifies;
-        keep the basis at the Shannon number (the `slepian_region_basis`
-        default), where every retained $\lambda_k$ is large.
+        with no per-mode normalisation. A round trip ``inverse(forward(u))``
+        therefore maps coefficients $c_k$ to $\lambda_k c_k$: it attenuates
+        weakly concentrated modes by $\lambda_k$, which acts as a soft
+        concentration taper, and is not the identity on the Slepian span. For
+        an exact round trip, normalise $\Phi$ yourself (for example, divide
+        each column by $\sqrt{\lambda_k}$) and build the transform with
+        `from_matrix`.
 
         The synthesis evaluates the basis with ``basis.evaluate`` at
         ``points_out_xyz`` (default ``points_xyz``), which may be any points on
@@ -235,10 +237,7 @@ class BasisTransform(eqx.Module):
             if out.ndim != 2 or out.shape[-1] != 3:
                 raise ValueError(f"points_out_xyz must be (N_out, 3); got {out.shape}.")
             phi_out = basis.evaluate(out)
-        transform = cls.from_matrix(phi, weights, phi_out)
-        gram_diag = einx.dot("m n, n m -> m", transform.analysis, phi)
-        analysis = einx.divide("m n, m -> m n", transform.analysis, gram_diag)
-        return cls(analysis=analysis, synthesis=phi_out, n_modes=transform.n_modes)
+        return cls.from_matrix(phi, weights, phi_out)
 
     @classmethod
     def from_mesh(

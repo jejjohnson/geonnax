@@ -88,19 +88,25 @@ def test_from_matrix_validation(phi_shape, w_shape, out_shape, match):
 # --- from_slepian -----------------------------------------------------------
 
 
-def test_from_slepian_round_trip_in_cap():
+def test_from_slepian_plain_analysis_round_trip_in_cap():
     points, weights, cap, basis = _cap_setup()
     assert basis.num_modes == 9  # Shannon number of the 60° cap at l_max = 5
     t = BasisTransform.from_slepian(basis, points[cap], weights[cap])
     assert t.n_modes == 9
     assert t.analysis.shape == (9, int(cap.sum()))
     # A band-limited field concentrated in the cap: a mix of its Slepians.
+    # The plain analysis gives A Phi = diag(lambda), lambda_k = sum_n w_n g_k^2.
     coeffs = jr.normal(jr.PRNGKey(3), (2, basis.num_modes))
-    u = einx.dot("n k, c k -> c n", basis.evaluate(points[cap]), coeffs)
+    phi = basis.evaluate(points[cap])
+    lam = einx.dot("n k, n -> k", phi**2, weights[cap])
+    u = einx.dot("n k, c k -> c n", phi, coeffs)
+    scaled = einx.multiply("c k, k -> c k", coeffs, lam)
+    assert jnp.allclose(t.forward(u), scaled, atol=1e-4)
+    # The round trip is the lambda-tapered synthesis, not the identity.
     recon = t.inverse(t.forward(u))
-    rel = jnp.linalg.norm(recon - u) / jnp.linalg.norm(u)
-    assert rel < 0.05
-    assert jnp.allclose(t.forward(u), coeffs, atol=1e-4)
+    expected = einx.dot("n k, c k -> c n", phi, scaled)
+    assert jnp.allclose(recon, expected, atol=1e-4)
+    assert bool(jnp.all(lam <= 1 + 1e-5))
 
 
 def test_from_slepian_output_anywhere():
@@ -111,8 +117,10 @@ def test_from_slepian_output_anywhere():
     assert t.synthesis.shape == (points.shape[0], 9)
     coeffs = jr.normal(jr.PRNGKey(4), (2, 9))
     u_cap = einx.dot("n k, c k -> c n", basis.evaluate(points[cap]), coeffs)
-    u_all = einx.dot("n k, c k -> c n", basis.evaluate(points), coeffs)
-    assert jnp.allclose(t.inverse(t.forward(u_cap)), u_all, atol=1e-4)
+    lam = einx.dot("n k, n -> k", basis.evaluate(points[cap]) ** 2, weights[cap])
+    scaled = einx.multiply("c k, k -> c k", coeffs, lam)
+    expected = einx.dot("n k, c k -> c n", basis.evaluate(points), scaled)
+    assert jnp.allclose(t.inverse(t.forward(u_cap)), expected, atol=1e-4)
 
 
 def test_from_slepian_validation():
