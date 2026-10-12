@@ -1,10 +1,12 @@
 """Grid-resolution invariance of the operators, via ``tests/_resolution_invariance.py``.
 
-FNO and WNO read the grid only at call time and must pass; ``UNet`` / ``XUNet``
-(fixed-stencil CNNs) do not, which is pinned here as a strict ``xfail`` until
-``CNO`` (#33) lands. SFNO is omitted: its spherical-harmonic transform is
-built for one fixed ``(n_lat, n_lon)`` grid, so it cannot be evaluated at two
-resolutions with the same module.
+FNO and WNO read the grid only at call time and must pass, and so must ``CNO``,
+which resamples every input onto its computational grid with a band-limited
+filter (Raonić et al., NeurIPS 2023, SM C.4); ``UNet`` / ``XUNet``
+(fixed-stencil CNNs) do not, which is pinned here as a strict ``xfail``. SFNO
+is omitted: its spherical-harmonic transform is built for one fixed
+``(n_lat, n_lon)`` grid, so it cannot be evaluated at two resolutions with the
+same module.
 """
 
 import jax.numpy as jnp
@@ -17,6 +19,7 @@ from _resolution_invariance import (
     spectral_resize,
 )
 
+from geonnax.cno import CNO
 from geonnax.fno import FNO
 from geonnax.unet import UNet
 from geonnax.wno import WNO
@@ -74,6 +77,27 @@ def test_fno_resolution_invariant(seed):
     assert resolution_gap(fno, _x(seed), UP, DOWN) < FNO_TOL
 
 
+@pytest.mark.parametrize("resolution", [32, 64])
+def test_cno_resolution_invariant(resolution):
+    # CNO's continuous operator is "resize onto the computational grid, run,
+    # resize back", so on a band-limited input the gap is float32 round-off
+    # (measured <= 2.3e-7 at 32^2, exactly 0 at 64^2 over three input keys).
+    # It is held to the FNO tolerance as the issue asks. Run on the input grid
+    # (``resolution=None``) the same network measures 0.07-0.13: its
+    # stencils are tied to the grid spacing.
+    cno = CNO.init(
+        1,
+        1,
+        2,
+        key=KEY,
+        hidden_channels=8,
+        depth=2,
+        n_res_blocks=1,
+        resolution=resolution,
+    )
+    assert resolution_gap(cno, _x(), UP, DOWN) < FNO_TOL
+
+
 @pytest.mark.integration
 def test_wno_resolution_invariant():
     wno = WNO.init(1, 1, 2, key=KEY, hidden_channels=16, n_layers=2)
@@ -87,7 +111,8 @@ def test_wno_resolution_invariant():
 @pytest.mark.xfail(
     strict=True,
     reason="UNet/XUNet use a fixed 3x3 stencil and aliasing activations, so "
-    "they are not discretisation-invariant; expected to pass once CNO (#33) lands.",
+    "they are not discretisation-invariant; CNO (geonnax.CNO) is the "
+    "invariant sibling.",
 )
 def test_unet_not_resolution_invariant():
     # ``XUNet`` is an alias of ``UNet``, so this covers both.

@@ -10,8 +10,8 @@ $$ \frac{\lVert G(u) - \mathrm{down}(G(\mathrm{up}(u)))\rVert}{\lVert G(u)\rVert
 `resolution_gap` returns that ratio. Spectral (FFT zero-pad / truncate)
 resampling is exact on band-limited periodic fields, so the gap isolates the
 operator rather than the interpolation. This is the grid counterpart of
-`tests/_point_invariance.py` (point clouds); `CNO` (#33) is asserted with the
-same helper.
+`tests/_point_invariance.py` (point clouds); `CNO` is asserted with the same
+helper.
 """
 
 from __future__ import annotations
@@ -23,14 +23,17 @@ import jax.numpy as jnp
 import jax.random as jr
 from jaxtyping import Array, Float
 
+from geonnax.layers import band_limited_resize
+
 
 def spectral_resize(
     x: Float[Array, "C *spatial"], shape: Sequence[int]
 ) -> Float[Array, "C *spatial"]:
     """Resample a periodic field to ``shape`` by FFT zero-padding / truncation.
 
-    Exact for fields band-limited below the smaller grid's Nyquist frequency.
-    The Nyquist row of the smaller grid is dropped, so a field must stay
+    A thin wrapper of `geonnax.layers.band_limited_resize`. Exact for fields
+    band-limited below the smaller grid's Nyquist frequency; the Nyquist bin
+    of an even grid is dropped on a resized axis, so a field must stay
     strictly below it (``max_mode < min(n) / 2``).
 
     Args:
@@ -40,21 +43,7 @@ def spectral_resize(
     Returns:
         The resampled field, shape ``(C, *shape)``, amplitude-preserving.
     """
-    axes = tuple(range(1, x.ndim))
-    xf = jnp.fft.fftshift(jnp.fft.fftn(x, axes=axes), axes=axes)
-    out = xf
-    for ax, (n, m) in enumerate(zip(x.shape[1:], shape, strict=True), start=1):
-        if m > n:  # zero-pad the spectrum symmetrically
-            lo = (m - n) // 2
-            pad = [(0, 0)] * out.ndim
-            pad[ax] = (lo, m - n - lo)
-            out = jnp.pad(out, pad)
-        elif m < n:  # keep the central m frequencies
-            lo = (n - m) // 2
-            out = jnp.take(out, jnp.arange(lo, lo + m), axis=ax)
-    out = jnp.fft.ifftn(jnp.fft.ifftshift(out, axes=axes), axes=axes)
-    scale = jnp.prod(jnp.asarray(shape)) / jnp.prod(jnp.asarray(x.shape[1:]))
-    return out.real * scale
+    return band_limited_resize(x, tuple(shape))
 
 
 def band_limited_field(

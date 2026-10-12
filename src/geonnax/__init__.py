@@ -34,12 +34,15 @@ Submodules:
 - `geonnax.geofno` — ``GeoFNO``, a Fourier neural operator on per-sample
   point clouds, and ``LearnedDeformation``, its learned chart onto the
   latent torus (Li et al., JMLR 2023).
+- `geonnax.cno` — ``CNO``, the convolutional neural operator (a
+  band-limited, discretisation-invariant U-Net; Raonić et al., NeurIPS 2023).
 - `geonnax.randfeat` — ``OrthogonalRandomFeatures`` +
   ``rff_forward`` / ``rff_cosine_forward`` helpers.
 """
 
 from geonnax import (
     basis,
+    cno,
     conditioning,
     crf,
     encoders,
@@ -65,6 +68,7 @@ from geonnax import (
     vssgp,
     wno,
 )
+from geonnax.cno import CNO, CNOBlock, CNOResBlock, ConvolutionalNeuralOperator
 from geonnax.conditioning import (
     AbstractConditioner,
     AffineModulation,
@@ -161,6 +165,7 @@ from geonnax.wno import WNO, WaveletNeuralOperator, WNOBlock
 __version__ = "0.0.8"  # x-release-please-version
 
 __all__ = [
+    "CNO",
     "FNO",
     "MSWT",
     "SFNO",
@@ -173,11 +178,14 @@ __all__ = [
     "BasisSpectralConv",
     "BasisTransform",
     "Block",
+    "CNOBlock",
+    "CNOResBlock",
     "CPTensor",
     "Cartesian3DEncoder",
     "ConcatConditioner",
     "ConditionedINR",
     "ConvNeXtBlock",
+    "ConvolutionalNeuralOperator",
     "CyclicEncoder",
     "DeepVSSGPCore",
     "Deg2Rad",
@@ -251,6 +259,7 @@ __all__ = [
     "band_limited_resize",
     "basis",
     "build_siren_specs",
+    "cno",
     "conditioning",
     "crf",
     "encoders",
