@@ -100,6 +100,8 @@ from geonnax.heteroscedastic import (
 )
 from geonnax.layers import (
     Attention,
+    BasisSpectralConv,
+    BasisTransform,
     Block,
     ConvNeXtBlock,
     CPTensor,
@@ -162,6 +164,8 @@ __all__ = [
     "AbstractConditioner",
     "AffineModulation",
     "Attention",
+    "BasisSpectralConv",
+    "BasisTransform",
     "Block",
     "CPTensor",
     "Cartesian3DEncoder",
