@@ -95,9 +95,22 @@ subdivided-icosahedron triangle mesh ($10\cdot4^{\ell} + 2$ vertices,
 outward-oriented triangles) for mesh Laplacians and finite elements on the
 sphere.
 
+## Mesh Laplace–Beltrami eigenbasis
+
+`mesh_vertex_areas` returns the lumped (barycentric) vertex areas of any
+triangle mesh — its mass matrix and quadrature weights — and
+`cotangent_laplacian_eigpairs` returns `(eigvals, eigvecs, areas)`, the
+smallest eigenpairs of the cotangent Laplacian $L\varphi = \lambda M\varphi$
+with $M$-orthonormal eigenvectors. Unlike the graph Laplacian it converges to
+the surface's Laplace–Beltrami eigenfunctions under refinement (on
+`icosphere(3)`: $0, 2.00^{\times 3}, 5.97^{\times 5}, 11.83^{\times 7}$ against
+$\ell(\ell+1)$), so it is the basis for spectral operators on an exact ocean,
+basin or ice-sheet mesh (NORM). Meshes with a boundary get natural (Neumann)
+conditions.
+
 !!! note "Large graphs"
-    `graph_laplacian_eigpairs` is a dense eigendecomposition ($O(V^3)$),
-    practical up to a few thousand nodes. For large or structured graphs use
+    `graph_laplacian_eigpairs` and `cotangent_laplacian_eigpairs` are dense
+    eigendecompositions ($O(V^3)$), practical up to a few thousand nodes. For large or structured graphs use
     [`kernellib.laplacian_eigpairs`](https://github.com/jejjohnson/kernellib),
     which works on sparse graph types and solves by an exact Kronecker product
     on grid graphs, Lanczos or ARPACK.
