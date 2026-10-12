@@ -59,6 +59,30 @@ or [`FNO`](#geonnax.fno.FNO).
 
 ::: geonnax.layers.SphericalHarmonicTransform
 
+## Manifold neural operator
+
+When the geometry is fixed (an ice-sheet mesh, an ocean basin on the sphere),
+the FNO's Fourier modes can be replaced by the domain's own spectral basis.
+`ManifoldNO` is NORM (Chen et al., 2024) generalised to any basis: every block
+analyses into the $M$ modes of one shared, frozen
+[`BasisTransform`](layers.md#geonnax.layers.BasisTransform), mixes channels with
+one matrix per mode, and synthesises back at the same $N$ points,
+
+$$
+h_\ell = \sigma\big(\Phi\,(W_{\ell,m}\,\hat h_m)_{m=1}^{M} + W_\ell h_{\ell-1}\big),
+\qquad \hat h = \Phi^\top \operatorname{diag}(w)\,h_{\ell-1}^\top .
+$$
+
+Build the transform from a mesh's cotangent Laplace–Beltrami eigenvectors
+(`BasisTransform.from_mesh`, the NORM basis) or from a region Slepian basis
+(`BasisTransform.from_slepian`). The weights are tied to that domain's modes, so
+the operator does not transfer to another geometry; output at query points other
+than the input points is a planned follow-up.
+
+::: geonnax.manifold_no.ManifoldNO
+
+::: geonnax.manifold_no.ManifoldNOBlock
+
 ## Wavelet Neural Operator
 
 The WNO swaps the FNO's Fourier transform for a multi-level discrete wavelet

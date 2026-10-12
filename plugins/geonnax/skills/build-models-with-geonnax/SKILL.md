@@ -40,6 +40,7 @@ it up:
 |---|---|
 | A neural operator on a grid | `geonnax.FNO` (dense / CP / Tucker / TT spectral weights, `domain_padding` for non-periodic fields), `geonnax.WNO` (wavelets), `geonnax.MSWT` (wavelet-domain attention) |
 | An operator on the sphere (lat/lon grid) | `geonnax.SFNO`, `geonnax.SphericalHarmonicTransform`, `geonnax.SphericalSpectralConv`, `geonnax.SphericalWaveletTransform` |
+| An operator on a fixed irregular domain (mesh, region on the sphere) | `geonnax.ManifoldNO` with a shared `geonnax.BasisTransform` (`from_mesh` Laplace–Beltrami eigenvectors, `from_slepian` region Slepians, `from_matrix` any basis) |
 | A U-Net (1-D / 2-D / 3-D) | `geonnax.UNet` (ResNet or ConvNeXt blocks, attention, nested U²-Net stages, MC dropout) |
 | Layers to compose your own model | `geonnax.layers` (`StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `WindowedAttention`, `SpectralConv`, `WaveletConv`, `Downsample` / `Upsample`, `dwt` / `idwt`, …) |
 | An implicit neural representation | `geonnax.SIREN`, `geonnax.SirenDense`, `geonnax.MultiScaleSIREN`, `geonnax.FourierNet`, `geonnax.GaborNet` |
