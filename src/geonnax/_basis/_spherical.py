@@ -3,21 +3,36 @@ r"""Real spherical harmonics on the unit 2-sphere.
 For ``l_max``, the basis is $(l_{\max} + 1)^2$ real SHs indexed by
 $(l, m)$ with $l = 0, 1, \ldots, l_{\max}$ and
 $m = -l, \ldots, l$. Inputs are unit Cartesian directions; the
-azimuthal singularity at the poles is avoided by computing
-$Q_l^m(z) = P_l^m(z) / (1 - z^2)^{m/2}$ (a polynomial in ``z``)
+azimuthal singularity at the poles is avoided by computing the
+pole-free polynomial $\bar Q_l^m(z) = \bar P_l^m(z) / (1 - z^2)^{m/2}$
 and pairing it with $(x + iy)^m$ directly — no
 ``arctan2`` or division by $\sin\theta$.
 
+The $\bar Q_l^m$ come from the fully normalised recurrences shared with
+`associated_legendre`, run as one `jax.lax.scan` over $l$, so the traced
+graph does not grow with ``l_max`` and the values stay finite to high degree.
+
 Tested via the addition theorem
 $\sum_m Y_{lm}(x) Y_{lm}(x') = \frac{2l+1}{4\pi} P_l(x \cdot x')$.
+
+References:
+    Holmes & Featherstone (2002), *A unified approach to the Clenshaw
+    summation and the recursive computation of very high degree and order
+    normalised associated Legendre functions*, Journal of Geodesy 76(5),
+    279–299.
 """
 
 from __future__ import annotations
 
 import math
 
+import einx
+import jax
 import jax.numpy as jnp
+import numpy as np
 from jaxtyping import Array, Float
+
+from geonnax._basis._legendre import _legendre_table, _sectoral_scale
 
 
 def harmonic_degrees(l_max: int) -> tuple[int, ...]:
@@ -37,48 +52,22 @@ def harmonic_degrees(l_max: int) -> tuple[int, ...]:
     return tuple(l for l in range(l_max + 1) for _ in range(2 * l + 1))
 
 
-def _q_lm_table(
-    z: Float[Array, " N"], l_max: int
-) -> dict[tuple[int, int], Float[Array, " N"]]:
-    r"""Build the table $Q_l^m(z) = P_l^m(z) / (1 - z^2)^{m/2}$.
-
-    Computes one entry per pair ``0 <= m <= l <= l_max`` via the standard
-    three-term forward recursion in ``l`` for fixed ``m``, seeded from
-    $Q_m^m = (-1)^m (2m - 1)!!$.
-    """
-    Q: dict[tuple[int, int], Float[Array, " N"]] = {}
-    one = jnp.ones_like(z)
-    # Seed: Q_m^m = (-1)^m (2m-1)!!, then Q_{m+1}^m = (2m+1) z Q_m^m.
-    for m in range(0, l_max + 1):
-        if m == 0:
-            Q[(0, 0)] = one
-        else:
-            # double factorial (2m-1)!!
-            dfac = 1.0
-            for k in range(1, 2 * m, 2):
-                dfac *= float(k)
-            sign = (-1.0) ** m
-            Q[(m, m)] = jnp.full_like(z, sign * dfac)
-        if m + 1 <= l_max:
-            Q[(m + 1, m)] = (2.0 * m + 1.0) * z * Q[(m, m)]
-        for l in range(m + 2, l_max + 1):
-            num = (2.0 * l - 1.0) * z * Q[(l - 1, m)] - (l + m - 1.0) * Q[(l - 2, m)]
-            Q[(l, m)] = num / (l - m)
-    return Q
-
-
 def _xy_powers(
     x: Float[Array, " N"], y: Float[Array, " N"], m_max: int
-) -> tuple[list[Float[Array, " N"]], list[Float[Array, " N"]]]:
-    """Real and imaginary parts of $(x + iy)^m$ for ``m = 0, 1, ..., m_max``."""
-    re = [jnp.ones_like(x)]
-    im = [jnp.zeros_like(x)]
-    for _m in range(1, m_max + 1):
-        # (x + iy) * (re_prev + i im_prev) = (x re - y im) + i (x im + y re)
-        re_prev = re[-1]
-        im_prev = im[-1]
-        re.append(x * re_prev - y * im_prev)
-        im.append(x * im_prev + y * re_prev)
+) -> tuple[Float[Array, "M N"], Float[Array, "M N"]]:
+    """Real and imaginary parts of $(x + iy)^m$ for ``m = 0, 1, ..., m_max``.
+
+    One `jax.lax.scan` over ``m``; rows are indexed by ``m``.
+    """
+
+    def step(carry, _):
+        re, im = carry
+        # (x + iy) * (re + i im) = (x re - y im) + i (x im + y re)
+        return (x * re - y * im, x * im + y * re), carry
+
+    _, (re, im) = jax.lax.scan(
+        step, (jnp.ones_like(x), jnp.zeros_like(x)), None, length=m_max + 1
+    )
     return re, im
 
 
@@ -99,10 +88,48 @@ def real_spherical_harmonics(
     $$
 
 
-    with $N_l^m = \sqrt{\frac{2l+1}{4\pi}\frac{(l-m)!}{(l+m)!}}$. The
-    pole singularity is avoided by evaluating
-    $P_l^m(z) \cos(m\phi) = Q_l^m(z) \cdot \mathrm{Re}[(x + iy)^m]$
-    and similarly for the sine branch.
+    with $N_l^m = \sqrt{\frac{2l+1}{4\pi}\frac{(l-m)!}{(l+m)!}}$ and the
+    Condon–Shortley phase in $P_l^m$. The basis is orthonormal on the sphere,
+    $\int_{S^2} Y_l^m Y_{l'}^{m'}\,d\Omega = \delta_{ll'}\delta_{mm'}$.
+
+    The pole singularity is avoided by evaluating
+    $P_l^m(z) \cos(m\phi) = Q_l^m(z) \cdot \mathrm{Re}[(x + iy)^m]$ with
+    $Q_l^m = P_l^m / (1-z^2)^{m/2}$ (and similarly for the sine branch), so
+    each $Y_l^m$ is a polynomial in $(x, y, z)$ and is differentiable
+    everywhere, poles included. $Q_l^m$ is computed in the fully normalised
+    form $\bar Q_l^m$ ($\int_{-1}^1 (\bar Q_l^m)^2 (1-z^2)^m\,dz = 1$) by the
+    standard forward-column recurrences of Holmes & Featherstone (2002) with
+    the factor $(1-z^2)^{m/2}$ taken out (their "modified forward column"):
+
+    $$
+    \begin{aligned}
+    \bar Q_0^0 &= \tfrac{1}{\sqrt 2}, \qquad
+    \bar Q_m^m = -\sqrt{\tfrac{2m+1}{2m}}\;\bar Q_{m-1}^{m-1}, \qquad
+    \bar Q_{m+1}^m = \sqrt{2m+3}\;z\,\bar Q_m^m, \\
+    \bar Q_l^m &= a_{lm}\big(z\,\bar Q_{l-1}^m - b_{lm}\,\bar Q_{l-2}^m\big),\quad
+    a_{lm} = \sqrt{\tfrac{4l^2-1}{l^2-m^2}},\quad
+    b_{lm} = \sqrt{\tfrac{(l-1)^2-m^2}{4(l-1)^2-1}},
+    \end{aligned}
+    $$
+
+    and then $Y_l^0 = \bar Q_l^0 / \sqrt{2\pi}$,
+    $Y_l^{m} = \bar Q_l^m\,\mathrm{Re}[(x+iy)^m] / \sqrt{\pi}$ and
+    $Y_l^{-m} = \bar Q_l^m\,\mathrm{Im}[(x+iy)^m] / \sqrt{\pi}$. The
+    recurrence runs over all orders at once inside one `jax.lax.scan` over
+    $l$, so the traced graph has constant size in ``l_max`` (compile time
+    stays at a second or so at ``l_max = 100``), and no factorial ratio is
+    ever formed, so it does not overflow where the unnormalised
+    $Q_l^m \sim (2m-1)!!$ would (near $l_{\max} \approx 30$ in float32,
+    $85$ in float64). $\bar Q_l^m$ itself grows like roughly $e^{0.48 l}$
+    at the poles, so float32 stays finite up to $l_{\max} \approx 180$.
+
+    Pseudocode:
+
+        c[m]   = Q̄_m^m constants                      # cumulative product, host
+        Q[l]   = scan over l of the 3-term recurrence  # (l, N, m)
+        P[m]   = (x + iy)^m                            # scan over m
+        for each column (l, m), l outer, m = -l..l inner:
+            Y[:, (l, m)] = Q[l, :, |m|] * {1/√(2π), Re P[m]/√π, Im P[|m|]/√π}
 
     Args:
         unit_xyz: Inputs of shape ``(N, 3)``; assumed to lie on the unit
@@ -112,6 +139,12 @@ def real_spherical_harmonics(
     Returns:
         ``(N, (l_max + 1)^2)`` array with the SH index flattened as
         outer loop over ``l``, inner loop over ``m = -l, ..., l``.
+
+    References:
+        Holmes & Featherstone (2002), *A unified approach to the Clenshaw
+        summation and the recursive computation of very high degree and
+        order normalised associated Legendre functions*, Journal of Geodesy
+        76(5), 279–299.
 
     Examples:
         >>> import jax.numpy as jnp
@@ -126,29 +159,35 @@ def real_spherical_harmonics(
     if unit_xyz.ndim != 2 or unit_xyz.shape[-1] != 3:
         raise ValueError(f"unit_xyz must be (N, 3); got shape {unit_xyz.shape}.")
 
+    dtype = (
+        unit_xyz.dtype if jnp.issubdtype(unit_xyz.dtype, jnp.floating) else jnp.float32
+    )
+    unit_xyz = unit_xyz.astype(dtype)
     x = unit_xyz[:, 0]
     y = unit_xyz[:, 1]
     z = unit_xyz[:, 2]
 
-    Q = _q_lm_table(z, l_max)
-    re_pow, im_pow = _xy_powers(x, y, l_max)
+    # Pole-free Q̄_l^m: the orthonormal recurrence seeded with the sectoral
+    # constants instead of P̄_m^m = c_m (1 - z²)^{m/2}.
+    seeds = jnp.asarray(_sectoral_scale(l_max), dtype=dtype)
+    sectoral = einx.multiply("n, m -> n m", jnp.ones_like(z), seeds)
+    Q = _legendre_table(z, sectoral, l_max)  # (l, N, m)
+    re, im = _xy_powers(x, y, l_max)  # (m, N)
 
-    columns: list[Float[Array, " N"]] = []
-    inv_sqrt_4pi = 1.0 / math.sqrt(4.0 * math.pi)
-    for l in range(l_max + 1):
-        # m = 0
-        N_l0 = math.sqrt(2.0 * l + 1.0) * inv_sqrt_4pi
-        # The first 2l+1 columns for this l: m = -l, ..., -1, 0, 1, ..., l
-        for m in range(-l, l + 1):
-            am = abs(m)
-            if am == 0:
-                col = N_l0 * Q[(l, 0)]
-            else:
-                # N_l^m with the sqrt(2) tesseral factor folded in.
-                ratio = math.factorial(l - am) / math.factorial(l + am)
-                N_lm = math.sqrt(2.0 * (2.0 * l + 1.0) * ratio) * inv_sqrt_4pi
-                trig = re_pow[am] if m > 0 else im_pow[am]
-                col = N_lm * Q[(l, am)] * trig
-            columns.append(col)
+    # Host-side column layout: l outer, m = -l, ..., l inner.
+    ell = np.asarray(harmonic_degrees(l_max))
+    order = np.concatenate([np.arange(-l, l + 1) for l in range(l_max + 1)])
+    am = np.abs(order)
+    scale = np.where(
+        order == 0, 1.0 / math.sqrt(2.0 * math.pi), 1.0 / math.sqrt(math.pi)
+    )
 
-    return jnp.stack(columns, axis=-1)
+    q_cols = Q[ell, :, am]  # (F, N)
+    trig = jnp.where(
+        einx.id("f -> f 1", jnp.asarray(order > 0)),
+        re[am],
+        jnp.where(einx.id("f -> f 1", jnp.asarray(order < 0)), im[am], 1.0),
+    )  # (F, N)
+    return einx.multiply(
+        "f n, f n, f -> n f", q_cols, trig, jnp.asarray(scale, dtype=dtype)
+    )
