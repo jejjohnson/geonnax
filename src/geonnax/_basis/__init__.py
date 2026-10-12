@@ -27,6 +27,8 @@ library, since they ``isinstance``-dispatch on kernel classes):
 - `fibonacci_sphere` / `gauss_legendre_grid` / `latlon_grid` — point sets
   and quadrature grids on the sphere, returned with their weights.
 - `icosphere` — the subdivided-icosahedron triangle mesh of the sphere.
+- `mesh_vertex_areas` / `cotangent_laplacian_eigpairs` — lumped vertex areas
+  and the cotangent Laplace–Beltrami eigenpairs of any triangle mesh.
 - `vector_spherical_harmonics` — gradient and toroidal vector harmonics, a
   basis for tangent vector fields on the sphere.
 - `SlepianBasis` / `slepian_region_basis` / `slepian_polar_gap_basis` /
@@ -70,7 +72,9 @@ from geonnax._basis._legendre import (
     legendre_polynomials,
 )
 from geonnax._basis._mesh import (
+    cotangent_laplacian_eigpairs,
     icosphere,
+    mesh_vertex_areas,
 )
 from geonnax._basis._needlets import (
     needlet_basis,
@@ -115,6 +119,7 @@ __all__ = [
     "SlepianCapBasis",
     "associated_legendre",
     "associated_legendre_indices",
+    "cotangent_laplacian_eigpairs",
     "curlfree_basis",
     "divfree_basis",
     "eof_basis",
@@ -132,6 +137,7 @@ __all__ = [
     "icosphere",
     "latlon_grid",
     "legendre_polynomials",
+    "mesh_vertex_areas",
     "needlet_basis",
     "needlet_window",
     "rbf_basis",
