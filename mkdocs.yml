@@ -69,6 +69,8 @@ nav:
       - Encoders & Geometry: api/encoders.md
       - Uncertainty & Bayesian: api/uncertainty.md
       - Spectral Bases: api/bases.md
+  - Decision records:
+      - Irregular-geometry operators: decisions/irregular-geometry-operators.md
   - Building with agents: agents.md
   - Contributing: contributing.md
   - Changelog: CHANGELOG.md
