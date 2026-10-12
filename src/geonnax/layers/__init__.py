@@ -9,6 +9,9 @@ leading channel axis and ``num_spatial_dims`` trailing spatial axes — shape
 - `geonnax.layers._conv` — `StandardizedConv` (weight-standardized
   convolution) and the `Downsample` / `Upsample` pixel-shuffle
   resamplers.
+- `geonnax.layers._antialias` — `band_limited_resize` (Fourier
+  truncation / zero-padding resampling) and `AntiAliasedActivation`
+  (up → σ → low-pass → down), the band-limited primitives of CNO.
 - `geonnax.layers._norm` — `GlobalResponseNorm` (ConvNeXt-V2).
 - `geonnax.layers._blocks` — `Block`, `ResnetBlock`,
   `ConvNeXtBlock`, `SqueezeExcitation`.
@@ -33,6 +36,7 @@ leading channel axis and ``num_spatial_dims`` trailing spatial axes — shape
   (self-attention in the wavelet domain).
 """
 
+from geonnax.layers._antialias import AntiAliasedActivation, band_limited_resize
 from geonnax.layers._attention import (
     Attention,
     LinearAttention,
@@ -70,6 +74,7 @@ from geonnax.layers._wavelet_attention import WaveletAttention
 
 
 __all__ = [
+    "AntiAliasedActivation",
     "Attention",
     "BasisSpectralConv",
     "BasisTransform",
@@ -96,6 +101,7 @@ __all__ = [
     "WaveletAttention",
     "WaveletConv",
     "WindowedAttention",
+    "band_limited_resize",
     "dwt",
     "idwt",
     "init_factorized_tensor",
