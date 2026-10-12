@@ -59,6 +59,7 @@ nav:
   - Home: index.md
   - Examples:
       - Demo: notebooks/example_demo.ipynb
+      - Western Mediterranean SSH three ways: notebooks/irregular_geometry.ipynb
   - Guides:
       - FNO on curvilinear grids: guides/irregular-geometry.md
   - API Reference:

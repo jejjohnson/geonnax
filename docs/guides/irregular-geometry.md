@@ -16,7 +16,9 @@ physical coordinates as extra **input channels**.
 | B | Fixed unstructured mesh or irregular region, same for every sample | A basis fitted to the domain (forthcoming `ManifoldNO`, #88) |
 | C | Point cloud or mesh that changes from sample to sample | A deformation onto a periodic latent grid (forthcoming `GeoFNO`, #84) |
 
-Only case A is available today, and it needs no new code.
+Case A needs no new code and is the subject of this page. For all three routes side by side
+on one basin (accuracy, parameters, step time and coastal error, with and without missing
+pixels), see the [Western Mediterranean SSH notebook](../notebooks/irregular_geometry.ipynb).
 
 ## Formulation
 
