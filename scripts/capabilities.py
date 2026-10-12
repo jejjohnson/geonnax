@@ -51,6 +51,7 @@ PUBLIC_MODULES: list[str] = [
     "geonnax.encoders",
     "geonnax.ensemble",
     "geonnax.fno",
+    "geonnax.geofno",
     "geonnax.heteroscedastic",
     "geonnax.mfn",
     "geonnax.mixture",

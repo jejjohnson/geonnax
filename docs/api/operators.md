@@ -113,3 +113,16 @@ for large grids, Swin-style `WindowedAttention` (``O(N · window^d)``).
 ::: geonnax.layers.WaveletAttention
 
 ::: geonnax.layers.WindowedAttention
+
+## Geo-FNO
+
+Geo-FNO (Li et al., JMLR 2023) runs an FNO on per-sample point clouds by
+learning a chart $\xi = \varphi(x)$ from the physical domain onto the latent
+torus $[0, 1)^d$. `LearnedDeformation` is that chart: an affine map of the
+bounding box into $[0, b]^d$, $b = 1/(1 + \mathrm{pad})$, plus a
+zero-initialised residual (none, an MLP on NeRF features, or a Dirichlet
+Laplacian eigenbasis whose `coeffs` pyrox puts a GP prior on), so it is the
+plain box map at init. `jacobian_det` reports $\det \nabla\varphi$ as a
+fold-over diagnostic.
+
+::: geonnax.geofno.LearnedDeformation
