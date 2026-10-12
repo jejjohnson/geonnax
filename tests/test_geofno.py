@@ -1,4 +1,4 @@
-"""Tests for `geonnax.geofno.LearnedDeformation`, the learned Geo-FNO chart."""
+"""Tests for `geonnax.geofno`: the learned chart `LearnedDeformation` and `GeoFNO`."""
 
 from __future__ import annotations
 
@@ -10,9 +10,10 @@ import jax
 import jax.numpy as jnp
 import jax.random as jr
 import pytest
+from _point_invariance import assert_point_refinement_converges, grid_nodes
 
 import geonnax
-from geonnax.geofno import LearnedDeformation
+from geonnax.geofno import GeoFNO, LearnedDeformation
 
 
 KEY = jr.PRNGKey(0)
@@ -310,3 +311,305 @@ def test_vmap_over_codes():
     codes = jr.normal(jr.PRNGKey(6), (4, 3))
     out = jax.vmap(phi, in_axes=(None, 0))(x, codes)
     assert out.shape == (4, *x.shape)
+
+
+# === GeoFNO ==================================================================
+
+
+def _geofno(d: int = 2, **kwargs) -> GeoFNO:
+    lower, upper = BOXES[d]
+    args = {
+        "key": KEY,
+        "lower": lower,
+        "upper": upper,
+        "hidden_channels": 8,
+        "n_layers": 3,
+        "deformation_kwargs": {"width": 16, "depth": 1, "n_frequencies": 3},
+    } | kwargs
+    return GeoFNO.init(2, 3, (3,) * d, (8,) * d, **args)
+
+
+def _move_chart(model: GeoFNO) -> GeoFNO:
+    """Give the MLP chart a non-zero readout, so φ is no longer the box map."""
+    readout = model.deformation.mlp.layers[-1]
+    weight = 0.1 * jr.normal(jr.PRNGKey(4), readout.weight.shape)
+    return eqx.tree_at(lambda m: m.deformation.mlp.layers[-1].weight, model, weight)
+
+
+def _cloud(d: int, n: int, key: jax.Array) -> tuple[jax.Array, ...]:
+    """``(u (2, n), x (n, d), w (n,))`` with ``w = 1/n`` inside the box of ``d``."""
+    k_x, k_u = jr.split(key)
+    return jr.normal(k_u, (2, n)), _points(d, n, key=k_x), jnp.full((n,), 1.0 / n)
+
+
+def _pad(u, x, w, n_max, key):
+    """Zero-pad a cloud to ``n_max`` points at in-box coordinates, u = w = 0."""
+    n_pad = n_max - x.shape[0]
+    if n_pad == 0:
+        return u, x, w
+    x_pad = _points(x.shape[1], n_pad, key=key)
+    return (
+        einx.id("c n, c p -> c (n + p)", u, jnp.zeros((u.shape[0], n_pad))),
+        einx.id("n d, p d -> (n + p) d", x, x_pad),
+        einx.id("n, p -> (n + p)", w, jnp.zeros((n_pad,))),
+    )
+
+
+@pytest.mark.parametrize("d", [1, 2, pytest.param(3, marks=pytest.mark.slow)])
+def test_geofno_shapes(d):
+    model = _geofno(d)
+    u, x, w = _cloud(d, 50, jr.PRNGKey(1))
+    assert model(u, x, w).shape == (3, 50)
+    x_out = _points(d, 17, key=jr.PRNGKey(2))
+    assert model(u, x, w, x_out=x_out).shape == (3, 17)
+
+
+def test_geofno_fields():
+    model = _geofno(2, n_layers=4, projection_channels=5)
+    assert len(model.blocks) == 2
+    assert all(not blk.use_activation for blk in model.blocks)
+    assert model.pos_bias is not None and len(model.pos_bias) == 3
+    assert model.pos_bias_out is not None
+    assert model.proj1.out_channels == 5
+    assert model.latent_shape == (8, 8)
+    assert model.deformation.kind == "mlp"
+    assert not model.jacobian_weights
+    plain = _geofno(2, n_layers=2, positional_bias=False)
+    assert plain.blocks == [] and plain.pos_bias is None and plain.pos_bias_out is None
+
+
+def test_geofno_exported_from_top_level():
+    assert geonnax.GeoFNO is GeoFNO
+    assert "GeoFNO" in geonnax.__all__
+    assert "GeoFNO" in geonnax.geofno.__all__
+
+
+def test_geofno_permutation_invariant():
+    model = _move_chart(_geofno(2))
+    u, x, w = _cloud(2, 80, jr.PRNGKey(1))
+    perm = jr.permutation(jr.PRNGKey(2), 80)
+    y = model(u, x, w)
+    y_perm = model(u[:, perm], x[perm], w[perm])
+    # Only the summation order of the encoder changes: float32 rounding.
+    assert jnp.allclose(y_perm, y[:, perm], atol=1e-5)
+
+
+def test_geofno_zero_weight_padding_is_bit_identical():
+    # Padded points contribute exact zeros to the encoder (#80): for a fixed
+    # padded size, the output at the real points is bit-identical whatever the
+    # padding's coordinates and values are.
+    model = _move_chart(_geofno(2))
+    u, x, w = _cloud(2, 60, jr.PRNGKey(1))
+    u_a, x_a, w_a = _pad(u, x, w, 90, jr.PRNGKey(3))
+    _, x_b, _ = _pad(u, x, w, 90, jr.PRNGKey(4))
+    u_b = u_a.at[:, 60:].set(jr.normal(jr.PRNGKey(6), (2, 30)))
+    q = _points(2, 25, key=jr.PRNGKey(5))
+    assert jnp.array_equal(model(u_a, x_a, w_a)[:, :60], model(u_b, x_b, w_a)[:, :60])
+    assert jnp.array_equal(model(u_a, x_a, w_a, x_out=q), model(u_b, x_b, w_a, x_out=q))
+    # Against the unpadded cloud only float32 rounding differs: XLA picks
+    # different matmul / conv kernels for N = 60 and N = 90 in the lifting
+    # and the chart MLP.
+    assert jnp.allclose(model(u_a, x_a, w_a)[:, :60], model(u, x, w), atol=1e-6)
+
+
+def test_geofno_ragged_vmap_matches_unbatched():
+    model = _move_chart(_geofno(2))
+    clouds = [_cloud(2, n, jr.PRNGKey(n)) for n in (70, 45)]
+    padded = [_pad(*c, 70, jr.PRNGKey(9)) for c in clouds]
+    ub, xb, wb = (jnp.stack(arrs) for arrs in zip(*padded, strict=True))
+    yb = jax.vmap(model)(ub, xb, wb)
+    assert yb.shape == (2, 3, 70)
+    for b, (u, x, w) in enumerate(clouds):
+        n = x.shape[0]
+        assert jnp.allclose(yb[b, :, :n], model(u, x, w), atol=1e-5)
+
+
+def test_geofno_identity_two_layers_is_hand_composed():
+    # deformation="identity", n_layers=2, no positional bias: the model is
+    # lifting -> from_points -> σ -> to_points -> projection.
+    model = _geofno(2, n_layers=2, deformation="identity", positional_bias=False)
+    u, x, w = _cloud(2, 60, jr.PRNGKey(1))
+    x_out = _points(2, 20, key=jr.PRNGKey(2))
+    act = model.activation
+    xi, xi_out = model.deformation.box(x), model.deformation.box(x_out)
+    h = act(model.encoder.from_points(model.lifting(u), xi, w, (8, 8)))
+    ref = model.proj2(act(model.proj1(model.decoder.to_points(h, xi_out))))
+    assert jnp.allclose(model(u, x, w, x_out=x_out), ref, atol=1e-6)
+
+
+def test_geofno_jacobian_weights_at_init_are_normalised_weights():
+    # At init det∇φ is the constant prod(scale), so the Jacobian weights are
+    # w / Σw: with Σw = 1 the output is unchanged (up to rounding).
+    model = _geofno(2)
+    jac = _geofno(2, jacobian_weights=True)
+    u, x, w = _cloud(2, 60, jr.PRNGKey(1))
+    assert jnp.allclose(jac(u, x, w), model(u, x, w), atol=1e-5)
+    assert jnp.allclose(jac(u, x, 3.0 * w), model(u, x, w), atol=1e-5)
+    u_pad, x_pad, w_pad = _pad(u, x, w, 90, jr.PRNGKey(3))
+    assert jnp.allclose(jac(u_pad, x_pad, w_pad)[:, :60], jac(u, x, w), atol=1e-6)
+
+
+def test_geofno_code_conditioning():
+    model = _geofno(2, code_dim=4)
+    u, x, w = _cloud(2, 40, jr.PRNGKey(1))
+    codes = jr.normal(jr.PRNGKey(2), (3, 4))
+    y = jax.vmap(lambda c: model(u, x, w, code=c))(codes)
+    assert y.shape == (3, 3, 40)
+    with pytest.raises(ValueError, match="code must be given"):
+        model(u, x, w)
+
+
+# --- point-refinement convergence (the #82 harness) -------------------------
+
+
+def _band_limited(xi):
+    """A smooth periodic field inside a (3, 3)-mode band, (2, N) from xi (N, 2)."""
+    a, b = xi[:, 0], xi[:, 1]
+    two_pi = 2 * jnp.pi
+    f = jnp.sin(two_pi * a) + jnp.cos(two_pi * (a + 2 * b))
+    g = 0.5 * jnp.sin(two_pi * 3 * b) - jnp.cos(two_pi * (2 * a - b))
+    return jnp.stack([f, g])
+
+
+def _refinement_setup():
+    # Identity chart on the unit box with pad = 0, so ξ = x and the stratified
+    # clouds of the harness tile the whole latent torus. The lifted field is
+    # band-limited (|k| <= 3), so on the 32 x 32 grid its (6, 6)-mode
+    # coefficients are exact and the grid output is the continuum reference.
+    model = GeoFNO.init(
+        2,
+        1,
+        (6, 6),
+        (16, 16),
+        key=KEY,
+        lower=[0.0, 0.0],
+        upper=[1.0, 1.0],
+        hidden_channels=8,
+        n_layers=3,
+        deformation="identity",
+        deformation_kwargs={"pad": 0.0},
+    )
+    q = jr.uniform(jr.PRNGKey(7), (200, 2))
+    nodes = grid_nodes((32, 32))
+    reference = model(_band_limited(nodes), nodes, jnp.full((1024,), 1 / 1024), x_out=q)
+    return model, q, reference
+
+
+def test_geofno_point_refinement_converges():
+    # Jittered stratified clouds at N = 2025 / 8100, query output at 200 fixed
+    # points against the dense-grid reference. Stratified quadrature converges
+    # ~N^-1 (the error falls ~4x for 4x the points); eight harness keys
+    # measured 0.012-0.016 / 0.0030-0.0039 (KEY: 0.015 / 0.0033), so the
+    # bounds leave a factor ~2.5 over the worst key.
+    model, q, reference = _refinement_setup()
+    assert_point_refinement_converges(
+        lambda u, xi, w: model(u, xi, w, x_out=q),
+        _band_limited,
+        reference,
+        (45, 90),
+        d=2,
+        key=KEY,
+        max_rel_err=(0.04, 0.01),
+    )
+
+
+def test_geofno_point_refinement_unweighted_fails():
+    # Negative control: without the weights (w = 1, the reference Geo-FNO's
+    # unweighted sum) the encoder output grows ~N (rel. error ~240 / ~910).
+    model, q, reference = _refinement_setup()
+    with pytest.raises(AssertionError, match="does not converge"):
+        assert_point_refinement_converges(
+            lambda u, xi, w: model(u, xi, jnp.ones_like(w), x_out=q),
+            _band_limited,
+            reference,
+            (45, 90),
+            d=2,
+            key=KEY,
+            max_rel_err=(0.04, 0.01),
+        )
+
+
+# --- jit + vmap over ragged clouds + grad -------------------------------------
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("kind", ["mlp", "fourier"])
+def test_geofno_vmap_jit_grad(kind):
+    model = _geofno(2, deformation=kind, deformation_kwargs=None)
+    # Ragged clouds of 64, 40 and 25 real points, zero-weight padded to 64.
+    clouds = [_cloud(2, n, jr.PRNGKey(n)) for n in (64, 40, 25)]
+    padded = [_pad(*c, 64, jr.PRNGKey(11)) for c in clouds]
+    ub, xb, wb = (jnp.stack(arrs) for arrs in zip(*padded, strict=True))
+    target = jr.normal(jr.PRNGKey(12), (3, 3, 64))
+
+    y = eqx.filter_jit(lambda m, u, x, w: jax.vmap(m)(u, x, w))(model, ub, xb, wb)
+    assert y.shape == (3, 3, 64)
+    assert jnp.allclose(y[2, :, :25], model(*clouds[2]), atol=1e-5)
+
+    @eqx.filter_jit
+    @eqx.filter_grad
+    def grad_fn(m):
+        pred = jax.vmap(m)(ub, xb, wb)
+        mask = einx.greater("b n, -> b n", wb, 0.0)  # loss on the real points only
+        sq = einx.where("b n, b c n, -> b c n", mask, (pred - target) ** 2, 0.0)
+        return jnp.sum(sq) / (3 * jnp.sum(mask))
+
+    g = grad_fn(model)
+    leaves = jax.tree_util.tree_leaves(eqx.filter(g, eqx.is_inexact_array))
+    assert leaves and all(bool(jnp.all(jnp.isfinite(leaf))) for leaf in leaves)
+    if kind == "mlp":
+        dphi = g.deformation.mlp.layers[-1].weight
+    else:
+        dphi = g.deformation.coeffs
+    assert float(jnp.max(jnp.abs(dphi))) > 0
+    # The frozen box map gets no gradient.
+    assert float(jnp.max(jnp.abs(g.deformation.scale))) == 0
+
+
+# --- validation ---------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"n_layers": 1}, "n_layers must be >= 2"),
+        ({"n_modes": (3,)}, "equal length"),
+        ({"latent_shape": (8, 8, 8)}, "equal length"),
+        ({"lower": [0.0], "upper": [1.0]}, "equal length"),
+        (
+            {"n_modes": (), "latent_shape": (), "lower": [], "upper": []},
+            "non-empty",
+        ),
+        ({"latent_shape": (6, 8)}, r"must exceed 2 \* n_modes"),
+        ({"deformation": "spline"}, "kind must be one of"),
+        ({"deformation": "identity", "code_dim": 2}, "needs kind='mlp'"),
+        ({"deformation_kwargs": {"pad": -1.0}}, "pad must be >= 0"),
+    ],
+)
+def test_geofno_init_validation(kwargs, match):
+    args = {
+        "in_channels": 2,
+        "out_channels": 3,
+        "n_modes": (3, 3),
+        "latent_shape": (8, 8),
+        "key": KEY,
+        "lower": [0.0, 0.0],
+        "upper": [1.0, 1.0],
+    } | kwargs
+    with pytest.raises(ValueError, match=match):
+        GeoFNO.init(**args)
+
+
+def test_geofno_call_validation():
+    model = _geofno(2)
+    u, x, w = _cloud(2, 30, jr.PRNGKey(1))
+    with pytest.raises(ValueError, match=r"x must have shape \(N, 2\)"):
+        model(u, jnp.ones((30, 3)), w)
+    with pytest.raises(ValueError, match=r"u must have shape"):
+        model(jnp.ones((1, 30)), x, w)
+    with pytest.raises(ValueError, match=r"u must have shape"):
+        model(jnp.ones((2, 29)), x, w)
+    with pytest.raises(ValueError, match=r"weights must have shape \(30,\)"):
+        model(u, x, w[:-1])
+    with pytest.raises(ValueError, match=r"x_out must have shape \(M, 2\)"):
+        model(u, x, w, x_out=jnp.ones((5, 1)))

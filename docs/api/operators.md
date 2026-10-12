@@ -149,4 +149,18 @@ Laplacian eigenbasis whose `coeffs` pyrox puts a GP prior on), so it is the
 plain box map at init. `jacobian_det` reports $\det \nabla\varphi$ as a
 fold-over diagnostic.
 
+`GeoFNO` is the operator. It reads a field at $N$ points with quadrature
+weights, lifts it, transforms it onto a uniform latent grid with
+`SpectralConv.from_points` at $\xi = \varphi(x)$, runs `FNOBlock`s there
+(each plus a positional 1×1 conv of the latent coordinates), and evaluates
+the result at $M$ query points with `SpectralConv.to_points` at
+$\xi' = \varphi(x')$ before projecting. Ragged clouds batch by padding: pad
+each sample to a common $N$ with in-box coordinates, `u = 0` and `w = 0`,
+`jax.vmap` the model and mask the loss with `w > 0`; zero-weight points
+contribute exact zeros. `jacobian_weights=True` reweights the quadrature by
+$|\det \nabla\varphi|$ (off by default, pending
+[#85](https://github.com/jejjohnson/geonnax/issues/85)).
+
+::: geonnax.geofno.GeoFNO
+
 ::: geonnax.geofno.LearnedDeformation

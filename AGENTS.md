@@ -48,7 +48,8 @@ Imports point one way: `_basis` imports nothing else in geonnax; `layers`
 imports only itself and `_basis`; `geo` → `_basis`; the model modules import
 `layers` / `_basis` / `geo`, and only these model-to-model edges exist:
 `conditioning` and `multi_scale_siren` → `siren`, `vssgp` → `randfeat`,
-`slepian` → `encoders` / `geo`. No test enforces this; keep it.
+`slepian` → `encoders` / `geo`, `geofno` → `fno`. No test enforces this; keep
+it.
 
 ### Boundaries
 

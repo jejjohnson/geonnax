@@ -31,8 +31,9 @@ Submodules:
 - `geonnax.crf` — ``LinearChainCRF`` forward algorithm + Viterbi.
 - `geonnax.slepian` — ``SlepianEncoder``,
   ``HybridSphericalSlepianEncoder``.
-- `geonnax.geofno` — ``LearnedDeformation``, the learned Geo-FNO chart
-  onto the latent torus (Li et al., JMLR 2023).
+- `geonnax.geofno` — ``GeoFNO``, a Fourier neural operator on per-sample
+  point clouds, and ``LearnedDeformation``, its learned chart onto the
+  latent torus (Li et al., JMLR 2023).
 - `geonnax.randfeat` — ``OrthogonalRandomFeatures`` +
   ``rff_forward`` / ``rff_cosine_forward`` helpers.
 """
@@ -92,7 +93,7 @@ from geonnax.ensemble import (
     init_rank1_proj,
 )
 from geonnax.fno import FNO, DomainPadding, FNOBlock, FourierNeuralOperator
-from geonnax.geofno import LearnedDeformation
+from geonnax.geofno import GeoFNO, LearnedDeformation
 from geonnax.heteroscedastic import (
     HeteroscedasticHead,
     MCSigmoidDenseFA,
@@ -190,6 +191,7 @@ __all__ = [
     "GaborNet",
     "GeneratedSiren",
     "GeoContextEncoder",
+    "GeoFNO",
     "GlobalResponseNorm",
     "HeteroscedasticHead",
     "HybridSphericalSlepianEncoder",

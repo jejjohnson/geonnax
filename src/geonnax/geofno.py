@@ -3,8 +3,9 @@
 Geo-FNO handles point clouds on irregular, per-sample geometries by learning a
 chart $\\xi = \\varphi(x)$ from the physical domain onto the unit torus
 $[0, 1)^d$, where a standard FNO runs on a uniform latent grid. This module
-holds the chart, `LearnedDeformation`; it acts on the ``(N, d)`` points of one
-example (``jax.vmap`` over a batch of padded clouds).
+holds the chart, `LearnedDeformation`, and the operator, `GeoFNO`; both act on
+the ``(N, d)`` points of one example (``jax.vmap`` over a batch of padded
+clouds).
 
 References:
     Z. Li, D. Z. Huang, B. Liu and A. Anandkumar (2023), "Fourier Neural
@@ -17,7 +18,7 @@ References:
 from __future__ import annotations
 
 import math
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from typing import Literal, get_args
 
 import einx
@@ -27,9 +28,13 @@ import jax.numpy as jnp
 from jaxtyping import Array, Float
 
 from geonnax._basis import fourier_basis
+from geonnax.fno import FNOBlock
+from geonnax.layers._factorized import Factorization
+from geonnax.layers._spectral import SpectralConv
+from geonnax.layers._utils import pointwise
 
 
-__all__ = ["DeformationKind", "LearnedDeformation"]
+__all__ = ["DeformationKind", "GeoFNO", "LearnedDeformation"]
 
 DeformationKind = Literal["identity", "mlp", "fourier"]
 """The residual of a `LearnedDeformation`: none, an MLP, or a Laplacian eigenbasis."""
@@ -378,3 +383,378 @@ class LearnedDeformation(eqx.Module):
             return self(einx.id("d -> 1 d", xn), code)[0]
 
         return jnp.linalg.det(jax.vmap(jax.jacfwd(point))(x))
+
+
+class GeoFNO(eqx.Module):
+    r"""Geo-FNO: a Fourier neural operator on per-sample point clouds.
+
+    Reads a field $u$ at $N$ points $x_n$ with quadrature weights $w_n$, maps
+    the points onto the latent torus with the learned chart
+    $\xi = \varphi(x)$ (`LearnedDeformation`), runs FNO blocks on a uniform
+    latent grid $G$ (shape ``latent_shape``, nodes $j / s_a$ on $[0, 1)^d$),
+    and evaluates the result at $M$ query points $x'_m$ (the input points by
+    default):
+
+    $$
+    \begin{aligned}
+    h_0 &= \sigma\big(\mathcal{K}_0[P u;\ \xi, w] + b_0(G)\big)
+        && \text{points} \to G, \\
+    h_\ell &= \sigma\big(\mathcal{K}_\ell h_{\ell-1} + W_\ell h_{\ell-1}
+        + b_\ell(G)\big), \quad \ell = 1, \dots, L-2
+        && \text{on } G, \\
+    y &= Q_2\, \sigma\big(Q_1 (\mathcal{K}_{L-1} h_{L-2}\big|_{\xi'}
+        + b_{L-1}(\xi'))\big), \quad \xi' = \varphi(x')
+        && G \to \text{points}.
+    \end{aligned}
+    $$
+
+    $P$, $Q_1$, $Q_2$ and $W_\ell$ are pointwise linear maps; $\mathcal{K}_0$
+    is `SpectralConv.from_points` (the weighted non-uniform Fourier
+    transform $\hat v_k = \sum_n w_n (P u)_n e^{-2\pi i k\cdot\xi_n}$,
+    mixed and inverse-FFT-ed onto $G$), $\mathcal{K}_\ell$ and $W_\ell$ form
+    a `geonnax.fno.FNOBlock`, and $\mathcal{K}_{L-1}$ is
+    `SpectralConv.to_points` (the truncated Fourier series evaluated at
+    $\xi'$). The positional bias $b_\ell$ is a 1×1 conv of the latent
+    coordinates, added in every layer as in the reference
+    (``b0``…``b4`` in ``elas_geofno.py``): it tells the network where it is
+    on the torus once $\varphi$ moves points. With ``jacobian_weights=True``
+    the weights become the latent measure
+    $w^\xi_n = w_n |\det\nabla\varphi(x_n)| / \sum_m w_m
+    |\det\nabla\varphi(x_m)|$ (off by default; jejjohnson/geonnax#85 decides).
+
+    Pseudocode of `__call__` (``H = hidden_channels``):
+
+    ```text
+    ξ  = φ(x, code)                                         (N, d)
+    w  = weights                                            (N,)
+    if jacobian_weights: w = w·|det∇φ(x)| / Σ w·|det∇φ(x)|
+    h  = P u                                                (H, N)
+    h  = σ(encoder.from_points(h, ξ, w, G) + b_0(G))        (H, *G)
+    for ℓ, block in enumerate(blocks, 1):                   L - 2 blocks
+        h = σ(block(h) + b_ℓ(G))   # block = K_ℓ h + W_ℓ h, no activation
+    ξ' = φ(x_out, code)                                     (M, d)
+    h  = decoder.to_points(h, ξ') + b_out(ξ')               (H, M)
+    y  = Q_2 σ(Q_1 h)                                       (C_out, M)
+    ```
+
+    **Ragged batches.** Clouds of different sizes are batched by padding:
+
+    - pad every sample to $N_{\max}$ points with any finite in-box
+      coordinates, ``u = 0`` and ``w = 0``;
+    - ``jax.vmap(model)(u, x, w)``;
+    - mask the loss with ``w > 0``.
+
+    A zero-weight point contributes exact zeros to the encoder, so the
+    output at the real points does not depend on the padding. The latent
+    grid and the modes are static: ``latent_shape`` and ``n_modes`` cannot
+    vary per sample.
+
+    Deviations from the reference implementation (``neuraloperator/Geo-FNO``):
+
+    - **quadrature weights**: the reference encoder sums
+      $\sum_n u_n e^{-2\pi i k\cdot\xi_n}$ unweighted, which grows with $N$;
+      here $w_n$ makes the coefficients a quadrature of the Fourier integral,
+      so the operator converges as the cloud is refined;
+    - **additive, zero-initialised chart**: $\varphi$ is exactly the box map
+      at init for any bounding box (`LearnedDeformation`), where the
+      reference's $x + x\,\delta(x)$ is near the identity only near the
+      origin;
+    - **latent guard band**: the box maps into $[0, b]^d$,
+      $b = 1/(1 + \mathrm{pad})$, so opposite edges of a non-periodic domain
+      do not couple through the periodic latent FFT.
+
+    Cost per example: two dense non-uniform transforms,
+    $O(N\,|\mathcal{K}|\,H)$ with $|\mathcal{K}|$ the retained modes, plus
+    $L - 2$ FFT blocks, $O(H\, S \log S)$ with $S = \prod_a s_a$. Memory is
+    dominated by the $N \times |\mathcal{K}|$ exponential table of the
+    encoder; wrap the model in ``jax.checkpoint`` to trade it for compute.
+
+    Reference:
+        Z. Li, D. Z. Huang, B. Liu and A. Anandkumar (2023), "Fourier Neural
+        Operator with Learned Deformations for PDEs on General Geometries",
+        Journal of Machine Learning Research 24(388), 1-26, arXiv:2207.05209.
+
+    Attributes:
+        lifting: 1-D 1×1 conv over the points, ``in_channels -> H``.
+        encoder: `SpectralConv` applied with `SpectralConv.from_points`.
+        blocks: The ``n_layers - 2`` latent blocks (`geonnax.fno.FNOBlock`,
+            built with ``use_activation=False``: the activation follows the
+            positional bias).
+        decoder: `SpectralConv` applied with `SpectralConv.to_points`.
+        pos_bias: One ``d``-D 1×1 conv ``d -> H`` of the latent grid
+            coordinates per latent layer (``n_layers - 1``), or ``None``.
+        pos_bias_out: 1-D 1×1 conv ``d -> H`` of $\xi'$ at the query points,
+            or ``None``.
+        proj1, proj2: 1-D 1×1 convs ``H -> projection_channels -> out_channels``.
+        deformation: The chart $\varphi$ (`LearnedDeformation`).
+        activation: Pointwise nonlinearity $\sigma$.
+        latent_shape: Latent grid extents ``(s_1, …, s_d)``.
+        jacobian_weights: Whether to reweight by $|\det\nabla\varphi|$.
+        in_channels, out_channels, hidden_channels: Channel counts.
+
+    Examples:
+        >>> import einx
+        >>> import jax
+        >>> import jax.numpy as jnp
+        >>> import jax.random as jr
+        >>> from geonnax.geofno import GeoFNO
+        >>> model = GeoFNO.init(
+        ...     1, 2, (6, 6), (24, 24), key=jr.PRNGKey(0),
+        ...     lower=[0.0, 0.0], upper=[10.0, 5.0], hidden_channels=8, n_layers=3,
+        ...     deformation_kwargs={"width": 16, "depth": 1},
+        ... )
+        >>> box = jnp.array([10.0, 5.0])
+        >>> x = einx.multiply("n d, d", jr.uniform(jr.PRNGKey(1), (300, 2)), box)
+        >>> u = einx.id("n 1 -> 1 n", jnp.sin(x[:, :1]))   # (C_in, N)
+        >>> w = jnp.full((300,), 1 / 300)                   # quadrature weights
+        >>> model(u, x, w).shape                            # (C_out, N)
+        (2, 300)
+        >>> model(u, x, w, x_out=x[:50]).shape              # (C_out, M)
+        (2, 50)
+
+        A ragged batch: clouds of 300 and 200 real points, zero-padded to 300:
+
+        >>> n_real = jnp.array([300, 200])
+        >>> real = einx.less("n, b -> b n", jnp.arange(300), n_real)  # (B, N)
+        >>> wb = einx.where("b n, b, -> b n", real, 1.0 / n_real, 0.0)
+        >>> ub = einx.where("b n, c n, -> b c n", real, u, 0.0)
+        >>> xb = jnp.stack([x, x])
+        >>> yb = jax.vmap(model)(ub, xb, wb)                # mask the loss by w > 0
+        >>> yb.shape
+        (2, 2, 300)
+    """
+
+    lifting: eqx.nn.Conv
+    encoder: SpectralConv
+    blocks: list[FNOBlock]
+    decoder: SpectralConv
+    pos_bias: list[eqx.nn.Conv] | None
+    pos_bias_out: eqx.nn.Conv | None
+    proj1: eqx.nn.Conv
+    proj2: eqx.nn.Conv
+    deformation: LearnedDeformation
+    activation: Callable[[Array], Array] = eqx.field(static=True)
+    latent_shape: tuple[int, ...] = eqx.field(static=True)
+    jacobian_weights: bool = eqx.field(static=True)
+    in_channels: int = eqx.field(static=True)
+    out_channels: int = eqx.field(static=True)
+    hidden_channels: int = eqx.field(static=True)
+
+    @classmethod
+    def init(
+        cls,
+        in_channels: int,
+        out_channels: int,
+        n_modes: tuple[int, ...],
+        latent_shape: tuple[int, ...],
+        *,
+        key: Array,
+        lower: Sequence[float],
+        upper: Sequence[float],
+        hidden_channels: int = 32,
+        n_layers: int = 4,
+        projection_channels: int | None = None,
+        deformation: DeformationKind = "mlp",
+        deformation_kwargs: dict | None = None,
+        positional_bias: bool = True,
+        jacobian_weights: bool = False,
+        factorization: Factorization = "dense",
+        rank: float | int = 0.5,
+        activation: Callable[[Array], Array] = jax.nn.gelu,
+        code_dim: int = 0,
+    ) -> GeoFNO:
+        """Construct a Geo-FNO whose chart starts as the box map.
+
+        Args:
+            in_channels: Number of input channels ``C_in``.
+            out_channels: Number of output channels ``C_out``.
+            n_modes: Retained Fourier modes per latent axis; its length is the
+                dimension ``d``.
+            latent_shape: Latent grid extents, one per axis, each greater than
+                ``2 * n_modes``.
+            key: PRNG key.
+            lower: Lower corner of the physical bounding box, length ``d``.
+            upper: Upper corner of the physical bounding box, length ``d``.
+            hidden_channels: Latent channel width ``H``.
+            n_layers: Spectral layers, ``>= 2``: the encoder, ``n_layers - 2``
+                latent blocks (`geonnax.fno.FNOBlock`) and the decoder.
+            projection_channels: Hidden width of the projection (defaults to
+                ``hidden_channels``).
+            deformation: Kind of chart residual, ``"identity"``, ``"mlp"`` or
+                ``"fourier"`` (see `LearnedDeformation`).
+            deformation_kwargs: Extra keyword arguments for
+                `LearnedDeformation.init` (``pad``, ``width``, ``depth``,
+                ``n_frequencies``, ``n_basis``).
+            positional_bias: Add the 1×1 conv of the latent coordinates in
+                every layer (as the reference does).
+            jacobian_weights: Reweight the quadrature by
+                $|\\det\\nabla\\varphi|$ (jejjohnson/geonnax#85).
+            factorization: Spectral-weight parameterisation (``"dense"`` /
+                ``"cp"`` / ``"tucker"`` / ``"tt"``) of every spectral conv.
+            rank: Rank for the factorised forms; ignored when dense.
+            activation: Pointwise nonlinearity.
+            code_dim: Length ``P`` of the per-sample chart code (``0``: none;
+                needs ``deformation="mlp"``).
+
+        Returns:
+            A `GeoFNO`.
+
+        Raises:
+            ValueError: If ``n_layers < 2``; if ``n_modes`` is empty or
+                ``n_modes``, ``latent_shape``, ``lower`` and ``upper`` differ
+                in length; if some ``latent_shape[a] <= 2 * n_modes[a]``; or
+                for an invalid chart configuration (`LearnedDeformation.init`).
+        """
+        if n_layers < 2:
+            raise ValueError(f"n_layers must be >= 2, got {n_layers}.")
+        n_modes = tuple(int(m) for m in n_modes)
+        latent_shape = tuple(int(s) for s in latent_shape)
+        d = len(n_modes)
+        if d == 0 or not d == len(latent_shape) == len(lower) == len(upper):
+            raise ValueError(
+                "n_modes, latent_shape, lower and upper must be non-empty and of "
+                f"equal length, got n_modes={n_modes}, latent_shape={latent_shape}, "
+                f"lower={lower!r}, upper={upper!r}."
+            )
+        if any(2 * m >= s for m, s in zip(n_modes, latent_shape, strict=True)):
+            raise ValueError(
+                "each latent_shape extent must exceed 2 * n_modes = "
+                f"{tuple(2 * m for m in n_modes)}, got latent_shape={latent_shape}."
+            )
+        projection_channels = projection_channels or hidden_channels
+
+        (k_lift, k_enc, k_blocks, k_dec, k_pos, k_pos_out, k_p1, k_p2, k_def) = (
+            jax.random.split(key, 9)
+        )
+        deform = LearnedDeformation.init(
+            lower,
+            upper,
+            key=k_def,
+            kind=deformation,
+            code_dim=code_dim,
+            **(deformation_kwargs or {}),
+        )
+        lifting = pointwise(1, in_channels, hidden_channels, key=k_lift)
+        encoder, decoder = (
+            SpectralConv.init(
+                hidden_channels,
+                hidden_channels,
+                n_modes,
+                key=k,
+                factorization=factorization,
+                rank=rank,
+            )
+            for k in (k_enc, k_dec)
+        )
+        blocks = [
+            FNOBlock.init(
+                hidden_channels,
+                n_modes,
+                key=k,
+                factorization=factorization,
+                rank=rank,
+                activation=activation,
+                use_activation=False,
+            )
+            for k in jax.random.split(k_blocks, n_layers - 2)
+        ]
+        pos_bias = pos_bias_out = None
+        if positional_bias:
+            pos_bias = [
+                pointwise(d, d, hidden_channels, key=k)
+                for k in jax.random.split(k_pos, n_layers - 1)
+            ]
+            pos_bias_out = pointwise(1, d, hidden_channels, key=k_pos_out)
+        proj1 = pointwise(1, hidden_channels, projection_channels, key=k_p1)
+        proj2 = pointwise(1, projection_channels, out_channels, key=k_p2)
+        return cls(
+            lifting=lifting,
+            encoder=encoder,
+            blocks=blocks,
+            decoder=decoder,
+            pos_bias=pos_bias,
+            pos_bias_out=pos_bias_out,
+            proj1=proj1,
+            proj2=proj2,
+            deformation=deform,
+            activation=activation,
+            latent_shape=latent_shape,
+            jacobian_weights=jacobian_weights,
+            in_channels=in_channels,
+            out_channels=out_channels,
+            hidden_channels=hidden_channels,
+        )
+
+    def _latent_coords(self, dtype: jnp.dtype) -> Float[Array, "d *G"]:
+        """The latent grid nodes ``j / s_a`` on [0, 1)^d, channel-first."""
+        axes = [jnp.arange(s, dtype=dtype) / s for s in self.latent_shape]
+        return jnp.stack(jnp.meshgrid(*axes, indexing="ij"))
+
+    def _add_pos(
+        self, h: Float[Array, "H *G"], layer: int, grid: Float[Array, "d *G"]
+    ) -> Float[Array, "H *G"]:
+        """Add the positional bias $b_\\ell(G)$ of latent layer ``layer``, if any."""
+        if self.pos_bias is None:
+            return h
+        return h + self.pos_bias[layer](grid)
+
+    def __call__(
+        self,
+        u: Float[Array, "C_in N"],
+        x: Float[Array, "N d"],
+        weights: Float[Array, " N"],
+        *,
+        x_out: Float[Array, "M d"] | None = None,
+        code: Float[Array, " P"] | None = None,
+    ) -> Float[Array, "C_out M"]:
+        """Apply the operator to one point cloud.
+
+        Args:
+            u: Field values at the points, ``(C_in, N)``; ``0`` at padding.
+            x: Physical point coordinates, ``(N, d)``; finite (in-box) at
+                padding.
+            weights: Quadrature weights, ``(N,)``, approximating cell volumes
+                ($w_n \\ge 0$, $\\sum_n w_n \\approx 1$); ``0`` marks padding.
+            x_out: Physical query points, ``(M, d)``; ``None`` evaluates at
+                ``x``.
+            code: Per-sample chart code, ``(P,)``, exactly when
+                ``code_dim > 0``.
+
+        Returns:
+            The output field at the query points, ``(C_out, M)``.
+
+        Raises:
+            ValueError: If the shapes of ``u``, ``x``, ``weights`` or
+                ``x_out`` disagree with each other or with the model, or
+                ``code`` does not match ``code_dim``.
+        """
+        d = len(self.latent_shape)
+        if x.ndim != 2 or x.shape[1] != d:
+            raise ValueError(f"x must have shape (N, {d}), got {x.shape}.")
+        n = x.shape[0]
+        if u.shape != (self.in_channels, n):
+            raise ValueError(
+                f"u must have shape (in_channels, N) = ({self.in_channels}, {n}), "
+                f"got {u.shape}."
+            )
+        if weights.shape != (n,):
+            raise ValueError(f"weights must have shape ({n},), got {weights.shape}.")
+        if x_out is not None and (x_out.ndim != 2 or x_out.shape[1] != d):
+            raise ValueError(f"x_out must have shape (M, {d}), got {x_out.shape}.")
+
+        xi = self.deformation(x, code)  # (N, d)
+        w = weights
+        if self.jacobian_weights:
+            w = w * jnp.abs(self.deformation.jacobian_det(x, code))
+            w = w / jnp.maximum(einx.sum("[n]", w), jnp.finfo(w.dtype).tiny)
+        h = self.lifting(u)  # (H, N)
+        h = self.encoder.from_points(h, xi, w, self.latent_shape)  # (H, *G)
+        grid = self._latent_coords(h.dtype)  # (d, *G)
+        h = self.activation(self._add_pos(h, 0, grid))
+        for i, block in enumerate(self.blocks, start=1):
+            h = self.activation(self._add_pos(block(h), i, grid))  # K h + W h + b
+        xi_out = xi if x_out is None else self.deformation(x_out, code)  # (M, d)
+        h = self.decoder.to_points(h, xi_out)  # (H, M)
+        if self.pos_bias_out is not None:
+            h = h + self.pos_bias_out(einx.id("m d -> d m", xi_out))
+        return self.proj2(self.activation(self.proj1(h)))  # (C_out, M)
