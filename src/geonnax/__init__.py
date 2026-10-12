@@ -101,6 +101,7 @@ from geonnax.heteroscedastic import (
     hetero_noisy_logits,
 )
 from geonnax.layers import (
+    AntiAliasedActivation,
     Attention,
     BasisSpectralConv,
     BasisTransform,
@@ -125,6 +126,7 @@ from geonnax.layers import (
     WaveletAttention,
     WaveletConv,
     WindowedAttention,
+    band_limited_resize,
     init_factorized_tensor,
 )
 from geonnax.manifold_no import ManifoldNO, ManifoldNOBlock
@@ -166,6 +168,7 @@ __all__ = [
     "WNO",
     "AbstractConditioner",
     "AffineModulation",
+    "AntiAliasedActivation",
     "Attention",
     "BasisSpectralConv",
     "BasisTransform",
@@ -245,6 +248,7 @@ __all__ = [
     "XUNet",
     "__version__",
     "apply_rank1_proj",
+    "band_limited_resize",
     "basis",
     "build_siren_specs",
     "conditioning",

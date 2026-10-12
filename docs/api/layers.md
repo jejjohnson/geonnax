@@ -13,6 +13,20 @@ example; `jax.vmap` over a batch.
 
 ::: geonnax.layers.Upsample
 
+## Band-limited resampling & anti-aliased activation
+
+`Downsample` / `Upsample` rearrange pixels into channels; these change the
+sampling rate of the *same* periodic function instead. `band_limited_resize`
+truncates or zero-pads the Fourier coefficients (an ideal low-pass), and
+`AntiAliasedActivation` evaluates a pointwise nonlinearity on a finer grid and
+low-passes it back (up → σ → down), the band-limit-preserving pieces of the
+Convolutional Neural Operator (Raonić et al., NeurIPS 2023). They reduce
+aliasing rather than eliminate it.
+
+::: geonnax.layers.band_limited_resize
+
+::: geonnax.layers.AntiAliasedActivation
+
 ## Residual & ConvNeXt blocks
 
 ::: geonnax.layers.Block
