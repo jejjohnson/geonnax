@@ -83,6 +83,35 @@ than the input points is a planned follow-up.
 
 ::: geonnax.manifold_no.ManifoldNOBlock
 
+## Convolutional Neural Operator
+
+The CNO (Raonić et al., NeurIPS 2023) is the *local* counterpart of the FNO: a
+U-Net of ordinary convolution stencils in which every other operation respects
+the band limit, so the discrete network represents a continuous operator. The
+sampling rate changes with [`band_limited_resize`](layers.md#geonnax.layers.band_limited_resize)
+and the nonlinearity is evaluated on a finer grid by
+[`AntiAliasedActivation`](layers.md#geonnax.layers.AntiAliasedActivation),
+$\Sigma(v) = R_N\,\sigma(R_{2N} v)$. Four blocks build it: invariant
+$I = \Sigma \circ K$, downsampling $D = R_{N/2}\,\sigma\,R_{2N} K$, upsampling
+$U = R_{2N}\,\sigma\,R_{2N} K$ (all `CNOBlock`) and residual
+$R(v) = v + K \Sigma K v$ (`CNOResBlock`), with R blocks on the skips and at
+the bottleneck.
+
+The stencils are tied to the grid spacing, so a CNO is defined on one
+computational grid: pass `resolution=` and every input is band-limited-resized
+onto it and the output back, which is how the paper evaluates CNO across
+resolutions. Local stencils keep sharp and discontinuous features that the
+FNO's mode truncation smooths, which also makes the CNO a natural ensemble
+partner for it.
+
+Also exported under the long-form alias `geonnax.ConvolutionalNeuralOperator`.
+
+::: geonnax.cno.CNO
+
+::: geonnax.cno.CNOBlock
+
+::: geonnax.cno.CNOResBlock
+
 ## Wavelet Neural Operator
 
 The WNO swaps the FNO's Fourier transform for a multi-level discrete wavelet
