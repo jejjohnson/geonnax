@@ -48,6 +48,7 @@ from geonnax import (
     geofno,
     heteroscedastic,
     layers,
+    manifold_no,
     mfn,
     mixture,
     mswt,
@@ -125,6 +126,7 @@ from geonnax.layers import (
     WindowedAttention,
     init_factorized_tensor,
 )
+from geonnax.manifold_no import ManifoldNO, ManifoldNOBlock
 from geonnax.mfn import FourierFilter, FourierNet, GaborFilter, GaborNet, mfn_forward
 from geonnax.mixture import MixtureOfGaussiansDenseHead
 from geonnax.mswt import MSWT, MSWTBlock, MultiScaleWaveletTransformer
@@ -202,6 +204,8 @@ __all__ = [
     "MCSigmoidDenseFA",
     "MCSoftmaxDenseFA",
     "MSWTBlock",
+    "ManifoldNO",
+    "ManifoldNOBlock",
     "MixtureOfGaussiansDenseHead",
     "MultiHeadAttentionBE",
     "MultiScaleSIREN",
@@ -254,6 +258,7 @@ __all__ = [
     "init_rank1_proj",
     "layers",
     "log_spaced_omegas",
+    "manifold_no",
     "mfn",
     "mfn_forward",
     "mixture",
