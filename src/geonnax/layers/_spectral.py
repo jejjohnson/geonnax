@@ -14,7 +14,6 @@ large parameter count for a compact, regularised one (Kossaifi et al., 2023).
 
 from __future__ import annotations
 
-import itertools
 import math
 
 import equinox as eqx
@@ -30,23 +29,10 @@ from geonnax.layers._factorized import (
     TuckerTensor,
     init_factorized_tensor,
 )
+from geonnax.layers._utils import _corner_slices
 
 
 FactorizedTensor = DenseTensor | CPTensor | TuckerTensor | TTTensor
-
-
-def _corner_slices(n_modes: tuple[int, ...]) -> list[tuple[slice, ...]]:
-    """Slices selecting the ``2**(d-1)`` low-frequency corners of an rfft spectrum.
-
-    Every non-final axis keeps both its lowest positive (``[0:m]``) and lowest
-    negative (``[-m:]``) frequencies; the final (rfft-halved) axis keeps only
-    ``[0:m]``. The Cartesian product over axes enumerates the corner blocks.
-    """
-    d = len(n_modes)
-    per_axis = [[slice(0, m), slice(-m, None)] for m in n_modes[:-1]]
-    combos = itertools.product(*per_axis) if d > 1 else [()]
-    last = slice(0, n_modes[-1])
-    return [(*combo, last) for combo in combos]
 
 
 class SpectralConv(eqx.Module):

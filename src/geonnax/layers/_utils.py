@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import itertools
 import math
 
 import equinox as eqx
 import jax
+import numpy as np
 from jaxtyping import Array
 
 
@@ -54,3 +56,35 @@ def pointwise(
         kernel_size=1,
         key=key,
     )
+
+
+# --- rfft corner layout (shared by SpectralConv and the non-uniform transforms) ---
+
+
+def _corner_slices(n_modes: tuple[int, ...]) -> list[tuple[slice, ...]]:
+    """Slices selecting the ``2**(d-1)`` low-frequency corners of an rfft spectrum.
+
+    Every non-final axis keeps both its lowest positive (``[0:m]``) and lowest
+    negative (``[-m:]``) frequencies; the final (rfft-halved) axis keeps only
+    ``[0:m]``. The Cartesian product over axes enumerates the corner blocks.
+    """
+    d = len(n_modes)
+    per_axis = [[slice(0, m), slice(-m, None)] for m in n_modes[:-1]]
+    combos = itertools.product(*per_axis) if d > 1 else [()]
+    last = slice(0, n_modes[-1])
+    return [(*combo, last) for combo in combos]
+
+
+def _corner_freqs(n_modes: tuple[int, ...]) -> list[tuple[np.ndarray, ...]]:
+    """Integer wavenumbers of each corner block, in `_corner_slices` order.
+
+    Corner ``c`` holds one integer array per axis: ``0..m-1`` or ``-m..-1`` on a
+    non-final axis, ``0..m-1`` on the final one. These are exactly the
+    frequencies that ``_corner_slices(n_modes)[c]`` selects from an rfft
+    spectrum.
+    """
+    d = len(n_modes)
+    per_axis = [[np.arange(m), np.arange(-m, 0)] for m in n_modes[:-1]]
+    combos = itertools.product(*per_axis) if d > 1 else [()]
+    last = np.arange(n_modes[-1])
+    return [(*combo, last) for combo in combos]

@@ -51,7 +51,7 @@ first sentence names it (the capability index uses it as the group title).
   `_blocks._dropout_layer(rate)` (and `unet._split_keys` to thread keys).
 - Reuse the helpers: `layers._utils.act` (SiLU), `group_count` for
   `eqx.nn.GroupNorm`, `shuffle_patterns` / `shuffle_kwargs` for space-to-
-  depth, `_factorized._resolve_rank`, `_spectral._corner_slices`,
+  depth, `_factorized._resolve_rank`, `_utils._corner_slices` / `_corner_freqs`,
   `_wavelet._filter_bank`.
 - Fixed tables (quadrature grids, filter banks, transform matrices) are
   built in `init` (NumPy is fine there), stored as array leaves and read

@@ -93,8 +93,11 @@ PRIVATE_HELPERS: dict[str, str] = {
     "geonnax.layers._factorized._resolve_rank": (
         "a fractional or absolute rank resolved against the full size"
     ),
-    "geonnax.layers._spectral._corner_slices": (
+    "geonnax.layers._utils._corner_slices": (
         "the corner slices of the retained Fourier modes along each axis"
+    ),
+    "geonnax.layers._utils._corner_freqs": (
+        "the integer wavenumbers of each rfft corner block, in `_corner_slices` order"
     ),
     "geonnax.layers._wavelet._filter_bank": (
         "the orthonormal analysis filters (low, high) of a `Wavelet`"

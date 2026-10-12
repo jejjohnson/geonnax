@@ -29,7 +29,8 @@ lands where the next person will find and reuse it.
 It is one package, `src/geonnax/`. The public API is `geonnax.__all__` plus
 the public submodules (each with its own `__all__`); names reachable only
 from a submodule are the bases (`geonnax.basis`), the lon/lat helpers
-(`geonnax.geo`), `geonnax.layers.dwt` / `idwt` / `Factorization` / `Wavelet`,
+(`geonnax.geo`), `geonnax.layers.dwt` / `idwt` / `nonuniform_rfft` /
+`nonuniform_irfft` / `Factorization` / `Wavelet`,
 `geonnax.mswt.WaveletDownsample` / `WaveletUpsample` and
 `geonnax.unet.BlockType`.
 
@@ -37,7 +38,7 @@ from a submodule are the bases (`geonnax.basis`), the lon/lat helpers
 |---|---|---|
 | Bases (pure functions) | `_basis/` (implementation), `basis.py` (the public surface) | Dirichlet / Fourier eigenpairs on a box, divergence-free atoms, real spherical harmonics, Slepian cap bases, graph-Laplacian eigenpairs, RBF / Wendland and Gabor frames, DWT matrices, EOFs; Fourier / seasonal / interaction / time-window features, `standardize` |
 | Geography | `geo.py`, `encoders.py`, `slepian.py` | lon/lat helpers (`deg2rad`, `lonlat_scale`, `lonlat_to_cartesian3d`, `cyclic_encode`, `spherical_harmonic_encode`); parameter-free encoder modules; `GeoContextEncoder`; Slepian encoders |
-| Building blocks | `layers/` | `StandardizedConv`, `Downsample` / `Upsample`, `Block`, `ResnetBlock`, `ConvNeXtBlock`, `SqueezeExcitation`, `GlobalResponseNorm`, attention (`Attention`, `LinearAttention`, `WindowedAttention`, `WaveletAttention`), `SpectralConv` + factorized weights (`DenseTensor`, `CPTensor`, `TuckerTensor`, `TTTensor`), spherical harmonic / wavelet transforms and convs, `dwt` / `idwt`, `WaveletConv` |
+| Building blocks | `layers/` | `StandardizedConv`, `Downsample` / `Upsample`, `Block`, `ResnetBlock`, `ConvNeXtBlock`, `SqueezeExcitation`, `GlobalResponseNorm`, attention (`Attention`, `LinearAttention`, `WindowedAttention`, `WaveletAttention`), `SpectralConv` + factorized weights (`DenseTensor`, `CPTensor`, `TuckerTensor`, `TTTensor`), `nonuniform_rfft` / `nonuniform_irfft`, spherical harmonic / wavelet transforms and convs, `dwt` / `idwt`, `WaveletConv` |
 | Neural operators | `fno.py`, `sfno.py`, `wno.py`, `mswt.py` | `FNO`, `SFNO`, `WNO`, `MSWT` and their blocks |
 | U-Net | `unet.py` | `UNet` (alias `XUNet`), `Stage`, `NestedResidualUNet` |
 | Implicit neural representations | `siren.py`, `multi_scale_siren.py`, `mfn.py`, `conditioning.py` | `SIREN`, `SirenDense`, the SIREN init rules, `MultiScaleSIREN`, `FourierNet` / `GaborNet`, conditioners (`ConcatConditioner`, `AffineModulation` = `FiLM`, `HyperLinear`), `ConditionedINR`, `HyperSIREN` |

@@ -16,6 +16,9 @@ leading channel axis and ``num_spatial_dims`` trailing spatial axes — shape
   `LinearAttention`.
 - `geonnax.layers._spectral` — `SpectralConv` (Fourier neural
   operator layer).
+- `geonnax.layers._nonuniform` — `nonuniform_rfft` / `nonuniform_irfft`
+  (weighted Fourier transforms between point sets and the truncated rfft
+  spectrum).
 - `geonnax.layers._factorized` — `DenseTensor` / `CPTensor`
   / `TuckerTensor` / `TTTensor` low-rank weight parameterisations.
 - `geonnax.layers._spherical_transform` —
@@ -48,6 +51,7 @@ from geonnax.layers._factorized import (
     TuckerTensor,
     init_factorized_tensor,
 )
+from geonnax.layers._nonuniform import nonuniform_irfft, nonuniform_rfft
 from geonnax.layers._norm import GlobalResponseNorm
 from geonnax.layers._spectral import SpectralConv
 from geonnax.layers._spherical_transform import (
@@ -90,4 +94,6 @@ __all__ = [
     "dwt",
     "idwt",
     "init_factorized_tensor",
+    "nonuniform_irfft",
+    "nonuniform_rfft",
 ]
