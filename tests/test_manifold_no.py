@@ -123,8 +123,12 @@ def test_rejects_transform_with_other_mode_count():
 def test_mesh_refinement_agrees_at_shared_vertices():
     """The same weights on icosphere(2) and icosphere(3) agree at shared vertices.
 
-    Inline point-refinement check; switch to the #82 harness
-    (``tests/_point_invariance.py``) once it lands.
+    Not `assert_point_refinement_converges` (``tests/_point_invariance.py``):
+    that harness draws stratified clouds on [0, 1)^d with w = 1/N and compares
+    against a fixed-shape reference, whereas ManifoldNO outputs at its own
+    input points (N_out == N) and its geometry is a mesh, refined here by
+    nesting icospheres with vertex-area weights. Comparing at the shared
+    vertices is the mesh analogue of that check.
 
     The weights are per mode, so the modes must match in order. Signs cancel
     (each mode enters once in the analysis and once in the synthesis), but
