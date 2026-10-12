@@ -32,3 +32,15 @@ example; `jax.vmap` over a batch.
 ::: geonnax.layers.Attention
 
 ::: geonnax.layers.LinearAttention
+
+## Non-uniform Fourier transforms
+
+Weighted Fourier transforms between values at arbitrary points of the latent
+torus $[0, 1)^d$ and the truncated rfft spectrum that
+[`SpectralConv`](operators.md#geonnax.layers.SpectralConv) mixes (the
+geometry-facing halves of Geo-FNO, with quadrature weights added). On a
+uniform grid with weights $1/S$ they reproduce `rfftn / S` and `irfftn`.
+
+::: geonnax.layers.nonuniform_rfft
+
+::: geonnax.layers.nonuniform_irfft

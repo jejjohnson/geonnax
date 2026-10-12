@@ -26,7 +26,7 @@ in `AGENTS.md`.
    - the shared private helpers themselves: `geonnax.layers._utils` (`act`,
      `group_count`, `shuffle_patterns`, `shuffle_kwargs`);
      `layers._blocks._dropout_layer`; `unet._split_keys`;
-     `layers._factorized._resolve_rank`; `layers._spectral._corner_slices`;
+     `layers._factorized._resolve_rank`; `layers._utils._corner_slices` / `_corner_freqs`;
      `layers._wavelet._filter_bank`; `layers._utils.pointwise`;
      `ensemble._glorot_uniform`, `ensemble._rs_init`, `sngp._glorot_normal`;
      `siren._require_positive`; `spectral_norm._l2_normalize`;
