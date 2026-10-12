@@ -145,15 +145,67 @@ def associated_legendre(
     dtype = t.dtype if jnp.issubdtype(t.dtype, jnp.floating) else jnp.float32
     t = t.astype(dtype)
     s = jnp.sqrt(jnp.maximum(1.0 - t**2, 0.0))
-    n = l_max + 1
-    m = np.arange(n)
+    m = np.arange(l_max + 1)
 
     # Sectoral values P̄_m^m for every m, by a cumulative product over m.
-    sect_factor = np.ones(n)
-    sect_factor[1:] = -np.sqrt((2.0 * m[1:] + 1.0) / (2.0 * m[1:]))
-    sect_scale = np.cumprod(sect_factor) / math.sqrt(2.0)  # (n,)
     s_pow = s[..., None] ** jnp.asarray(m, dtype=dtype)  # (..., n)
-    sectoral = jnp.asarray(sect_scale, dtype=dtype) * s_pow  # P̄_m^m
+    sectoral = jnp.asarray(_sectoral_scale(l_max), dtype=dtype) * s_pow  # P̄_m^m
+
+    table = _legendre_table(t, sectoral, l_max)  # (n_l, ..., n_m)
+
+    pairs = associated_legendre_indices(l_max)
+    ell_idx = np.array([ell for ell, _ in pairs])
+    m_idx = np.array([mm_ for _, mm_ in pairs])
+    out = jnp.moveaxis(table, 0, -2)[..., ell_idx, m_idx]
+
+    if normalization == "orthonormal":
+        return out
+    # Convert P̄ (unit L² norm on [-1, 1]) to the classical P_l^m.
+    log_ratio = np.array(
+        [math.lgamma(ell + mm_ + 1) - math.lgamma(ell - mm_ + 1) for ell, mm_ in pairs]
+    )
+    to_classical = np.sqrt(2.0 / (2.0 * ell_idx + 1.0) * np.exp(log_ratio))
+    if normalization == "none":
+        return out * jnp.asarray(to_classical, dtype=dtype)
+    # Schmidt: √((2 − δ_m0)(l−m)!/(l+m)!) P_l^m, without the Condon–Shortley phase.
+    schmidt = np.sqrt(2.0 * (2.0 - (m_idx == 0)) / (2.0 * ell_idx + 1.0))
+    schmidt = schmidt * (-1.0) ** m_idx
+    return out * jnp.asarray(schmidt, dtype=dtype)
+
+
+def _sectoral_scale(l_max: int) -> np.ndarray:
+    r"""Sectoral constants $c_m = \bar P_m^m / (1 - t^2)^{m/2}$, $m \le l_{\max}$.
+
+    $c_0 = 1/\sqrt2$ and $c_m = -\sqrt{(2m+1)/(2m)}\;c_{m-1}$, the
+    orthonormal sectoral recurrence with the factor $\sqrt{1-t^2}$ taken out.
+    """
+    m = np.arange(l_max + 1)
+    factor = np.ones(l_max + 1)
+    factor[1:] = -np.sqrt((2.0 * m[1:] + 1.0) / (2.0 * m[1:]))
+    return np.cumprod(factor) / math.sqrt(2.0)
+
+
+def _legendre_table(
+    t: Float[Array, "..."], sectoral: Float[Array, "... L"], l_max: int
+) -> Float[Array, "L ... L"]:
+    r"""Run the orthonormal recurrence in $l$ for every order $m$ at once.
+
+    Given the sectoral row ``sectoral[..., m]`` $= \bar P_m^m$, fills
+    $\bar P_{m+1}^m = \sqrt{2m+3}\,t\,\bar P_m^m$ and
+    $\bar P_l^m = a_{lm}(t\,\bar P_{l-1}^m - b_{lm}\,\bar P_{l-2}^m)$ in one
+    `jax.lax.scan` over $l$, so the trace size does not grow with ``l_max``.
+    The map is linear in ``sectoral``: passing the constants of
+    `_sectoral_scale` (without $(1-t^2)^{m/2}$) gives the pole-free
+    polynomials $\bar P_l^m(t) / (1-t^2)^{m/2}$ that `real_spherical_harmonics`
+    uses.
+
+    Returns:
+        Array of shape ``(l_max + 1,) + t.shape + (l_max + 1,)``, indexed
+        ``[l, ..., m]``; entries with ``m > l`` are zero.
+    """
+    dtype = sectoral.dtype
+    n = l_max + 1
+    m = np.arange(n)
 
     # Recurrence coefficients a_lm, b_lm (host constants), for rows l >= 1.
     # They are only used where m <= l - 2; elsewhere the masks below select the
@@ -196,28 +248,8 @@ def associated_legendre(
             jnp.asarray(arr[1:], dtype=dtype) for arr in (a_all, b_all, diag, sub)
         )
         _, rows = jax.lax.scan(step, (zeros, p_00), xs)
-        table = jnp.concatenate([p_00[None], rows], axis=0)  # (n_l, ..., n_m)
-    else:
-        table = p_00[None]
-
-    pairs = associated_legendre_indices(l_max)
-    ell_idx = np.array([ell for ell, _ in pairs])
-    m_idx = np.array([mm_ for _, mm_ in pairs])
-    out = jnp.moveaxis(table, 0, -2)[..., ell_idx, m_idx]
-
-    if normalization == "orthonormal":
-        return out
-    # Convert P̄ (unit L² norm on [-1, 1]) to the classical P_l^m.
-    log_ratio = np.array(
-        [math.lgamma(ell + mm_ + 1) - math.lgamma(ell - mm_ + 1) for ell, mm_ in pairs]
-    )
-    to_classical = np.sqrt(2.0 / (2.0 * ell_idx + 1.0) * np.exp(log_ratio))
-    if normalization == "none":
-        return out * jnp.asarray(to_classical, dtype=dtype)
-    # Schmidt: √((2 − δ_m0)(l−m)!/(l+m)!) P_l^m, without the Condon–Shortley phase.
-    schmidt = np.sqrt(2.0 * (2.0 - (m_idx == 0)) / (2.0 * ell_idx + 1.0))
-    schmidt = schmidt * (-1.0) ** m_idx
-    return out * jnp.asarray(schmidt, dtype=dtype)
+        return jnp.concatenate([p_00[None], rows], axis=0)
+    return p_00[None]
 
 
 def gauss_legendre(n: int) -> tuple[np.ndarray, np.ndarray]:

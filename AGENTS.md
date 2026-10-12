@@ -271,9 +271,12 @@ The basis contract (long form in [`docs/api/bases.md`](docs/api/bases.md)):
 | `tests/test_multi_scale_siren.py`, `test_geo_context_encoder.py`, `test_geonnax.py` | `MultiScaleSIREN`; `GeoContextEncoder`; smoke and forward checks for the rest of the public surface |
 | ruff (`RUF022`, …), ty | Sorted `__all__`, lint, types (`src/geonnax`) |
 
-The closed-form eigenbases (`fourier_basis`, `real_spherical_harmonics`,
-`slepian_cap_basis`, `graph_laplacian_eigpairs`) are covered only by their
-doctests and a smoke import; a change to them needs tests.
+`real_spherical_harmonics` is tested in
+`tests/test_real_spherical_harmonics.py` (orthonormality on a quadrature grid,
+the addition theorem, the pre-#73 values, degree 150). The other closed-form
+eigenbases (`fourier_basis`, `slepian_cap_basis`, `graph_laplacian_eigpairs`)
+are covered only by their doctests and a smoke import; a change to them needs
+tests.
 
 ## Recipes
 
