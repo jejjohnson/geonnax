@@ -28,19 +28,7 @@ from jaxtyping import Array, Float
 
 from geonnax.layers._factorized import Factorization
 from geonnax.layers._spectral import SpectralConv
-
-
-def _pointwise(
-    num_spatial_dims: int, in_channels: int, out_channels: int, *, key: Array
-) -> eqx.nn.Conv:
-    """A ``1x1`` (pointwise) convolution — a per-position channel-wise linear map."""
-    return eqx.nn.Conv(
-        num_spatial_dims=num_spatial_dims,
-        in_channels=in_channels,
-        out_channels=out_channels,
-        kernel_size=1,
-        key=key,
-    )
+from geonnax.layers._utils import pointwise
 
 
 class DomainPadding(eqx.Module):
@@ -129,10 +117,10 @@ class FNOBlock(eqx.Module):
             factorization=factorization,
             rank=rank,
         )
-        pointwise = _pointwise(len(n_modes), channels, channels, key=k_pw)
+        skip = pointwise(len(n_modes), channels, channels, key=k_pw)
         return cls(
             spectral=spectral,
-            pointwise=pointwise,
+            pointwise=skip,
             activation=activation,
             use_activation=use_activation,
         )
@@ -243,7 +231,7 @@ class FNO(eqx.Module):
         projection_channels = projection_channels or hidden_channels
 
         k_lift, k_p1, k_p2, k_blocks = jax.random.split(key, 4)
-        lifting = _pointwise(d, in_channels, hidden_channels, key=k_lift)
+        lifting = pointwise(d, in_channels, hidden_channels, key=k_lift)
         bkeys = jax.random.split(k_blocks, n_layers)
         blocks = [
             FNOBlock.init(
@@ -258,8 +246,8 @@ class FNO(eqx.Module):
             )
             for i in range(n_layers)
         ]
-        proj1 = _pointwise(d, hidden_channels, projection_channels, key=k_p1)
-        proj2 = _pointwise(d, projection_channels, out_channels, key=k_p2)
+        proj1 = pointwise(d, hidden_channels, projection_channels, key=k_p1)
+        proj2 = pointwise(d, projection_channels, out_channels, key=k_p2)
 
         dp = (
             DomainPadding(padding=domain_padding, num_spatial_dims=d)

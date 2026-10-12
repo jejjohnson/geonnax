@@ -457,7 +457,7 @@ reuse them instead of writing another copy.
 | `geonnax.layers._factorized._resolve_rank` | a fractional or absolute rank resolved against the full size |
 | `geonnax.layers._spectral._corner_slices` | the corner slices of the retained Fourier modes along each axis |
 | `geonnax.layers._wavelet._filter_bank` | the orthonormal analysis filters (low, high) of a `Wavelet` |
-| `geonnax.fno._pointwise` | a 1x1 (pointwise) `eqx.nn.Conv` channel mix |
+| `geonnax.layers._utils.pointwise` | a 1x1 (pointwise) `eqx.nn.Conv` channel mix |
 | `geonnax.ensemble._glorot_uniform` | Glorot-uniform `(D_in, D_out)` init |
 | `geonnax.sngp._glorot_normal` | Glorot-normal `(F_in, F_out)` init |
 | `geonnax.siren._require_positive` | raise `ValueError` if any keyword value is not positive |

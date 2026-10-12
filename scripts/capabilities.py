@@ -99,7 +99,7 @@ PRIVATE_HELPERS: dict[str, str] = {
     "geonnax.layers._wavelet._filter_bank": (
         "the orthonormal analysis filters (low, high) of a `Wavelet`"
     ),
-    "geonnax.fno._pointwise": "a 1x1 (pointwise) `eqx.nn.Conv` channel mix",
+    "geonnax.layers._utils.pointwise": "a 1x1 (pointwise) `eqx.nn.Conv` channel mix",
     "geonnax.ensemble._glorot_uniform": "Glorot-uniform `(D_in, D_out)` init",
     "geonnax.sngp._glorot_normal": "Glorot-normal `(F_in, F_out)` init",
     "geonnax.siren._require_positive": (

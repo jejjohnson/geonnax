@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 
+import equinox as eqx
 import jax
 from jaxtyping import Array
 
@@ -40,3 +41,16 @@ def shuffle_patterns(num_spatial_dims: int) -> tuple[str, str]:
 def shuffle_kwargs(num_spatial_dims: int) -> dict[str, int]:
     """Patch-size keyword args (all ``2``) for the shuffle einx patterns."""
     return {f"p{i}": 2 for i in range(num_spatial_dims)}
+
+
+def pointwise(
+    num_spatial_dims: int, in_channels: int, out_channels: int, *, key: Array
+) -> eqx.nn.Conv:
+    """A ``1x1`` (pointwise) convolution — a per-position channel-wise linear map."""
+    return eqx.nn.Conv(
+        num_spatial_dims=num_spatial_dims,
+        in_channels=in_channels,
+        out_channels=out_channels,
+        kernel_size=1,
+        key=key,
+    )

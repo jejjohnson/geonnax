@@ -96,9 +96,9 @@ exists:
    building block to `layers/`, a basis to `_basis/` (re-exported from
    `geonnax.basis`), a helper two modules need to the owner's `_utils` or the
    lowest module both already import — not inline in the one caller you have
-   today. Copies already exist (`_pointwise` in `fno` / `sfno` / `wno`,
-   `_glorot_uniform` in `ensemble` / `heteroscedastic`, `_require_positive`
-   in `siren` / `mfn`, `_safe_sqrt` in `_rbf` / `_gabor`); don't add more.
+   today. Copies already exist (`_glorot_uniform` in `ensemble` /
+   `heteroscedastic`, `_require_positive` in `siren` / `mfn`, `_safe_sqrt` in
+   `_rbf` / `_gabor`); don't add more.
 4. **One object, one name.** A name means one thing across `geonnax` and its
    submodules (`tests/test_capabilities.py`); the deliberate exceptions are
    listed with a reason in `ALLOWED_SHARED_NAMES` in
@@ -107,7 +107,7 @@ exists:
 
 | You are about to write… | Use instead |
 |---|---|
-| A 1×1 conv, conv + norm + activation, a residual block | `eqx.nn.Conv` (see `fno._pointwise`), `geonnax.layers.Block`, `ResnetBlock`, `ConvNeXtBlock` |
+| A 1×1 conv, conv + norm + activation, a residual block | `eqx.nn.Conv` (see `layers._utils.pointwise`), `geonnax.layers.Block`, `ResnetBlock`, `ConvNeXtBlock` |
 | Pixel-shuffle down / up-sampling, space-to-depth | `geonnax.layers.Downsample` / `Upsample`; the patterns in `layers._utils.shuffle_patterns` |
 | Self-attention over a grid | `geonnax.layers.Attention`, `LinearAttention`, `WindowedAttention`, `WaveletAttention` |
 | An FFT conv keeping the low modes | `geonnax.layers.SpectralConv` (dense / CP / Tucker / TT weights via `init_factorized_tensor`) |
