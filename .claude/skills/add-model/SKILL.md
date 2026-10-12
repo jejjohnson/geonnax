@@ -70,6 +70,10 @@ Read "1. Modules", "3. Numerics and initialisation" and "The public API" in
   grids (`test_spectral_conv_resolution_invariance` resizes with
   `jax.image.resize` and bounds the relative error, with a comment on why),
   exact reconstruction, identity at init, agreement with a published value.
+- **Grid operators** claiming resolution invariance: bound
+  `resolution_gap(op, x_lo, upsample, downsample)` from
+  `tests/_resolution_invariance.py` (spectral `spectral_pair`, smooth
+  `band_limited_field`), as in `tests/test_resolution_invariance.py`.
 - **Point-set operators** (anything that reads a point cloud with quadrature
   weights, e.g. `SpectralConv.from_points`, Geo-FNO): also refine the cloud
   with `tests/_point_invariance.py`. `assert_point_refinement_converges(apply,
