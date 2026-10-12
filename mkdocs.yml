@@ -73,6 +73,7 @@ nav:
       - Spectral Bases: api/bases.md
   - Decision records:
       - Irregular-geometry operators: decisions/irregular-geometry-operators.md
+      - Geo-FNO latent measure: decisions/geofno-latent-measure.md
   - Building with agents: agents.md
   - Contributing: contributing.md
   - Changelog: CHANGELOG.md
