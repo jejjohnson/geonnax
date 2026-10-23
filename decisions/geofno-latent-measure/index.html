@@ -1,0 +1,1568 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Pure-Equinox neural-network zoo for geoscientific machine learning.">
+      
+      
+        <meta name="author" content="J. Emmanuel Johnson">
+      
+      
+      
+        <link rel="prev" href="../irregular-geometry-operators/">
+      
+      
+        <link rel="next" href="../../agents/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/icon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Geo-FNO latent measure - geonnax</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#decision-record-geo-fno-latent-measure-and-fold-over-regulariser" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="geonnax" class="md-header__button md-logo" aria-label="geonnax" data-md-component="logo">
+      
+  <img src="../../assets/icon.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            geonnax
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Geo-FNO latent measure
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/jejjohnson/geonnax" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jejjohnson/geonnax
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../notebooks/example_demo/" class="md-tabs__link">
+          
+  
+  
+  Examples
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guides/irregular-geometry/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../irregular-geometry-operators/" class="md-tabs__link">
+          
+  
+  
+  Decision records
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../agents/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building with agents
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../contributing/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CHANGELOG/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Changelog
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="geonnax" class="md-nav__button md-logo" aria-label="geonnax" data-md-component="logo">
+      
+  <img src="../../assets/icon.svg" alt="logo">
+
+    </a>
+    geonnax
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/jejjohnson/geonnax" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    jejjohnson/geonnax
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../notebooks/example_demo/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Demo
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../notebooks/irregular_geometry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Western Mediterranean SSH three ways
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/irregular-geometry/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FNO on curvilinear grids
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/capabilities/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/operators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operators (FNO / SFNO)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/unet/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    U-Net
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/layers/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/representation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Representation Networks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/encoders/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Encoders & Geometry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/uncertainty/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Uncertainty & Bayesian
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/bases/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spectral Bases
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decision records
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Decision records
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../irregular-geometry-operators/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Irregular-geometry operators
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Geo-FNO latent measure
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Geo-FNO latent measure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ablation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ablation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building with agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CHANGELOG/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Changelog
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ablation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Ablation
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="decision-record-geo-fno-latent-measure-and-fold-over-regulariser">Decision record: Geo-FNO latent measure and fold-over regulariser<a class="headerlink" href="#decision-record-geo-fno-latent-measure-and-fold-over-regulariser" title="Permanent link">&para;</a></h1>
+<ul>
+<li><strong>Status:</strong> accepted</li>
+<li><strong>Issue:</strong> <a href="https://github.com/jejjohnson/geonnax/issues/85">#85</a>, under epic <a href="https://github.com/jejjohnson/geonnax/issues/76">#76</a></li>
+<li><strong>Related:</strong> <a href="https://github.com/jejjohnson/geonnax/issues/84">#84</a> (<code>GeoFNO</code>), <a href="https://github.com/jejjohnson/pyrox/issues/298">jejjohnson/pyrox#298</a> (a GP prior on the chart)</li>
+</ul>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p><code>GeoFNO</code> (#84) maps the points <span class="arithmatex">\(x_n\)</span> onto the latent torus with a learned chart <span class="arithmatex">\(\xi = \varphi(x)\)</span> and estimates the Fourier coefficients of the lifted field there:</p>
+<div class="arithmatex">\[
+\hat v_k = \int_{\mathbb{T}^d} v(\xi)\, e^{-2\pi i k\cdot\xi}\, d\xi
+\;\approx\; \sum_n w_n\, v_n\, e^{-2\pi i k\cdot\xi_n}.
+\]</div>
+<p>The physical quadrature weights <span class="arithmatex">\(w_n\)</span> approximate <span class="arithmatex">\(dx\)</span>, not <span class="arithmatex">\(d\xi\)</span>. By change of variables, <span class="arithmatex">\(d\xi = \lvert\det\nabla\varphi(x)\rvert\, dx\)</span>, so the consistent latent weights are</p>
+<div class="arithmatex">\[
+w_n^{\xi} = \frac{w_n\, \lvert\det\nabla\varphi(x_n)\rvert}{\sum_m w_m\, \lvert\det\nabla\varphi(x_m)\rvert}.
+\]</div>
+<p><code>GeoFNO(jacobian_weights=True)</code> applies this reweighting, using <code>LearnedDeformation.jacobian_det</code>. The reference Geo-FNO [1, 2] uses no weights at all. It also trains its chart without any invertibility constraint, so the chart may fold over (<span class="arithmatex">\(\det\nabla\varphi \le 0\)</span>).</p>
+<p>Two questions follow:</p>
+<ol>
+<li>Should <code>jacobian_weights</code> default to <code>True</code>?</li>
+<li>Should a fold-over penalty <span class="arithmatex">\(\mathbb{E}_x[\mathrm{relu}(-\det\nabla\varphi(x))]\)</span> ship, and if so, where?</li>
+</ol>
+<h2 id="options-considered">Options considered<a class="headerlink" href="#options-considered" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>A. Both off by default</strong> (the state after #84). This is faithful to the published method. The penalty is a few lines in the user's loss.</li>
+<li><strong>B. <code>jacobian_weights=True</code> by default, no built-in penalty.</strong> The quadrature is consistent. However, every forward pass gets a per-point Jacobian (<code>jacfwd</code>, <span class="arithmatex">\(d\)</span> extra JVPs), and the chart's gradient is coupled to the weights.</li>
+<li><strong>C. A geonnax helper <code>deformation_fold_penalty(deform, x, code=None)</code>.</strong> It is cheap and composable, but geonnax has no loss functions. The penalty might belong in pyrox instead, where the prior of pyrox#298 already discourages folding.</li>
+</ul>
+<h2 id="ablation">Ablation<a class="headerlink" href="#ablation" title="Permanent link">&para;</a></h2>
+<p><strong>Setup.</strong> The domain is the unit disc.</p>
+<ul>
+<li><strong>Point density.</strong> Points are drawn with density <span class="arithmatex">\(p(x) \propto 0.1 + \exp(-\lvert x - (0.45, 0.25)\rvert^2 / (2 \cdot 0.25^2))\)</span>. Each sample has its own cloud of <span class="arithmatex">\(N = 256\)</span> points, about 60 % of them within two blob widths of the centre, a region covering a quarter of the disc.</li>
+<li><strong>Weights.</strong> The quadrature weights are <span class="arithmatex">\(w_n \propto 1/p(x_n)\)</span>, normalised to sum to 1.</li>
+<li><strong>Input.</strong> The input <span class="arithmatex">\(u\)</span> is a random sum of six cosines, <span class="arithmatex">\(\sum_j a_j \cos(\omega_j\cdot x + \phi_j)\)</span> with <span class="arithmatex">\(\omega_j \sim \mathcal{N}(0, 2.5^2 I)\)</span>.</li>
+<li><strong>Target.</strong> The target is the nonlinear integral operator <span class="arithmatex">\(v = \int_{\text{disc}} e^{-\lvert x-y\rvert^2/(2\cdot 0.3^2)} u(y)\,dy + \tfrac12 u^2\)</span>. The integral is computed on a uniform reference grid of 2 809 points.</li>
+<li><strong>Model.</strong> <code>GeoFNO(1, 1, n_modes=(6, 6), latent_shape=(16, 16), hidden_channels=16, n_layers=3, deformation="mlp", deformation_kwargs={"width": 32, "depth": 2})</code>.</li>
+<li><strong>Training.</strong> 256 training and 64 test samples, Adam at <span class="arithmatex">\(3\times10^{-3}\)</span> with cosine decay, batch 16, 500 steps, seeds 0, 1 and 2. The loss is the quadrature-weighted relative L2.</li>
+<li><strong>Penalty.</strong> The fold penalty is <span class="arithmatex">\(\lambda\,\mathrm{mean}(\mathrm{relu}(-\det\nabla\varphi / \det_0))\)</span> with <span class="arithmatex">\(\lambda = 0.1\)</span>. Here <span class="arithmatex">\(\det_0 = \prod_a \mathrm{scale}_a\)</span> is the determinant at init, so the normalised determinant is 1 for the untrained chart.</li>
+<li><strong>Reference arm.</strong> <code>deformation="identity"</code> is included as a reference.</li>
+<li><strong>Runtime.</strong> CPU only, on a shared 16-core VM. A full run took about 4 minutes, including data generation and compilation.</li>
+</ul>
+<p>The determinant statistics are over all test points of all three seeds, normalised by <span class="arithmatex">\(\det_0\)</span>. "Folds" is the fraction of test points with <span class="arithmatex">\(\det\nabla\varphi \le 0\)</span>, given as the mean over seeds (the maximum in brackets). The test relative L2 is mean ± standard deviation over seeds. The time per step is the median wall time of a jitted training step, excluding the first steps.</p>
+<table>
+<thead>
+<tr>
+<th>chart</th>
+<th><code>jacobian_weights</code></th>
+<th>fold penalty</th>
+<th>test rel. L2</th>
+<th>folds</th>
+<th>min det J</th>
+<th>median det J</th>
+<th>ms / step</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>identity</td>
+<td>False</td>
+<td>off</td>
+<td>0.334 ± 0.006</td>
+<td>0 %</td>
+<td>1.000</td>
+<td>1.000</td>
+<td>20.2</td>
+</tr>
+<tr>
+<td>mlp</td>
+<td>False</td>
+<td>off</td>
+<td><strong>0.327 ± 0.009</strong></td>
+<td>2.0 % (2.4 %)</td>
+<td>−0.95</td>
+<td>0.77</td>
+<td>27.4</td>
+</tr>
+<tr>
+<td>mlp</td>
+<td>False</td>
+<td>on</td>
+<td>0.341 ± 0.013</td>
+<td>14.7 % (19.4 %)</td>
+<td>−0.94</td>
+<td>0.14</td>
+<td>29.5</td>
+</tr>
+<tr>
+<td>mlp</td>
+<td>True</td>
+<td>off</td>
+<td>0.355 ± 0.006</td>
+<td>44.8 % (46.4 %)</td>
+<td>−12.0</td>
+<td>0.87</td>
+<td>33.4</td>
+</tr>
+<tr>
+<td>mlp</td>
+<td>True</td>
+<td>on</td>
+<td>0.333 ± 0.006</td>
+<td><strong>0 %</strong></td>
+<td>+0.018</td>
+<td>0.86</td>
+<td>34.6</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Reading.</strong></p>
+<ul>
+<li><strong>Jacobian weights alone are harmful.</strong><ul>
+<li>They raise the test error by about 3 standard deviations (0.355 against 0.327).</li>
+<li>They make the chart fold over almost half the domain, with determinants from −12 to 17.</li>
+<li>The weights use <span class="arithmatex">\(\lvert\det\nabla\varphi\rvert\)</span>, so a fold costs nothing. Meanwhile the chart can now steer the quadrature, and it uses that freedom to reweight the points rather than to transport them. This is the instability that option B warned about, and it appears on a single small problem.</li>
+</ul>
+</li>
+<li><strong>Jacobian weights need the fold penalty.</strong><ul>
+<li>With the penalty, the chart has no folds on any seed (min det J &gt; 0).</li>
+<li>The error returns to the level of the identity chart (0.333).</li>
+<li>It is still no better than the unweighted chart.</li>
+</ul>
+</li>
+<li><strong>Without Jacobian weights, the penalty at this strength does not help.</strong><ul>
+<li>Mild folds remain (2 % without the penalty; 15 % with it).</li>
+<li>With the penalty, the chart drifts towards <span class="arithmatex">\(\det \approx 0\)</span> (median 0.14).</li>
+<li>The error rises slightly.</li>
+<li>A relu penalty only acts on points that are already folded, so this is a weak, poorly targeted constraint. A stronger <span class="arithmatex">\(\lambda\)</span> or a log-barrier would behave differently. That is a tuning question for the user's loss, not a default for the library.</li>
+</ul>
+</li>
+<li><strong>Cost.</strong> Jacobian weights add about 20 % per training step at <span class="arithmatex">\(d = 2\)</span> (27 → 33 ms). Each penalty evaluation adds another <code>jacobian_det</code> call.</li>
+<li><strong>The learned chart is worth little here.</strong> On this problem the best MLP chart (0.327) is within about one standard deviation of the identity chart (0.334). The measure question is therefore second-order compared with the chart itself.</li>
+</ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<h1 id="85-planned-the-ablation-on-the-geo-fno-elasticity-point-cloud-benchmark-this-record-uses-a-cpu-cheap-synthetic-disc-problem-with-deliberately-non-uniform-density-instead-so-that-the-chart-has-a-reason-to-deform-the-conclusion-favours-the-status-quo-so-a-larger-benchmark-is-not-needed-before-this-decision-reopen-85-if-a-real-dataset-shows-the-reweighting-helping">85 planned the ablation on the Geo-FNO elasticity point-cloud benchmark. This record uses a CPU-cheap synthetic disc problem with deliberately non-uniform density instead, so that the chart has a reason to deform. The conclusion favours the status quo, so a larger benchmark is not needed before this decision. Reopen #85 if a real dataset shows the reweighting helping.<a class="headerlink" href="#85-planned-the-ablation-on-the-geo-fno-elasticity-point-cloud-benchmark-this-record-uses-a-cpu-cheap-synthetic-disc-problem-with-deliberately-non-uniform-density-instead-so-that-the-chart-has-a-reason-to-deform-the-conclusion-favours-the-status-quo-so-a-larger-benchmark-is-not-needed-before-this-decision-reopen-85-if-a-real-dataset-shows-the-reweighting-helping" title="Permanent link">&para;</a></h1>
+</div>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Keep <code>jacobian_weights=False</code> as the default (option A).</strong><ul>
+<li>Flipping it made the model worse and produced heavily folded charts.</li>
+<li>It only matched the default once a fold penalty was added.</li>
+<li>It costs about 20 % more per step.</li>
+<li>The flag stays available for users who want the consistent measure, but it should be turned on only together with a fold penalty.</li>
+</ul>
+</li>
+<li><strong>The fold regulariser lives in the documentation, not in geonnax code (no option C).</strong><ul>
+<li>geonnax has no losses. The penalty is two lines built on the public <code>LearnedDeformation.jacobian_det</code>, and its strength and form (relu or log-barrier) are problem-dependent.</li>
+<li>The recipe is the snippet below.</li>
+<li>In pyrox, a prior on the chart (pyrox#298) is the principled way to discourage folds. pyrox needs no new loss helper either.</li>
+</ul>
+</li>
+</ul>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="k">def</span><span class="w"> </span><span class="nf">fold_penalty</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;mean(relu(-det∇φ / det₀)) over one cloud; 0 for a fold-free chart.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">det0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">deformation</span><span class="o">.</span><span class="n">scale</span><span class="p">)</span>  <span class="c1"># det∇φ of the untrained box map</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">det</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">deformation</span><span class="o">.</span><span class="n">jacobian_det</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span> <span class="o">/</span> <span class="n">det0</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="o">-</span><span class="n">det</span><span class="p">))</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="c1"># loss = data_loss + 0.1 * jnp.mean(jax.vmap(fold_penalty, (None, 0))(model, x))</span>
+</code></pre></div>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<ul>
+<li>No code change: the <code>jacobian_weights</code> default stays <code>False</code>, and downstream pyrox and kernellib are unaffected.</li>
+<li>No new public name. <code>LearnedDeformation.jacobian_det</code> remains both the fold diagnostic and the building block for the penalty.</li>
+<li>Users who set <code>jacobian_weights=True</code> should add the fold penalty above. Without it, the chart exploits the <span class="arithmatex">\(\lvert\det\rvert\)</span> weights and folds.</li>
+<li>
+<h1 id="85-is-closed-reopen-it-if-a-real-benchmark-such-as-elasticity-or-90-shows-the-latent-measure-helping">85 is closed. Reopen it if a real benchmark, such as elasticity or #90, shows the latent measure helping.<a class="headerlink" href="#85-is-closed-reopen-it-if-a-real-benchmark-such-as-elasticity-or-90-shows-the-latent-measure-helping" title="Permanent link">&para;</a></h1>
+</li>
+</ul>
+<h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Z. Li, D. Z. Huang, B. Liu, A. Anandkumar. <em>Fourier Neural Operator with Learned Deformations for PDEs on General Geometries.</em> Journal of Machine Learning Research 24(388):1–26, 2023. <a href="https://arxiv.org/abs/2207.05209">arXiv:2207.05209</a>, <a href="https://www.jmlr.org/papers/v24/23-0064.html">JMLR</a>.</li>
+<li>Reference implementation: <a href="https://github.com/neuraloperator/Geo-FNO">neuraloperator/Geo-FNO</a> (<code>elasticity/elas_geofno.py</code>, the <code>IPHI</code> chart).</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "content.code.copy", "content.code.annotate"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
