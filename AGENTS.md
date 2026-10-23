@@ -42,7 +42,7 @@ from a submodule are the bases (`geonnax.basis`), the lon/lat helpers
 | Building blocks | `layers/` | `StandardizedConv`, `Downsample` / `Upsample`, `band_limited_resize` / `AntiAliasedActivation`, `Block`, `ResnetBlock`, `ConvNeXtBlock`, `SqueezeExcitation`, `GlobalResponseNorm`, attention (`Attention`, `LinearAttention`, `WindowedAttention`, `WaveletAttention`), `SpectralConv` + factorized weights (`DenseTensor`, `CPTensor`, `TuckerTensor`, `TTTensor`), `nonuniform_rfft` / `nonuniform_irfft`, spherical harmonic / wavelet transforms and convs, `dwt` / `idwt`, `WaveletConv` |
 | Neural operators | `fno.py`, `sfno.py`, `wno.py`, `mswt.py`, `manifold_no.py`, `cno.py`, `lno.py` | `FNO`, `SFNO`, `WNO`, `MSWT`, `ManifoldNO`, `CNO` and their blocks; `LNO`, a local core marched in time |
 | U-Net | `unet.py` | `UNet` (alias `XUNet`), `Stage`, `NestedResidualUNet` |
-| Implicit neural representations | `siren.py`, `multi_scale_siren.py`, `mfn.py`, `conditioning.py` | `SIREN`, `SirenDense`, the SIREN init rules, `MultiScaleSIREN`, `FourierNet` / `GaborNet`, conditioners (`ConcatConditioner`, `AffineModulation` = `FiLM`, `HyperLinear`), `ConditionedINR`, `HyperSIREN` |
+| Implicit neural representations | `siren.py`, `multi_scale_siren.py`, `mfn.py`, `neural_field.py`, `conditioning.py` | `SIREN`, `SirenDense`, the SIREN init rules, `MultiScaleSIREN`, `FourierNet` / `GaborNet`, `NeuralFieldMLP` (the BayesNF network), conditioners (`ConcatConditioner`, `AffineModulation` = `FiLM`, `HyperLinear`), `ConditionedINR`, `HyperSIREN` |
 | Field derivatives | `diffops.py` | `grad`, `jacobian`, `divergence`, `curl2d`, `laplacian`; on the unit sphere `surface_grad`, `surface_grad_enu`, `laplace_beltrami` (operators on single-example fields, not losses) |
 | Uncertainty-aware cores | `randfeat.py`, `sngp.py`, `vssgp.py`, `spectral_norm.py`, `ensemble.py`, `heteroscedastic.py`, `mixture.py`, `crf.py`, `ncp.py` | Random Fourier features, the SNGP head and its Laplace covariance, the deep VSSGP core, spectral normalisation, BatchEnsemble layers, heteroscedastic heads, mixture-density head, linear-chain CRF, NCP input perturbation — each the deterministic half of a probabilistic layer pyrox builds |
 
@@ -52,6 +52,7 @@ imports only itself and `_basis`; `geo` → `_basis`; the model modules import
 `conditioning` and `multi_scale_siren` → `siren`, `vssgp` → `randfeat`,
 `slepian` → `encoders` / `geo`, `geofno` → `fno`, `lno` → `cno`,
 `encoders` → `randfeat` (`GaussianFourierEncoder` reuses `rff_forward`);
+`neural_field` → `basis` (the public feature transforms it gates);
 `diffops` imports `geo` and `_basis` only. No test enforces this; keep it.
 
 ### Boundaries
