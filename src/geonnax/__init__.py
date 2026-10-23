@@ -22,6 +22,8 @@ Submodules:
 - `geonnax.encoders` — coordinate encoders (``Deg2Rad``, …,
   ``SphericalHarmonicEncoder``) and ``GeoContextEncoder`` for
   lon/lat/time/covariate context vectors.
+- `geonnax.neural_field` — ``NeuralFieldMLP``, the Bayesian Neural Field
+  architecture (Saad et al., 2024) as a deterministic core.
 - `geonnax.ncp` — ``NCPContinuousPerturb`` input perturbation.
 - `geonnax.siren` — ``SirenDense``, ``SIREN`` (Sitzmann et al.,
   2020).
@@ -65,6 +67,7 @@ from geonnax import (
     mswt,
     multi_scale_siren,
     ncp,
+    neural_field,
     randfeat,
     sfno,
     siren,
@@ -148,6 +151,7 @@ from geonnax.mixture import MixtureOfGaussiansDenseHead
 from geonnax.mswt import MSWT, MSWTBlock, MultiScaleWaveletTransformer
 from geonnax.multi_scale_siren import MultiScaleSIREN, log_spaced_omegas
 from geonnax.ncp import NCPContinuousPerturb
+from geonnax.neural_field import NeuralFieldMLP
 from geonnax.randfeat import (
     OrthogonalRandomFeatures,
     orthogonal_blocks,
@@ -237,6 +241,7 @@ __all__ = [
     "MultiScaleWaveletTransformer",
     "NCPContinuousPerturb",
     "NestedResidualUNet",
+    "NeuralFieldMLP",
     "OrthogonalRandomFeatures",
     "RandomFeatureGaussianProcess",
     "Rank1ProjInit",
@@ -295,6 +300,7 @@ __all__ = [
     "mswt",
     "multi_scale_siren",
     "ncp",
+    "neural_field",
     "orthogonal_blocks",
     "randfeat",
     "rff_cosine_forward",

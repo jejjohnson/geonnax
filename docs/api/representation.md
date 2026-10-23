@@ -25,6 +25,31 @@ coordinate.
 
 ::: geonnax.multi_scale_siren
 
+## Bayesian Neural Field core
+
+`NeuralFieldMLP` is the network of Google's Bayesian Neural Field (Saad et al., 2024)
+without its priors: learned per-input scales, gated feature blocks (rescaled inputs,
+dyadic Fourier, seasonal, interactions and an optional pre-encoded block such as
+spherical-harmonic features), a learned mix of `elu` and `tanh`, and NTK-scaled dense
+layers with learned gains. Train it deterministically, or let pyrox-nn swap its named
+fields for priors.
+
+```python
+import jax, jax.numpy as jnp, jax.random as jr
+import geonnax
+
+enc = geonnax.SphericalHarmonicEncoder(l_max=6, input_mode="lonlat")
+field = geonnax.NeuralFieldMLP.init(
+    (365.0, 180.0, 90.0), width=64, depth=2,           # inputs: (t, lon, lat)
+    seasonality_periods=(365.25,), num_seasonal_harmonics=(3,),
+    extra_features=49, key=jr.PRNGKey(0),
+)
+x = jnp.array([12.0, 3.5, 40.2])
+y = field(x, enc(geonnax.geo.deg2rad(x[1:])))                # (1,)
+```
+
+::: geonnax.neural_field
+
 ## Multiplicative Filter Networks
 
 MFNs (Fathony et al., 2021) build an output by repeatedly multiplying a linear map with
