@@ -113,6 +113,7 @@ from geonnax.ensemble import (
 from geonnax.fno import FNO, DomainPadding, FNOBlock, FourierNeuralOperator
 from geonnax.geofno import GeoFNO, LearnedDeformation
 from geonnax.heteroscedastic import (
+    GaussianRegressionHead,
     HeteroscedasticHead,
     MCSigmoidDenseFA,
     MCSoftmaxDenseFA,
@@ -219,6 +220,7 @@ __all__ = [
     "GaborFilter",
     "GaborNet",
     "GaussianFourierEncoder",
+    "GaussianRegressionHead",
     "GeneratedSiren",
     "GeoContextEncoder",
     "GeoFNO",

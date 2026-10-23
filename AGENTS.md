@@ -44,7 +44,7 @@ from a submodule are the bases (`geonnax.basis`), the lon/lat helpers
 | U-Net | `unet.py` | `UNet` (alias `XUNet`), `Stage`, `NestedResidualUNet` |
 | Implicit neural representations | `siren.py`, `multi_scale_siren.py`, `mfn.py`, `neural_field.py`, `separable.py`, `conditioning.py` | `SIREN`, `SirenDense`, the SIREN init rules, `MultiScaleSIREN`, `FourierNet` / `GaborNet`, `NeuralFieldMLP` (the BayesNF network), `SeparableINR` (rank-r per-axis networks, `on_grid`), conditioners (`ConcatConditioner`, `AffineModulation` = `FiLM`, `HyperLinear`), `ConditionedINR`, `HyperSIREN` |
 | Field derivatives | `diffops.py` | `grad`, `jacobian`, `divergence`, `curl2d`, `laplacian`; on the unit sphere `surface_grad`, `surface_grad_enu`, `laplace_beltrami` (operators on single-example fields, not losses) |
-| Uncertainty-aware cores | `randfeat.py`, `sngp.py`, `vssgp.py`, `spectral_norm.py`, `ensemble.py`, `heteroscedastic.py`, `mixture.py`, `crf.py`, `ncp.py` | Random Fourier features, the SNGP head and its Laplace covariance, the deep VSSGP core, spectral normalisation, BatchEnsemble layers, heteroscedastic heads, mixture-density head, linear-chain CRF, NCP input perturbation — each the deterministic half of a probabilistic layer pyrox builds |
+| Uncertainty-aware cores | `randfeat.py`, `sngp.py`, `vssgp.py`, `spectral_norm.py`, `ensemble.py`, `heteroscedastic.py`, `mixture.py`, `crf.py`, `ncp.py` | Random Fourier features, the SNGP head and its Laplace covariance, the deep VSSGP core, spectral normalisation, BatchEnsemble layers, heteroscedastic classification heads and the Gaussian regression head (`GaussianRegressionHead`), mixture-density head, linear-chain CRF, NCP input perturbation — each the deterministic half of a probabilistic layer pyrox builds |
 
 Imports point one way: `_basis` imports nothing else in geonnax; `layers`
 imports only itself and `_basis`; `geo` → `_basis`; `basis` → `_basis` and
@@ -127,6 +127,7 @@ exists:
 | A SIREN layer or its `U(-a, a)` init | `geonnax.SirenDense`, `SIREN`, `siren_W_limit`, `build_siren_specs` |
 | FiLM / concat / hypernetwork conditioning | `geonnax.AffineModulation` (`FiLM`), `ConcatConditioner`, `HyperLinear`, `ConditionedINR`, `HyperSIREN` |
 | Spectral normalisation, power iteration | `geonnax.SpectralNormalization` |
+| A mean plus input-dependent log σ regression head | `geonnax.GaussianRegressionHead` |
 | An SNGP head, an EMA Laplace precision | `geonnax.RandomFeatureGaussianProcess`, `LaplaceRandomFeatureCovariance` |
 | BatchEnsemble rank-1 layers | `geonnax.DenseRank1`, `LayerNormEnsemble`, `MultiHeadAttentionBE`, `init_rank1_proj` / `apply_rank1_proj` |
 | Glorot init, positive-argument checks, a safe `sqrt` / `arccos` | the private helpers in the index (`ensemble._glorot_uniform`, `siren._require_positive`, `_basis._rbf._safe_sqrt`, …) |

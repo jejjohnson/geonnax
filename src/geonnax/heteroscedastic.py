@@ -11,6 +11,8 @@ here (``hetero_noisy_logits``, ``HeteroscedasticHead``).
   low-rank-plus-diagonal logit noise, MC-averaged softmax probabilities.
 * `MCSigmoidDenseFA` — same noise model, sigmoid output for
   multi-label / binary classification.
+* `GaussianRegressionHead` — regression head returning a mean and an
+  input-dependent, clamped log standard deviation.
 
 Both share the same heteroscedastic logit-noise model — given an
 input-dependent low-rank factor $V(x) \\in \\mathbb{R}^{C \\times r}$
@@ -24,7 +26,9 @@ $$
 
 
 Predictions average a small number of Monte Carlo softmax / sigmoid
-samples.
+samples. The regression head needs no sampling: it returns the two
+parameters $(\\mu(x), \\log\\sigma(x))$ of a Gaussian, and the likelihood
+is built downstream.
 """
 
 from __future__ import annotations
@@ -330,7 +334,181 @@ class MCSigmoidDenseFA(HeteroscedasticHead):
         return jnp.mean(jax.nn.sigmoid(logits), axis=0)
 
 
+# Clamp range of `GaussianRegressionHead`'s log standard deviation.
+_LOG_SIGMA_MIN = -7.0
+_LOG_SIGMA_MAX = 3.0
+
+
+class GaussianRegressionHead(eqx.Module):
+    r"""Heteroscedastic Gaussian regression head (mean plus log-scale).
+
+    Maps a feature vector $h \in \mathbb{R}^{D_\mathrm{in}}$ to the
+    parameters of an input-dependent Gaussian observation model,
+
+    $$
+    y \sim \mathcal{N}\bigl(\mu(h),\ \sigma(h)^2\bigr), \qquad
+    \mu = W_\mu^\top h + b_\mu, \qquad
+    \log\sigma = \operatorname{clip}\bigl(W_s^\top h + b_s,\
+    -7,\ 3\bigr),
+    $$
+
+    with one output per target, $\mu, \log\sigma \in \mathbb{R}^K$
+    (Nix & Weigend, 1994). The clamp keeps $\sigma \in
+    [e^{-7}, e^{3}] \approx [9 \times 10^{-4}, 20]$, so the Gaussian
+    negative log-likelihood cannot diverge by collapsing $\sigma$ onto a
+    fitted point; outside the range the gradient through $\log\sigma$ is
+    zero.
+
+    **Initialisation.** $W_\mu$ is Glorot-uniform and $b_\mu = 0$;
+    $W_s = \texttt{scale\_init\_factor} \cdot \text{Glorot}$ (zero by
+    default) and $b_s = \log\sigma_\mathrm{init}$, so the head starts
+    homoscedastic at $\sigma_\mathrm{init}$ and the variance branch only
+    departs from it as the data ask. Fitting the mean before the variance
+    follows Nix & Weigend (1994); starting the variance flat avoids the
+    early collapse of joint mean-variance NLL training described by
+    Seitzer et al. (2022). The small-scale init mirrors the
+    ``scale_init_factor`` / ``diag_init_bias`` choice of
+    `HeteroscedasticHead`. A zero $W_s$ still receives gradient
+    ($\partial \log\sigma / \partial W_s = h$).
+
+    The head returns parameters, not a distribution: build the likelihood
+    downstream. With a known per-observation error $\sigma_i$, combine the
+    two as $\sigma_i^2 + \sigma(h)^2$. A Bayesian wrapper samples the four
+    array fields ``W_loc``, ``b_loc``, ``W_log_scale`` and ``b_log_scale``.
+
+    Attributes:
+        W_loc: Mean weight matrix $W_\mu$, shape ``(D_in, K)``.
+        b_loc: Mean bias $b_\mu$, shape ``(K,)``.
+        W_log_scale: Log-scale weight matrix $W_s$, shape ``(D_in, K)``.
+        b_log_scale: Log-scale bias $b_s$, shape ``(K,)``.
+        in_features: Input dimension $D_\mathrm{in}$.
+        out_features: Number of targets $K$.
+        log_sigma_min: Lower clamp of $\log\sigma$ (``-7.0``).
+        log_sigma_max: Upper clamp of $\log\sigma$ (``3.0``).
+
+    Examples:
+        >>> import jax, jax.numpy as jnp, jax.random as jr
+        >>> head = GaussianRegressionHead.init(
+        ...     in_features=8, out_features=2, sigma_init=0.5, key=jr.PRNGKey(0)
+        ... )
+        >>> mu, log_sigma = head(jnp.ones(8))
+        >>> mu.shape, log_sigma.shape
+        ((2,), (2,))
+        >>> [round(float(s), 3) for s in jnp.exp(log_sigma)]  # homoscedastic at init
+        [0.5, 0.5]
+        >>> mu_b, log_sigma_b = jax.vmap(head)(jnp.ones((5, 8)))
+        >>> mu_b.shape
+        (5, 2)
+
+    References:
+        Nix, D. A., & Weigend, A. S. (1994). *Estimating the mean and
+        variance of the target probability distribution.* ICNN.
+
+        Seitzer, M., Tavakoli, A., Antic, D., & Martius, G. (2022). *On the
+        Pitfalls of Heteroscedastic Uncertainty Estimation with Probabilistic
+        Neural Networks.* ICLR.
+    """
+
+    W_loc: Float[Array, "D_in K"]
+    b_loc: Float[Array, " K"]
+    W_log_scale: Float[Array, "D_in K"]
+    b_log_scale: Float[Array, " K"]
+    in_features: int = eqx.field(static=True)
+    out_features: int = eqx.field(static=True)
+    log_sigma_min: float = eqx.field(static=True, default=_LOG_SIGMA_MIN)
+    log_sigma_max: float = eqx.field(static=True, default=_LOG_SIGMA_MAX)
+
+    @classmethod
+    def init(
+        cls,
+        in_features: int,
+        out_features: int = 1,
+        *,
+        key: PRNGKeyArray,
+        sigma_init: float = 1.0,
+        scale_init_factor: float = 0.0,
+    ) -> Self:
+        r"""Build the head with a Glorot mean branch and a flat log-scale.
+
+        Args:
+            in_features: Input dimension $D_\mathrm{in}$; must be > 0.
+            out_features: Number of targets $K$; must be > 0.
+            key: PRNG key, split between the mean and log-scale weights.
+            sigma_init: Initial standard deviation $\sigma_\mathrm{init}$;
+                $\log\sigma_\mathrm{init}$ must lie in $[-7, 3]$.
+            scale_init_factor: Multiplier on the Glorot draw for $W_s$;
+                ``0.0`` (the default) makes the initial head exactly
+                homoscedastic. Must be >= 0.
+
+        Returns:
+            The initialised head.
+
+        Raises:
+            ValueError: If a dimension is non-positive, ``sigma_init`` is not
+                positive or outside $[e^{-7}, e^{3}]$, or
+                ``scale_init_factor`` is negative.
+
+        Examples:
+            >>> import jax.random as jr
+            >>> head = GaussianRegressionHead.init(4, 3, key=jr.PRNGKey(0))
+            >>> head.W_loc.shape, head.W_log_scale.shape, head.b_log_scale.shape
+            ((4, 3), (4, 3), (3,))
+        """
+        if in_features <= 0 or out_features <= 0:
+            raise ValueError(
+                "in_features and out_features must be > 0; "
+                f"got {in_features=}, {out_features=}."
+            )
+        if not sigma_init > 0:
+            raise ValueError(f"sigma_init must be > 0; got {sigma_init}.")
+        log_sigma_init = math.log(sigma_init)
+        if not _LOG_SIGMA_MIN <= log_sigma_init <= _LOG_SIGMA_MAX:
+            raise ValueError(
+                f"log(sigma_init) must lie in [{_LOG_SIGMA_MIN}, {_LOG_SIGMA_MAX}]; "
+                f"got sigma_init={sigma_init} (log = {log_sigma_init:.3f})."
+            )
+        if scale_init_factor < 0:
+            raise ValueError(
+                f"scale_init_factor must be >= 0; got {scale_init_factor}."
+            )
+        k_loc, k_scale = jr.split(key)
+        return cls(
+            W_loc=_glorot_uniform(k_loc, in_features, out_features),
+            b_loc=jnp.zeros(out_features),
+            W_log_scale=scale_init_factor
+            * _glorot_uniform(k_scale, in_features, out_features),
+            b_log_scale=jnp.full((out_features,), log_sigma_init),
+            in_features=in_features,
+            out_features=out_features,
+        )
+
+    def __call__(
+        self, h: Float[Array, " D_in"]
+    ) -> tuple[Float[Array, " K"], Float[Array, " K"]]:
+        r"""Map one feature vector to $(\mu, \log\sigma)$.
+
+        Args:
+            h: Feature vector of shape ``(D_in,)``; ``vmap`` to batch.
+
+        Returns:
+            ``(mu, log_sigma)``, each of shape ``(K,)``; ``log_sigma`` is
+            clamped to ``[log_sigma_min, log_sigma_max]``.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> head = GaussianRegressionHead.init(4, key=jr.PRNGKey(0))
+            >>> mu, log_sigma = head(jnp.ones(4))
+            >>> mu.shape, float(log_sigma[0])
+            ((1,), 0.0)
+        """
+        mu = einx.dot("d, d k -> k", h, self.W_loc) + self.b_loc
+        raw = einx.dot("d, d k -> k", h, self.W_log_scale) + self.b_log_scale
+        log_sigma = jnp.clip(raw, self.log_sigma_min, self.log_sigma_max)
+        return mu, log_sigma
+
+
 __all__ = [
+    "GaussianRegressionHead",
     "HeteroscedasticHead",
     "MCSigmoidDenseFA",
     "MCSoftmaxDenseFA",
