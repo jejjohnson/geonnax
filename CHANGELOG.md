@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.0.11](https://github.com/jejjohnson/geonnax/compare/v0.0.10...v0.0.11) (2026-10-23)
+
+
+### Features
+
+* **basis:** add healpix_grid, HEALPix pixel centres with equal-area weights ([#147](https://github.com/jejjohnson/geonnax/issues/147)) ([f9d109e](https://github.com/jejjohnson/geonnax/commit/f9d109e1770292098bd1f5f2b27869fa6146f91d))
+* **heteroscedastic:** add GaussianRegressionHead, a mean plus log-scale regression core ([#150](https://github.com/jejjohnson/geonnax/issues/150)) ([ce7add2](https://github.com/jejjohnson/geonnax/commit/ce7add26a7f63aa78d6d103699b587a6a7faa0fe))
+* **separable:** add SeparableINR, a rank-r separable neural field with on_grid ([#148](https://github.com/jejjohnson/geonnax/issues/148)) ([34bb898](https://github.com/jejjohnson/geonnax/commit/34bb898b8bf7f0ba6de7f001acee8288f1eb3038))
+
+
+### Bug Fixes
+
+* **basis:** fourier_features and seasonal_features follow the input dtype ([#146](https://github.com/jejjohnson/geonnax/issues/146)) ([7da0eeb](https://github.com/jejjohnson/geonnax/commit/7da0eeb3c4bf17e23b5f21ecdf2dfb8fdc4a22d9)), closes [#145](https://github.com/jejjohnson/geonnax/issues/145)
+
 ## [0.0.10](https://github.com/jejjohnson/geonnax/compare/v0.0.9...v0.0.10) (2026-10-23)
 
 
