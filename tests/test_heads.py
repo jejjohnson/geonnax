@@ -6,6 +6,7 @@ sequences for small ``T`` and ``K``.
 """
 
 import itertools
+import math
 
 import equinox as eqx
 import jax
@@ -315,6 +316,7 @@ def test_gaussian_regression_head_jit_and_grad():
 
     mu, log_sigma = eqx.filter_jit(head)(hs[0])
     mu_ref, log_sigma_ref = head(hs[0])
+    # atol 1e-6: XLA may reassociate the float32 dot under jit.
     np.testing.assert_allclose(mu, mu_ref, atol=1e-6)
     np.testing.assert_allclose(log_sigma, log_sigma_ref, atol=1e-6)
     grads = eqx.filter_grad(nll)(head)
@@ -333,6 +335,8 @@ def test_gaussian_regression_head_jit_and_grad():
         {"sigma_init": 0.0},
         {"sigma_init": 1e-4},  # log < -7
         {"sigma_init": 100.0},  # log > 3
+        {"sigma_init": math.exp(-7.0)},  # on the lower clip
+        {"sigma_init": math.exp(3.0)},  # on the upper clip
         {"scale_init_factor": -0.1},
     ],
 )

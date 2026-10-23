@@ -356,19 +356,30 @@ class GaussianRegressionHead(eqx.Module):
     (Nix & Weigend, 1994). The clamp keeps $\sigma \in
     [e^{-7}, e^{3}] \approx [9 \times 10^{-4}, 20]$, so the Gaussian
     negative log-likelihood cannot diverge by collapsing $\sigma$ onto a
-    fitted point; outside the range the gradient through $\log\sigma$ is
-    zero.
+    fitted point. The hard clip is deliberate: it pins $\sigma$ to exact,
+    documented bounds, at the cost of a zero gradient through
+    $\log\sigma$ while the pre-activation is outside the range (a
+    saturated output stops learning until the mean branch moves the
+    residuals back). A soft clamp, e.g.
+    $\log\sigma_{\min} + (\log\sigma_{\max} - \log\sigma_{\min})
+    \,\mathrm{sigmoid}(\cdot)$ or a softplus floor, keeps a gradient
+    everywhere but no longer reproduces $\sigma_\mathrm{init}$ exactly
+    from $b_s$; wrap the head if you need it.
 
     **Initialisation.** $W_\mu$ is Glorot-uniform and $b_\mu = 0$;
     $W_s = \texttt{scale\_init\_factor} \cdot \text{Glorot}$ (zero by
     default) and $b_s = \log\sigma_\mathrm{init}$, so the head starts
     homoscedastic at $\sigma_\mathrm{init}$ and the variance branch only
-    departs from it as the data ask. Fitting the mean before the variance
-    follows Nix & Weigend (1994); starting the variance flat avoids the
-    early collapse of joint mean-variance NLL training described by
-    Seitzer et al. (2022). The small-scale init mirrors the
-    ``scale_init_factor`` / ``diag_init_bias`` choice of
-    `HeteroscedasticHead`. A zero $W_s$ still receives gradient
+    departs from it as the data ask. Nix & Weigend (1994) train in two
+    phases, the mean first and the variance after; a flat variance at init
+    approximates that schedule inside a single joint fit. Seitzer et al.
+    (2022) show that the $1/\sigma^2$ weighting of the Gaussian NLL lets
+    the mean underfit the regions the variance branch has already marked
+    as noisy (they propose the $\beta$-NLL); starting homoscedastic keeps
+    that weighting uniform early on. The small-scale init follows the
+    ``scale_init_factor`` knob of `HeteroscedasticHead`, with a different
+    default: that head uses ``0.1``, this one ``0.0`` so the start is
+    exactly homoscedastic. A zero $W_s$ still receives gradient
     ($\partial \log\sigma / \partial W_s = h$).
 
     The head returns parameters, not a distribution: build the likelihood
@@ -435,7 +446,8 @@ class GaussianRegressionHead(eqx.Module):
             out_features: Number of targets $K$; must be > 0.
             key: PRNG key, split between the mean and log-scale weights.
             sigma_init: Initial standard deviation $\sigma_\mathrm{init}$;
-                $\log\sigma_\mathrm{init}$ must lie in $[-7, 3]$.
+                $\log\sigma_\mathrm{init}$ must lie strictly inside
+                $(-7, 3)$, so the head does not start on the clip.
             scale_init_factor: Multiplier on the Glorot draw for $W_s$;
                 ``0.0`` (the default) makes the initial head exactly
                 homoscedastic. Must be >= 0.
@@ -445,7 +457,7 @@ class GaussianRegressionHead(eqx.Module):
 
         Raises:
             ValueError: If a dimension is non-positive, ``sigma_init`` is not
-                positive or outside $[e^{-7}, e^{3}]$, or
+                positive or not strictly inside $(e^{-7}, e^{3})$, or
                 ``scale_init_factor`` is negative.
 
         Examples:
@@ -462,9 +474,12 @@ class GaussianRegressionHead(eqx.Module):
         if not sigma_init > 0:
             raise ValueError(f"sigma_init must be > 0; got {sigma_init}.")
         log_sigma_init = math.log(sigma_init)
-        if not _LOG_SIGMA_MIN <= log_sigma_init <= _LOG_SIGMA_MAX:
+        # Strict: at a tie jnp.clip splits the gradient (0.5 to b_s), so a
+        # head initialised on the bound would start half-saturated.
+        if not _LOG_SIGMA_MIN < log_sigma_init < _LOG_SIGMA_MAX:
             raise ValueError(
-                f"log(sigma_init) must lie in [{_LOG_SIGMA_MIN}, {_LOG_SIGMA_MAX}]; "
+                "log(sigma_init) must lie strictly inside "
+                f"({_LOG_SIGMA_MIN}, {_LOG_SIGMA_MAX}); "
                 f"got sigma_init={sigma_init} (log = {log_sigma_init:.3f})."
             )
         if scale_init_factor < 0:
