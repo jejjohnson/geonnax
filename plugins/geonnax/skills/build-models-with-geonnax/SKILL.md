@@ -1,6 +1,6 @@
 ---
 name: build-models-with-geonnax
-description: Build geoscientific neural networks in JAX / Equinox on geonnax — Fourier, spherical, wavelet and convolutional neural operators (FNO, SFNO, WNO, MSWT, CNO), local neural operators for time marching (LNO) and Geo-FNO on point clouds (GeoFNO), dimension-flexible U-Nets, SIREN and multiplicative filter networks with FiLM / hypernetwork conditioning, lon/lat and spherical-harmonic encoders, spectral and localized bases with their eigenvalues or geometry, random Fourier features, spectral normalisation, SNGP / VSSGP heads, BatchEnsemble and heteroscedastic layers. Use whenever a task builds or trains a neural network on gridded, spherical or coordinate data, writes an FFT / spherical-harmonic / wavelet layer, encodes lon/lat or time, evaluates a basis, or needs a deterministic core for an uncertainty-aware model, in a project that uses (or could use) geonnax.
+description: Build geoscientific neural networks in JAX / Equinox on geonnax — Fourier, spherical, wavelet and convolutional neural operators (FNO, SFNO, WNO, MSWT, CNO), local neural operators for time marching (LNO) and Geo-FNO on point clouds (GeoFNO), dimension-flexible U-Nets, SIREN and multiplicative filter networks with FiLM / hypernetwork conditioning, the BayesNF neural-field core, coordinate derivatives of fields (flat and spherical), lon/lat, spherical-harmonic and Gaussian Fourier-feature encoders, spectral and localized bases with their eigenvalues or geometry, random Fourier features, spectral normalisation, SNGP / VSSGP heads, BatchEnsemble and heteroscedastic layers. Use whenever a task builds or trains a neural network on gridded, spherical or coordinate data, writes an FFT / spherical-harmonic / wavelet layer, encodes lon/lat or time, evaluates a basis, or needs a deterministic core for an uncertainty-aware model, in a project that uses (or could use) geonnax.
 ---
 
 # Geoscience models on geonnax
@@ -46,8 +46,10 @@ it up:
 | A U-Net (1-D / 2-D / 3-D) | `geonnax.UNet` (ResNet or ConvNeXt blocks, attention, nested U²-Net stages, MC dropout) |
 | Layers to compose your own model | `geonnax.layers` (`StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `WindowedAttention`, `SpectralConv`, `WaveletConv`, `Downsample` / `Upsample`, `dwt` / `idwt`, …) |
 | An implicit neural representation | `geonnax.SIREN`, `geonnax.SirenDense`, `geonnax.MultiScaleSIREN`, `geonnax.FourierNet`, `geonnax.GaborNet` |
+| A spatiotemporal field from scattered observations (BayesNF-style) | `geonnax.NeuralFieldMLP` (learned input scales, gated Fourier / seasonal / interaction blocks, an optional `extra` block such as `geonnax.SphericalHarmonicEncoder` features, NTK-scaled layers; one point `(D,) -> (K,)`; pyrox-nn puts the priors on it) |
+| Derivatives of a field with respect to its coordinates | `geonnax.diffops` (`grad`, `jacobian`, `divergence`, `curl2d`, `laplacian`; on the unit sphere `surface_grad`, `surface_grad_enu` for east/north components, `laplace_beltrami`) — operators returning callables, not losses |
 | Conditioning on a latent or context vector | `geonnax.AffineModulation` (`geonnax.FiLM`), `geonnax.ConcatConditioner`, `geonnax.HyperLinear`, `geonnax.ConditionedINR`, `geonnax.HyperSIREN` |
-| Lon/lat and time encodings | `geonnax.geo` (`deg2rad`, `lonlat_scale`, `lonlat_to_cartesian3d`, `cyclic_encode`, `spherical_harmonic_encode`); modules `geonnax.SphericalHarmonicEncoder`, `geonnax.Cartesian3DEncoder`, `geonnax.CyclicEncoder`, `geonnax.GeoContextEncoder`, `geonnax.SlepianEncoder` |
+| Lon/lat and time encodings | `geonnax.geo` (`deg2rad`, `lonlat_scale`, `lonlat_to_cartesian3d`, `cyclic_encode`, `spherical_harmonic_encode`); modules `geonnax.SphericalHarmonicEncoder`, `geonnax.Cartesian3DEncoder`, `geonnax.CyclicEncoder`, `geonnax.GeoContextEncoder`, `geonnax.SlepianEncoder`; Gaussian Fourier features for coordinate MLPs, `geonnax.GaussianFourierEncoder` (`init(in_features, num_frequencies, sigma, key=…)`, frozen frequencies) |
 | A basis with its eigenvalues or geometry | `geonnax.basis` (`fourier_basis`, `real_spherical_harmonics`, `slepian_cap_basis`, `graph_laplacian_eigpairs`, `divfree_basis`, `rbf_basis`, `spherical_rbf_basis`, `gabor_frame_grid`, `wavelet_basis_1d`, `eof_basis`) |
 | Fourier / seasonal / interaction features | `geonnax.basis.fourier_features`, `geonnax.basis.seasonal_features`, `geonnax.basis.interaction_features`, `geonnax.basis.gaussian_window_features` |
 | Random Fourier features | `geonnax.rff_forward`, `geonnax.rff_cosine_forward`, `geonnax.orthogonal_blocks`, `geonnax.OrthogonalRandomFeatures` |
@@ -170,6 +172,9 @@ to the training features).
 | `sin(ω (W x + b))` layers with hand-tuned uniform inits | `geonnax.SIREN`, `geonnax.SirenDense`, `geonnax.siren_W_limit` |
 | FiLM `γ(z) ⊙ h + β(z)` or a hypernetwork | `geonnax.AffineModulation`, `geonnax.HyperLinear`, `geonnax.ConditionedINR` |
 | `cos(xW/ℓ)` random features, orthogonal frequency blocks | `geonnax.OrthogonalRandomFeatures`, `geonnax.rff_forward`, `geonnax.orthogonal_blocks` |
+| `[cos 2πBx, sin 2πBx]` with `B ~ N(0, σ²)` in front of an MLP | `geonnax.GaussianFourierEncoder` |
+| `jax.grad` / Hessian traces of a field, tangent projections on the sphere | `geonnax.diffops.grad`, `geonnax.diffops.laplacian`, `geonnax.diffops.surface_grad_enu`, `geonnax.diffops.laplace_beltrami` |
+| The BayesNF network (scaled inputs, gated feature blocks, elu/tanh mix) | `geonnax.NeuralFieldMLP` |
 | `lon * π / 180`, lon/lat → xyz, `[cos θ, sin θ]` | `geonnax.geo.deg2rad`, `geonnax.geo.lonlat_to_cartesian3d`, `geonnax.geo.cyclic_encode` |
 | Laplacian eigenfunctions on a box, RBF / Gabor columns, EOFs | `geonnax.basis.fourier_basis`, `geonnax.basis.rbf_basis`, `geonnax.basis.gabor_frame_grid`, `geonnax.basis.eof_basis` |
 | Power iteration for a Lipschitz layer | `geonnax.SpectralNormalization` |
