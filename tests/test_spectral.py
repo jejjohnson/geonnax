@@ -352,9 +352,10 @@ def test_sht_round_trip_is_exact_on_band_limited():
 def test_sht_tables_are_built_in_float64():
     # #122: the tables are constants, so `init` evaluates the harmonics in float64
     # and casts once. analy @ synth = I is then exact to float32 rounding of the
-    # tables: measured 4.9e-8 at l_max = 63 (5.3e-6 when the harmonics were
-    # evaluated in float32); 5e-7 leaves margin and fails the float32 build.
-    l_max = 63
+    # tables: measured 6.2e-8 at l_max = 31 (1.6e-6 when the harmonics were
+    # evaluated in float32); 5e-7 sits between the two, so the float32 build fails.
+    # l_max = 31 keeps the fast tier light: 2048 x 1024 tables, a 1024² Gram.
+    l_max = 31
     sht = SphericalHarmonicTransform.init(l_max + 1, 2 * l_max + 2, l_max)
     assert sht.synth.dtype == jnp.zeros(()).dtype  # default float, cast once
     with jax.enable_x64(True):
