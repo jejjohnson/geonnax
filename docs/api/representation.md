@@ -45,7 +45,7 @@ field = geonnax.NeuralFieldMLP.init(
     extra_features=49, key=jr.PRNGKey(0),
 )
 x = jnp.array([12.0, 3.5, 40.2])
-y = field(x, enc(jnp.deg2rad(x[1:])))                  # (1,)
+y = field(x, enc(geonnax.geo.deg2rad(x[1:])))                # (1,)
 ```
 
 ::: geonnax.neural_field
