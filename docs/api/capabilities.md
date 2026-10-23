@@ -411,6 +411,7 @@ almost here, extend it where it lives. Regenerate with
 |---|---|---|
 | `fibonacci_sphere` | function | The Fibonacci lattice: ``n`` near-uniform points on the unit sphere. |
 | `gauss_legendre_grid` | function | Gauss–Legendre grid on the sphere with its quadrature weights. |
+| `healpix_grid` | function | HEALPix pixel centres with their equal-area weights. |
 | `latlon_grid` | function | Regular cell-centred lat/lon grid with exact cell-area weights. |
 
 ### Real spherical harmonics on the unit 2-sphere. (`geonnax._basis._spherical`)
