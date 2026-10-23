@@ -38,7 +38,7 @@ from a submodule are the bases (`geonnax.basis`), the lon/lat helpers
 | Family | Modules | Owns |
 |---|---|---|
 | Bases (pure functions) | `_basis/` (implementation), `basis.py` (the public surface) | Dirichlet / Fourier eigenpairs on a box, divergence-free atoms, real spherical harmonics, Slepian cap bases, graph-Laplacian eigenpairs, RBF / Wendland and Gabor frames, DWT matrices, EOFs; Fourier / seasonal / interaction / time-window features, `standardize` |
-| Geography | `geo.py`, `encoders.py`, `slepian.py` | lon/lat helpers (`deg2rad`, `lonlat_scale`, `lonlat_to_cartesian3d`, `cyclic_encode`, `spherical_harmonic_encode`); parameter-free encoder modules; `GeoContextEncoder`; Slepian encoders |
+| Geography | `geo.py`, `encoders.py`, `slepian.py` | lon/lat helpers (`deg2rad`, `lonlat_scale`, `lonlat_to_cartesian3d`, `cyclic_encode`, `spherical_harmonic_encode`); parameter-free encoder modules, plus `GaussianFourierEncoder` (a frozen random frequency matrix drawn in `init`); `GeoContextEncoder`; Slepian encoders |
 | Building blocks | `layers/` | `StandardizedConv`, `Downsample` / `Upsample`, `band_limited_resize` / `AntiAliasedActivation`, `Block`, `ResnetBlock`, `ConvNeXtBlock`, `SqueezeExcitation`, `GlobalResponseNorm`, attention (`Attention`, `LinearAttention`, `WindowedAttention`, `WaveletAttention`), `SpectralConv` + factorized weights (`DenseTensor`, `CPTensor`, `TuckerTensor`, `TTTensor`), `nonuniform_rfft` / `nonuniform_irfft`, spherical harmonic / wavelet transforms and convs, `dwt` / `idwt`, `WaveletConv` |
 | Neural operators | `fno.py`, `sfno.py`, `wno.py`, `mswt.py`, `manifold_no.py`, `cno.py`, `lno.py` | `FNO`, `SFNO`, `WNO`, `MSWT`, `ManifoldNO`, `CNO` and their blocks; `LNO`, a local core marched in time |
 | U-Net | `unet.py` | `UNet` (alias `XUNet`), `Stage`, `NestedResidualUNet` |
@@ -50,7 +50,8 @@ Imports point one way: `_basis` imports nothing else in geonnax; `layers`
 imports only itself and `_basis`; `geo` → `_basis`; the model modules import
 `layers` / `_basis` / `geo`, and only these model-to-model edges exist:
 `conditioning` and `multi_scale_siren` → `siren`, `vssgp` → `randfeat`,
-`slepian` → `encoders` / `geo`, `geofno` → `fno`, `lno` → `cno`;
+`slepian` → `encoders` / `geo`, `geofno` → `fno`, `lno` → `cno`,
+`encoders` → `randfeat` (`GaussianFourierEncoder` reuses `rff_forward`);
 `diffops` imports `geo` and `_basis` only. No test enforces this; keep it.
 
 ### Boundaries

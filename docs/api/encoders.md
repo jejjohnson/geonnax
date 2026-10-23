@@ -34,6 +34,12 @@ context = jax.vmap(
 context.shape[-1] == encoder.output_dim(extra_dim=2)
 ```
 
+`GaussianFourierEncoder` is the one keyed encoder: a Gaussian random Fourier-feature
+positional encoding $\gamma(x) = [\cos 2\pi Bx,\ \sin 2\pi Bx]$ with
+$B \sim \mathcal{N}(0, \sigma^2)$ drawn once and frozen (Tancik et al., 2020). Put it
+in front of a plain MLP to fit fine-scale structure; $\sigma$ sets the bandwidth, so
+rescale inputs to unit range first and tune $\sigma$ on held-out points.
+
 ::: geonnax.encoders
 
 ## Slepian encoders
