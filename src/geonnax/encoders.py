@@ -12,6 +12,7 @@ batch over leading dimensions.
 
 from __future__ import annotations
 
+import math
 from typing import Literal
 
 import einx
@@ -579,8 +580,8 @@ class GaussianFourierEncoder(eqx.Module):
                 "in_features and num_frequencies must be >= 1; "
                 f"got {in_features} and {num_frequencies}."
             )
-        if not sigma > 0.0:
-            raise ValueError(f"sigma must be > 0; got {sigma}.")
+        if not (math.isfinite(sigma) and sigma > 0.0):
+            raise ValueError(f"sigma must be finite and > 0; got {sigma}.")
         B = sigma * jax.random.normal(key, (num_frequencies, in_features))
         return cls(B=B, in_features=in_features, num_frequencies=num_frequencies)
 
@@ -614,9 +615,12 @@ class GaussianFourierEncoder(eqx.Module):
                 "Use jax.vmap to encode a batch."
             )
         x = _promote_to_floating(x)
-        B = jax.lax.stop_gradient(self.B).astype(x.dtype)
-        z = 2.0 * jnp.pi * einx.dot("m d, d -> m", B, x)
-        return jnp.concatenate([jnp.cos(z), jnp.sin(z)])
+        # The phase reaches tens of radians, so it is formed in at least
+        # float32 (half precision would ruin it) and cast back afterwards.
+        work = jnp.promote_types(x.dtype, jnp.float32)
+        B = jax.lax.stop_gradient(self.B).astype(work)
+        z = 2.0 * jnp.pi * einx.dot("m d, d -> m", B, x.astype(work))
+        return jnp.concatenate([jnp.cos(z), jnp.sin(z)]).astype(x.dtype)
 
 
 __all__ = [
