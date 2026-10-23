@@ -6,6 +6,7 @@ sequences for small ``T`` and ``K``.
 """
 
 import itertools
+import math
 
 import equinox as eqx
 import jax
@@ -240,3 +241,106 @@ def test_head_modules_do_not_import_numpyro():
     for module in (crf_mod, mixture_mod):
         source = pathlib.Path(module.__file__).read_text()
         assert not numpyro_import.search(source)
+
+
+# ---- GaussianRegressionHead ------------------------------------------------
+
+
+def test_gaussian_regression_head_shapes_and_vmap():
+    head = geonnax.GaussianRegressionHead.init(16, 3, key=jr.PRNGKey(0))
+    mu, log_sigma = head(jnp.ones(16))
+    assert mu.shape == (3,)
+    assert log_sigma.shape == (3,)
+    mu_b, log_sigma_b = jax.vmap(head)(jnp.ones((5, 16)))
+    assert mu_b.shape == (5, 3)
+    assert log_sigma_b.shape == (5, 3)
+
+
+def test_gaussian_regression_head_mean_is_affine():
+    head = geonnax.GaussianRegressionHead.init(8, 2, key=jr.PRNGKey(1))
+    h = jr.normal(jr.PRNGKey(2), (8,))
+    mu, _ = head(h)
+    expected = np.asarray(h) @ np.asarray(head.W_loc) + np.asarray(head.b_loc)
+    # float32 round-off on an 8-term dot product.
+    np.testing.assert_allclose(mu, expected, atol=1e-6)
+
+
+@pytest.mark.parametrize("sigma_init", [0.01, 1.0, 5.0])
+def test_gaussian_regression_head_zero_init_is_homoscedastic(sigma_init):
+    """With the default ``scale_init_factor=0`` σ(h) = σ_init for every h."""
+    head = geonnax.GaussianRegressionHead.init(
+        8, 2, sigma_init=sigma_init, key=jr.PRNGKey(3)
+    )
+    assert jnp.all(head.W_log_scale == 0.0)
+    hs = 10.0 * jr.normal(jr.PRNGKey(4), (50, 8))
+    _, log_sigma = jax.vmap(head)(hs)
+    # b_s is log σ_init stored in float32: exact up to one float32 rounding.
+    np.testing.assert_allclose(log_sigma, np.log(sigma_init), atol=1e-6)
+
+
+def test_gaussian_regression_head_small_scale_init():
+    factor = 0.1
+    head = geonnax.GaussianRegressionHead.init(
+        8, 2, scale_init_factor=factor, key=jr.PRNGKey(5)
+    )
+    lim = factor * np.sqrt(6.0 / (8 + 2))  # the scaled Glorot-uniform support
+    assert jnp.all(jnp.abs(head.W_log_scale) <= lim)
+    assert jnp.any(head.W_log_scale != 0.0)
+
+
+def test_gaussian_regression_head_log_sigma_is_clamped():
+    head = geonnax.GaussianRegressionHead.init(4, 2, key=jr.PRNGKey(6))
+    h = jnp.ones(4)
+    low = eqx.tree_at(lambda m: m.b_log_scale, head, jnp.array([-100.0, -5.0]))
+    high = eqx.tree_at(lambda m: m.b_log_scale, head, jnp.array([100.0, 2.0]))
+    np.testing.assert_allclose(low(h)[1], [-7.0, -5.0])
+    np.testing.assert_allclose(high(h)[1], [3.0, 2.0])
+
+    # The clamp passes no gradient to the saturated output, full gradient
+    # (d log σ / d b_s = 1) inside the range.
+    def total_log_sigma(m):
+        return m(h)[1].sum()
+
+    g = eqx.filter_grad(total_log_sigma)(low)
+    np.testing.assert_allclose(g.b_log_scale, [0.0, 1.0])
+
+
+def test_gaussian_regression_head_jit_and_grad():
+    head = geonnax.GaussianRegressionHead.init(6, 1, key=jr.PRNGKey(7))
+    hs = jr.normal(jr.PRNGKey(8), (32, 6))
+    ys = jr.normal(jr.PRNGKey(9), (32, 1))
+
+    def nll(m):
+        mu, log_sigma = jax.vmap(m)(hs)
+        return jnp.mean(log_sigma + 0.5 * ((ys - mu) / jnp.exp(log_sigma)) ** 2)
+
+    mu, log_sigma = eqx.filter_jit(head)(hs[0])
+    mu_ref, log_sigma_ref = head(hs[0])
+    # atol 1e-6: XLA may reassociate the float32 dot under jit.
+    np.testing.assert_allclose(mu, mu_ref, atol=1e-6)
+    np.testing.assert_allclose(log_sigma, log_sigma_ref, atol=1e-6)
+    grads = eqx.filter_grad(nll)(head)
+    for leaf in (grads.W_loc, grads.b_loc, grads.W_log_scale, grads.b_log_scale):
+        assert jnp.all(jnp.isfinite(leaf))
+    # A zero-initialised W_s still learns: its gradient is h times the
+    # gradient on log σ, which is non-zero for these residuals.
+    assert jnp.any(grads.W_log_scale != 0.0)
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"in_features": 0},
+        {"out_features": 0},
+        {"sigma_init": 0.0},
+        {"sigma_init": 1e-4},  # log < -7
+        {"sigma_init": 100.0},  # log > 3
+        {"sigma_init": math.exp(-7.0)},  # on the lower clip
+        {"sigma_init": math.exp(3.0)},  # on the upper clip
+        {"scale_init_factor": -0.1},
+    ],
+)
+def test_gaussian_regression_head_validation(kwargs):
+    args = {"in_features": 4, "out_features": 1} | kwargs
+    with pytest.raises(ValueError):
+        geonnax.GaussianRegressionHead.init(**args, key=jr.PRNGKey(0))

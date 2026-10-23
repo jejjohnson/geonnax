@@ -55,7 +55,7 @@ it up:
 | Fourier / seasonal / interaction features | `geonnax.basis.fourier_features`, `geonnax.basis.seasonal_features`, `geonnax.basis.interaction_features`, `geonnax.basis.gaussian_window_features` |
 | Random Fourier features | `geonnax.rff_forward`, `geonnax.rff_cosine_forward`, `geonnax.orthogonal_blocks`, `geonnax.OrthogonalRandomFeatures` |
 | Distance-aware uncertainty | `geonnax.SpectralNormalization`, `geonnax.RandomFeatureGaussianProcess` (SNGP head), `geonnax.DeepVSSGPCore` |
-| Ensembles and probabilistic heads | `geonnax.DenseRank1`, `geonnax.LayerNormEnsemble`, `geonnax.MultiHeadAttentionBE`, `geonnax.MCSoftmaxDenseFA`, `geonnax.MixtureOfGaussiansDenseHead`, `geonnax.LinearChainCRF`, `geonnax.NCPContinuousPerturb` |
+| Ensembles and probabilistic heads | `geonnax.DenseRank1`, `geonnax.LayerNormEnsemble`, `geonnax.MultiHeadAttentionBE`, `geonnax.MCSoftmaxDenseFA`, `geonnax.GaussianRegressionHead` (mean plus clamped log σ for heteroscedastic regression), `geonnax.MixtureOfGaussiansDenseHead`, `geonnax.LinearChainCRF`, `geonnax.NCPContinuousPerturb` |
 
 Priors, sample sites and Bayesian versions of these layers live in pyrox
 (`pyrox_nn` wraps geonnax cores); kernels and kernel methods live in

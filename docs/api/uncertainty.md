@@ -42,8 +42,10 @@ learning per-member rank-1 perturbations.
 
 ## Heteroscedastic heads
 
-Output heads that model input-dependent observation noise, including Monte-Carlo
-sigmoid/softmax approximations.
+Output heads that model input-dependent observation noise: Monte-Carlo
+sigmoid/softmax approximations for classification, and `GaussianRegressionHead`,
+which returns a mean and a clamped log standard deviation $(\mu(h), \log\sigma(h))$
+for regression and starts homoscedastic at $\sigma_\mathrm{init}$.
 
 ::: geonnax.heteroscedastic
 
