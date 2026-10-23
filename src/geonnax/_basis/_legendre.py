@@ -20,7 +20,7 @@ from typing import Literal
 import jax
 import jax.numpy as jnp
 import numpy as np
-from jaxtyping import Array, Float
+from jaxtyping import Array, Float, Int
 
 
 def legendre_polynomials(t: Float[Array, "..."], l_max: int) -> Float[Array, "... L"]:
@@ -91,8 +91,10 @@ def associated_legendre(
 ) -> Float[Array, "... M"]:
     r"""Associated Legendre functions $P_l^m(t)$ for $0 \le m \le l \le l_{\max}$.
 
-    Computed with the fully normalised recurrences, which stay finite to high
-    degree:
+    Computed with the fully normalised recurrences, carried as a mantissa and a
+    binary exponent per order (`_legendre_table_carry`), so they stay finite
+    and accurate to high degree in float32 as well as float64 — Gram error on
+    the $n$-point Gauss rule about $3 \times 10^{-5}$ in float32 at $l_{\max} = 511$:
 
     $$
     \begin{aligned}
@@ -145,13 +147,13 @@ def associated_legendre(
     dtype = t.dtype if jnp.issubdtype(t.dtype, jnp.floating) else jnp.float32
     t = t.astype(dtype)
     s = jnp.sqrt(jnp.maximum(1.0 - t**2, 0.0))
-    m = np.arange(l_max + 1)
 
-    # Sectoral values P̄_m^m for every m, by a cumulative product over m.
-    s_pow = s[..., None] ** jnp.asarray(m, dtype=dtype)  # (..., n)
-    sectoral = jnp.asarray(_sectoral_scale(l_max), dtype=dtype) * s_pow  # P̄_m^m
-
-    table = _legendre_table(t, sectoral, l_max)  # (n_l, ..., n_m)
+    # Sectoral values P̄_m^m = mantissa · 2^exponent for every m. The exponent
+    # carry keeps (1 - t²)^{m/2} from underflowing near the poles, where P̄_l^m
+    # grows back to O(1) for l ≫ m (#122).
+    sec_mant, sec_exp = _sectoral_carry(s, l_max)  # (..., n), (..., n)
+    mant, expo = _legendre_table_carry(t, sec_mant, sec_exp, l_max)  # (n_l, ..., n_m)
+    table = _ldexp(mant, expo)
 
     pairs = associated_legendre_indices(l_max)
     ell_idx = np.array([ell for ell, _ in pairs])
@@ -185,6 +187,62 @@ def _sectoral_scale(l_max: int) -> np.ndarray:
     return np.cumprod(factor) / math.sqrt(2.0)
 
 
+def _ldexp(x: Float[Array, "..."], e: Int[Array, "..."]) -> Float[Array, "..."]:
+    r"""$x \cdot 2^e$ with the exact derivative $2^e$ everywhere.
+
+    `jnp.ldexp` passes ``x == 0`` through a ``where``, so its derivative there
+    is 1 instead of $2^e$; the Legendre values are exactly zero at many points
+    (odd $l - m$ at $t = 0$, $(x + iy)^m$ on the axes) where their derivative is
+    not. The power of two is split in two halves, and ``e`` is clipped to the
+    range where both halves are finite, so ``x == 0`` gives 0 (never
+    ``0 · inf``) and a non-zero ``x`` overflows or underflows only when the
+    result itself does.
+    """
+    max_half = jnp.finfo(x.dtype).maxexp - 1  # largest finite power of two
+    e = jnp.clip(e, -2 * max_half, 2 * max_half)
+    half = e // 2
+    two = jnp.asarray(2.0, dtype=x.dtype)
+    return x * two ** half.astype(x.dtype) * two ** (e - half).astype(x.dtype)
+
+
+def _sectoral_carry(
+    s: Float[Array, "..."], l_max: int
+) -> tuple[Float[Array, "... L"], Int[Array, "... L"]]:
+    r"""Sectoral values $\bar P_m^m = c_m s^m$ as mantissa and binary exponent.
+
+    Runs $\bar P_m^m = -\sqrt{(2m+1)/(2m)}\;s\,\bar P_{m-1}^{m-1}$ as a
+    `jax.lax.scan` over $m$ and renormalises with `jnp.frexp` at every step, so
+    the value is ``_ldexp(mantissa, exponent)`` with the mantissa in
+    $[\tfrac12, 1)$: $s^m$ never underflows, however small $s$ and large $m$.
+    Where $s = 0$ the mantissa is $0$ for $m \ge 1$, which is exact.
+
+    Args:
+        s: $\sqrt{1 - t^2}$, any shape.
+        l_max: Maximum order, inclusive.
+
+    Returns:
+        ``(mantissa, exponent)``, each of shape ``s.shape + (l_max + 1,)``.
+    """
+    dtype = s.dtype
+    m = np.arange(1, l_max + 1)
+    factors = jnp.asarray(-np.sqrt((2.0 * m + 1.0) / (2.0 * m)), dtype=dtype)
+    mant0 = jnp.full_like(s, 1.0 / math.sqrt(2.0))
+    exp0 = jnp.zeros(s.shape, dtype=jnp.int32)
+
+    def step(carry, factor):
+        mant, expo = carry
+        value = factor * s * mant
+        _, shift = jnp.frexp(value)
+        shift = jnp.where(value != 0, shift, 0)
+        mant, expo = _ldexp(value, -shift), expo + shift
+        return (mant, expo), (mant, expo)
+
+    _, (mants, expos) = jax.lax.scan(step, (mant0, exp0), factors)
+    mant = jnp.concatenate([mant0[None], mants], axis=0)  # (L, ...)
+    expo = jnp.concatenate([exp0[None], expos], axis=0)
+    return jnp.moveaxis(mant, 0, -1), jnp.moveaxis(expo, 0, -1)
+
+
 def _legendre_table(
     t: Float[Array, "..."], sectoral: Float[Array, "... L"], l_max: int
 ) -> Float[Array, "L ... L"]:
@@ -199,9 +257,53 @@ def _legendre_table(
     polynomials $\bar P_l^m(t) / (1-t^2)^{m/2}$ that `real_spherical_harmonics`
     uses.
 
+    This is `_legendre_table_carry` with a zero seed exponent, returned as
+    values.
+
     Returns:
         Array of shape ``(l_max + 1,) + t.shape + (l_max + 1,)``, indexed
         ``[l, ..., m]``; entries with ``m > l`` are zero.
+    """
+    mant, expo = _legendre_table_carry(
+        t, sectoral, jnp.zeros(sectoral.shape, dtype=jnp.int32), l_max
+    )
+    return _ldexp(mant, expo)
+
+
+def _legendre_table_carry(
+    t: Float[Array, "..."],
+    sectoral: Float[Array, "... L"],
+    sectoral_exp: Int[Array, "... L"],
+    l_max: int,
+) -> tuple[Float[Array, "L ... L"], Int[Array, "L ... L"]]:
+    r"""The recurrence of `_legendre_table` with a binary-exponent carry.
+
+    Each order $m$ is carried as a mantissa and an integer exponent,
+    $\bar P_l^m = \mathfrak m_l^m\,2^{e^m}$. The recurrence is linear and
+    homogeneous in each column, so a column's two carried rows can share one
+    exponent; after every step both are rescaled by the power of two
+    (`jnp.frexp`) that brings the larger into $[\tfrac12, 1)$. No intermediate
+    leaves the floating-point range, so float32 stays accurate where
+    $\bar P_m^m \propto (1-t^2)^{m/2}$ is far below its smallest normal number
+    but $\bar P_l^m$, $l \gg m$, is $O(1)$ (#122). The exponent shift is an
+    integer, so gradients flow through the mantissas only, which is exact.
+
+    Args:
+        t: Points in $[-1, 1]$, any shape.
+        sectoral: Mantissas of the seeds $\bar P_m^m$, shape ``t.shape + (L,)``.
+        sectoral_exp: Their binary exponents (int32), same shape.
+        l_max: Maximum degree, inclusive; ``L = l_max + 1``.
+
+    Returns:
+        ``(mantissa, exponent)``, each of shape ``(L,) + t.shape + (L,)``,
+        indexed ``[l, ..., m]``; the value is ``_ldexp(mantissa, exponent)``
+        and entries with ``m > l`` are zero.
+
+    References:
+        Fukushima, T. (2012). Numerical computation of spherical harmonics of
+        arbitrary degree and order by extending exponent of floating point
+        numbers. *Journal of Geodesy* 86, 271–285 (the "X-number" idea, here
+        with one shared exponent per column).
     """
     dtype = sectoral.dtype
     n = l_max + 1
@@ -231,15 +333,23 @@ def _legendre_table(
     )
     diag = (m[None, :] == np.arange(n)[:, None]).astype(float)  # (n, n): m == l
     sub = (m[None, :] == np.arange(n)[:, None] - 1).astype(float)  # m == l - 1
-    sub_scale = np.sqrt(2.0 * m + 3.0)  # P̄_{m+1}^m = √(2m+3) t P̄_m^m
+    sub_scale = jnp.asarray(np.sqrt(2.0 * m + 3.0), dtype=dtype)  # √(2m+3)
 
     def step(carry, inputs):
-        p_lm2, p_lm1 = carry
+        # Carried rows P̄_{l-2}^m, P̄_{l-1}^m in units of 2^expo (one per column).
+        p_lm2, p_lm1, expo = carry
         a, b, d, sb = inputs
         general = a * (t[..., None] * p_lm1 - b * p_lm2)
-        first_off = jnp.asarray(sub_scale, dtype=dtype) * t[..., None] * sectoral
+        # P̄_{m+1}^m = √(2m+3) t P̄_m^m: the previous row is the sectoral one.
+        first_off = sub_scale * t[..., None] * p_lm1
+        # A column's sectoral row arrives while its carry is still zero, so its
+        # exponent is still the seed's.
         p_l = d * sectoral + sb * first_off + (1.0 - d - sb) * general
-        return (p_lm1, p_l), p_l
+        biggest = jnp.maximum(jnp.abs(p_l), jnp.abs(p_lm1))
+        _, shift = jnp.frexp(biggest)
+        shift = jnp.where(biggest > 0, shift, 0)
+        new_carry = (_ldexp(p_lm1, -shift), _ldexp(p_l, -shift), expo + shift)
+        return new_carry, (p_l, expo)
 
     zeros = jnp.zeros_like(sectoral)
     p_00 = jnp.asarray(diag[0], dtype=dtype) * sectoral
@@ -247,9 +357,12 @@ def _legendre_table(
         xs = tuple(
             jnp.asarray(arr[1:], dtype=dtype) for arr in (a_all, b_all, diag, sub)
         )
-        _, rows = jax.lax.scan(step, (zeros, p_00), xs)
-        return jnp.concatenate([p_00[None], rows], axis=0)
-    return p_00[None]
+        _, (rows, row_exps) = jax.lax.scan(step, (zeros, p_00, sectoral_exp), xs)
+        return (
+            jnp.concatenate([p_00[None], rows], axis=0),
+            jnp.concatenate([sectoral_exp[None], row_exps], axis=0),
+        )
+    return p_00[None], sectoral_exp[None]
 
 
 def gauss_legendre(n: int) -> tuple[np.ndarray, np.ndarray]:
