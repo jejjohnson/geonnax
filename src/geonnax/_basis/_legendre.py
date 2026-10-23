@@ -94,7 +94,7 @@ def associated_legendre(
     Computed with the fully normalised recurrences, carried as a mantissa and a
     binary exponent per order (`_legendre_table_carry`), so they stay finite
     and accurate to high degree in float32 as well as float64 — Gram error on
-    the $n$-point Gauss rule below $3 \times 10^{-5}$ in float32 at $l_{\max} = 511$:
+    the $n$-point Gauss rule about $3 \times 10^{-5}$ in float32 at $l_{\max} = 511$:
 
     $$
     \begin{aligned}
@@ -193,9 +193,13 @@ def _ldexp(x: Float[Array, "..."], e: Int[Array, "..."]) -> Float[Array, "..."]:
     `jnp.ldexp` passes ``x == 0`` through a ``where``, so its derivative there
     is 1 instead of $2^e$; the Legendre values are exactly zero at many points
     (odd $l - m$ at $t = 0$, $(x + iy)^m$ on the axes) where their derivative is
-    not. The power of two is split in two halves so it stays in range whenever
-    the result does.
+    not. The power of two is split in two halves, and ``e`` is clipped to the
+    range where both halves are finite, so ``x == 0`` gives 0 (never
+    ``0 · inf``) and a non-zero ``x`` overflows or underflows only when the
+    result itself does.
     """
+    max_half = jnp.finfo(x.dtype).maxexp - 1  # largest finite power of two
+    e = jnp.clip(e, -2 * max_half, 2 * max_half)
     half = e // 2
     two = jnp.asarray(2.0, dtype=x.dtype)
     return x * two ** half.astype(x.dtype) * two ** (e - half).astype(x.dtype)

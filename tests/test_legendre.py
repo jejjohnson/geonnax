@@ -180,6 +180,20 @@ def test_gradient_matches_finite_difference_where_values_vanish(t0):
     np.testing.assert_allclose(jac, fd, rtol=0, atol=1e-7)
 
 
+def test_ldexp_helper_exact_at_zero_and_out_of_range():
+    # #122: the exponent carry scales by powers of two with `_ldexp`, which
+    # must have derivative 2^e at x = 0 (jnp.ldexp gives 1) and must not form
+    # 0 · inf when e exceeds float32's range (exact poles at l_max ≈ 370).
+    from geonnax._basis._legendre import _ldexp
+
+    zero = jnp.float32(0.0)
+    assert float(_ldexp(zero, jnp.int32(400))) == 0.0
+    assert float(_ldexp(jnp.float32(0.75), jnp.int32(-400))) == 0.0
+    assert float(_ldexp(jnp.float32(0.75), jnp.int32(5))) == 24.0
+    grad = jax.grad(lambda x: _ldexp(x, jnp.int32(3)))(zero)
+    assert float(grad) == 8.0
+
+
 def test_invalid_normalization_raises():
     with pytest.raises(ValueError, match="normalization"):
         associated_legendre(jnp.zeros(3), 2, normalization="bad")  # ty: ignore[invalid-argument-type]
