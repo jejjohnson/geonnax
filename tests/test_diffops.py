@@ -20,7 +20,7 @@ KEY = jr.PRNGKey(0)
 
 
 def _unit_points(n: int, key: jax.Array) -> jax.Array:
-    """Random unit vectors, kept away from the poles for the lon/lat checks."""
+    """Isotropic random unit vectors."""
     v = jr.normal(key, (n, 3))
     return v / jnp.linalg.norm(v, axis=-1, keepdims=True)
 
@@ -58,7 +58,11 @@ def test_laplacian_matches_dense_hessian_trace():
     f = lambda x: net(x)[0]
     x = jnp.array([0.1, -0.2, 0.3])
     np.testing.assert_allclose(
-        diffops.laplacian(f)(x), jnp.trace(jax.hessian(f)(x)), rtol=1e-4, atol=1e-3
+        # Same second derivatives by two float32 routes (HVP sum vs dense trace).
+        diffops.laplacian(f)(x),
+        jnp.trace(jax.hessian(f)(x)),
+        rtol=1e-5,
+        atol=1e-4,
     )
 
 
@@ -69,11 +73,12 @@ def test_divfree_and_curlfree_columns():
     def col(fn, j):
         return lambda p: fn(p[None, :], 3, 1.0)[0][0, j, :]
 
+    # Analytically zero; float32 round-off on Jacobian entries of O(10) is ~1e-6.
     for j in range(4):
         u = col(divfree_basis, j)
-        assert abs(float(diffops.divergence(u)(xy))) < 1e-4
+        assert abs(float(diffops.divergence(u)(xy))) < 1e-5
         w = col(curlfree_basis, j)
-        assert abs(float(diffops.curl2d(w)(xy))) < 1e-4
+        assert abs(float(diffops.curl2d(w)(xy))) < 1e-5
 
 
 def test_divergence_and_curl_shape_errors():
@@ -88,7 +93,7 @@ def test_divergence_and_curl_shape_errors():
 # --- Sphere -----------------------------------------------------------------
 
 
-@pytest.mark.parametrize("l_max", [4, 10])
+@pytest.mark.parametrize("l_max", [4, pytest.param(10, marks=pytest.mark.slow)])
 def test_laplace_beltrami_spherical_harmonic_eigenvalues(l_max):
     # Δ_S Y_lm = -l(l+1) Y_lm for every real spherical harmonic.
     pts = _unit_points(16, KEY)
@@ -106,8 +111,9 @@ def test_laplace_beltrami_spherical_harmonic_eigenvalues(l_max):
     lb = jax.jit(jax.vmap(jax.vmap(lb_j, (None, 0)), (0, None)))(eye, pts)  # (M, N)
     y = real_spherical_harmonics(pts, l_max).T  # (M, N)
     lam = -degrees * (degrees + 1)
-    # float32, second derivatives of degree-≤10 polynomials: scale atol by |λ|.
-    atol = 2e-3 * jnp.maximum(1.0, -lam)[:, None]
+    # float32 round-off of second derivatives of degree-≤10 polynomials,
+    # measured ≤ 3e-6·|λ|; allow 1e-5·max(1, |λ|).
+    atol = 1e-5 * jnp.maximum(1.0, -lam)[:, None]
     assert bool(jnp.all(jnp.abs(lb - lam[:, None] * y) <= atol))
 
 
@@ -119,7 +125,11 @@ def test_laplace_beltrami_general_extension_identity():
         H = jax.hessian(f)(n)
         rhs = jnp.trace(H) - n @ H @ n - 2 * n @ jax.grad(f)(n)
         np.testing.assert_allclose(
-            diffops.laplace_beltrami(f)(n), rhs, rtol=1e-3, atol=1e-3
+            # float32: both sides from the same second derivatives; measured ≤ 3e-7.
+            diffops.laplace_beltrami(f)(n),
+            rhs,
+            rtol=1e-5,
+            atol=1e-5,
         )
 
 
@@ -166,6 +176,42 @@ def test_surface_grad_enu_radians_matches_degrees():
         diffops.surface_grad_enu(f)(ll),
         frame[:2] @ diffops.surface_grad(f)(n),
         atol=1e-6,
+    )
+
+
+def test_sphere_operators_use_the_input_direction():
+    # Off the unit sphere the operators act at n / |n|, not at a rescaled field.
+    lb = diffops.laplace_beltrami(lambda n: n[0])
+    sg = diffops.surface_grad(lambda n: n[2])
+    n = jnp.array([0.6, 0.0, 0.8])
+    for r in (0.5, 1.01, 2.0):
+        np.testing.assert_allclose(lb(r * n), lb(n), rtol=1e-5)
+        np.testing.assert_allclose(sg(r * n), sg(n), atol=1e-6)
+
+
+def test_sphere_operators_are_finite_at_the_origin():
+    # Padded rows of zeros must not poison gradients through a masked mean.
+    net = SIREN.init(3, 8, 1, depth=2, key=KEY)
+
+    def loss(net):
+        f = lambda n: net(n)[0]
+        pts = jnp.stack([jnp.array([0.0, 0.0, 1.0]), jnp.zeros(3)])
+        lb = jax.vmap(diffops.laplace_beltrami(f))(pts)
+        return jnp.sum(jnp.where(jnp.array([True, False]), lb, 0.0))
+
+    import equinox as eqx
+
+    grads = eqx.filter_grad(loss)(net)
+    leaves = jax.tree_util.tree_leaves(eqx.filter(grads, eqx.is_array))
+    assert all(bool(jnp.all(jnp.isfinite(g))) for g in leaves)
+    assert bool(
+        jnp.all(jnp.isfinite(diffops.surface_grad(lambda n: n[0])(jnp.zeros(3))))
+    )
+
+
+def test_integer_points_are_promoted():
+    np.testing.assert_allclose(
+        diffops.grad(lambda x: jnp.sum(x**2))(jnp.array([1, 2])), jnp.array([2.0, 4.0])
     )
 
 

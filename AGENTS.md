@@ -29,7 +29,8 @@ lands where the next person will find and reuse it.
 It is one package, `src/geonnax/`. The public API is `geonnax.__all__` plus
 the public submodules (each with its own `__all__`); names reachable only
 from a submodule are the bases (`geonnax.basis`), the lon/lat helpers
-(`geonnax.geo`), `geonnax.layers.dwt` / `idwt` / `nonuniform_rfft` /
+(`geonnax.geo`), the field-derivative operators (`geonnax.diffops`),
+`geonnax.layers.dwt` / `idwt` / `nonuniform_rfft` /
 `nonuniform_irfft` / `Factorization` / `Wavelet`,
 `geonnax.mswt.WaveletDownsample` / `WaveletUpsample` and
 `geonnax.unet.BlockType`.

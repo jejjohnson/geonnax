@@ -39,20 +39,21 @@ import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-from geonnax._basis._rbf import _safe_sqrt
-from geonnax.geo import enu_basis, lonlat_to_cartesian3d
+from geonnax.geo import _promote_to_floating, enu_basis, lonlat_to_cartesian3d
 
 
 ScalarField = Callable[[Float[Array, " D"]], Float[Array, ""]]
 VectorField = Callable[[Float[Array, " D"]], Float[Array, " K"]]
 
 
-def _check_point(x: Float[Array, ...], name: str = "x") -> None:
+def _check_point(x: Float[Array, ...], name: str = "x") -> Float[Array, " D"]:
+    """Validate one point and promote integer coordinates to floating."""
     if x.ndim != 1:
         raise ValueError(
             f"{name} must be a single point of shape (D,); got shape {x.shape}. "
             "Batch with jax.vmap."
         )
+    return _promote_to_floating(x)
 
 
 def grad(f: ScalarField) -> Callable[[Float[Array, " D"]], Float[Array, " D"]]:
@@ -73,7 +74,7 @@ def grad(f: ScalarField) -> Callable[[Float[Array, " D"]], Float[Array, " D"]]:
     """
 
     def _grad(x: Float[Array, " D"]) -> Float[Array, " D"]:
-        _check_point(x)
+        x = _check_point(x)
         return jax.grad(f)(x)
 
     return _grad
@@ -100,7 +101,7 @@ def jacobian(u: VectorField) -> Callable[[Float[Array, " D"]], Float[Array, "K D
     """
 
     def _jac(x: Float[Array, " D"]) -> Float[Array, "K D"]:
-        _check_point(x)
+        x = _check_point(x)
         return jax.jacfwd(u)(x)
 
     return _jac
@@ -127,7 +128,7 @@ def divergence(u: VectorField) -> Callable[[Float[Array, " D"]], Float[Array, ""
     """
 
     def _div(x: Float[Array, " D"]) -> Float[Array, ""]:
-        _check_point(x)
+        x = _check_point(x)
         J = jax.jacfwd(u)(x)
         if J.shape != (x.shape[0], x.shape[0]):
             raise ValueError(
@@ -160,7 +161,7 @@ def curl2d(u: VectorField) -> Callable[[Float[Array, " 2"]], Float[Array, ""]]:
     """
 
     def _curl(x: Float[Array, " 2"]) -> Float[Array, ""]:
-        _check_point(x)
+        x = _check_point(x)
         J = jax.jacfwd(u)(x)
         if J.shape != (2, 2):
             raise ValueError(
@@ -193,7 +194,7 @@ def laplacian(f: ScalarField) -> Callable[[Float[Array, " D"]], Float[Array, ""]
     """
 
     def _lap(x: Float[Array, " D"]) -> Float[Array, ""]:
-        _check_point(x)
+        x = _check_point(x)
         g = jax.grad(f)
 
         def second(e: Float[Array, " D"]) -> Float[Array, ""]:
@@ -205,20 +206,30 @@ def laplacian(f: ScalarField) -> Callable[[Float[Array, " D"]], Float[Array, ""]
     return _lap
 
 
+def _unit(x: Float[Array, " 3"]) -> Float[Array, " 3"]:
+    # x / |x| with a double `where`: the origin has no direction, so it maps to
+    # itself with finite gradients (masked padding rows stay NaN-free).
+    sq = jnp.sum(x**2)
+    positive = sq > 0.0
+    norm = jnp.where(positive, jnp.sqrt(jnp.where(positive, sq, 1.0)), 1.0)
+    return x / norm
+
+
 def _radial_extension(f: ScalarField) -> ScalarField:
     # g(x) = f(x / |x|) is constant along rays, so its Euclidean derivatives at
-    # |x| = 1 are the surface derivatives of f. The safe sqrt keeps gradients
-    # finite even at the (never-evaluated) origin.
+    # |x| = 1 are the surface derivatives of f.
     def g(x: Float[Array, " 3"]) -> Float[Array, ""]:
-        return f(x / _safe_sqrt(jnp.sum(x**2)))
+        return f(_unit(x))
 
     return g
 
 
-def _check_sphere_point(n: Float[Array, ...]) -> None:
-    _check_point(n, "n")
+def _check_sphere_point(n: Float[Array, ...]) -> Float[Array, " 3"]:
+    """Validate a sphere point and project it onto the unit sphere."""
+    n = _check_point(n, "n")
     if n.shape[0] != 3:
         raise ValueError(f"n must be a 3-D unit vector; got shape {n.shape}.")
+    return _unit(n)
 
 
 def surface_grad(f: ScalarField) -> Callable[[Float[Array, " 3"]], Float[Array, " 3"]]:
@@ -231,16 +242,17 @@ def surface_grad(f: ScalarField) -> Callable[[Float[Array, " 3"]], Float[Array, 
     \nabla_S f(n) = (I - n n^\top)\, \nabla g(n).
     $$
 
-    $\nabla g$ is already tangent at $\lVert n\rVert = 1$; the projection
-    removes round-off and makes the result tangent for slightly
-    un-normalised inputs.
+    Inputs are first projected to $n / \lVert n \rVert$, so any non-zero
+    vector gives the surface gradient at its direction; the final projection
+    removes round-off. The origin has no direction and returns a finite but
+    meaningless value (with finite gradients, so masked padding is safe).
 
     Args:
         f: Field of a unit vector, ``(3,) -> ()``.
 
     Returns:
         A callable ``(3,) -> (3,)`` returning a tangent vector in
-        Cartesian components, for unit-norm inputs.
+        Cartesian components, at the direction of the input.
 
     Examples:
         >>> import jax.numpy as jnp
@@ -252,7 +264,7 @@ def surface_grad(f: ScalarField) -> Callable[[Float[Array, " 3"]], Float[Array, 
     g = _radial_extension(f)
 
     def _sgrad(n: Float[Array, " 3"]) -> Float[Array, " 3"]:
-        _check_sphere_point(n)
+        n = _check_sphere_point(n)
         dg = jax.grad(g)(n)
         return dg - n * jnp.vdot(n, dg)
 
@@ -322,7 +334,9 @@ def laplace_beltrami(
         f: Field of a unit vector, ``(3,) -> ()``.
 
     Returns:
-        A callable ``(3,) -> ()``, valid for unit-norm inputs.
+        A callable ``(3,) -> ()``, evaluated at the direction
+        $n/\lVert n\rVert$ of the input (the origin returns a finite but
+        meaningless value).
 
     Examples:
         >>> import jax.numpy as jnp
@@ -335,7 +349,7 @@ def laplace_beltrami(
     lap = laplacian(_radial_extension(f))
 
     def _lb(n: Float[Array, " 3"]) -> Float[Array, ""]:
-        _check_sphere_point(n)
+        n = _check_sphere_point(n)
         return lap(n)
 
     return _lb
