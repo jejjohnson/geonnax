@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.0.10](https://github.com/jejjohnson/geonnax/compare/v0.0.9...v0.0.10) (2026-10-23)
+
+
+### Features
+
+* **diffops:** coordinate derivatives of continuous fields, flat and on the sphere ([#142](https://github.com/jejjohnson/geonnax/issues/142)) ([f96dcee](https://github.com/jejjohnson/geonnax/commit/f96dceeb7a2792926f66f830571be8fa64cbe1c3))
+* **encoders:** add GaussianFourierEncoder (Tancik Gaussian Fourier features) ([#144](https://github.com/jejjohnson/geonnax/issues/144)) ([d59e4a8](https://github.com/jejjohnson/geonnax/commit/d59e4a8768d83a5ea6e901ac5ec14a80222c6d66))
+* **neural_field:** add NeuralFieldMLP, the BayesNF network as a deterministic core ([#143](https://github.com/jejjohnson/geonnax/issues/143)) ([64efc90](https://github.com/jejjohnson/geonnax/commit/64efc90c1f253c32900c7e77bf315a5c9bdc36ce))
+
+
+### Bug Fixes
+
+* **basis:** float32-safe associated_legendre via an exponent carry ([#126](https://github.com/jejjohnson/geonnax/issues/126)) ([21064aa](https://github.com/jejjohnson/geonnax/commit/21064aae416c783b8f67c281c19559a10f40a95a))
+* **basis:** float32-safe real_spherical_harmonics beyond l_max ≈ 180 ([#127](https://github.com/jejjohnson/geonnax/issues/127)) ([711702c](https://github.com/jejjohnson/geonnax/commit/711702c2cc3848d0940c6733f1b506777be02149))
+* **layers:** build SphericalHarmonicTransform tables in float64 ([#125](https://github.com/jejjohnson/geonnax/issues/125)) ([ed1960a](https://github.com/jejjohnson/geonnax/commit/ed1960a1cc4b867bc0946843709c468afb3cecdb))
+
 ## [0.0.9](https://github.com/jejjohnson/geonnax/compare/v0.0.8...v0.0.9) (2026-10-12)
 
 
