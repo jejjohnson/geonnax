@@ -40,15 +40,37 @@ import geonnax
 
 enc = geonnax.SphericalHarmonicEncoder(l_max=6, input_mode="lonlat")
 field = geonnax.NeuralFieldMLP.init(
-    (365.0, 180.0, 90.0), width=64, depth=2,           # inputs: (t, lon, lat)
-    seasonality_periods=(365.25,), num_seasonal_harmonics=(3,),
-    extra_features=49, key=jr.PRNGKey(0),
+    (365.0, 180.0, 90.0),
+    width=64,
+    depth=2,  # inputs: (t, lon, lat)
+    seasonality_periods=(365.25,),
+    num_seasonal_harmonics=(3,),
+    extra_features=49,
+    key=jr.PRNGKey(0),
 )
 x = jnp.array([12.0, 3.5, 40.2])
-y = field(x, enc(geonnax.geo.deg2rad(x[1:])))                # (1,)
+y = field(x, enc(geonnax.geo.deg2rad(x[1:])))  # (1,)
 ```
 
 ::: geonnax.neural_field
+
+## Separable neural fields
+
+`SeparableINR` (SPINN; Cho et al., 2023) gives each input axis its own small network and
+sums rank-$r$ products of their outputs. On a tensor-product grid of $N_1 \times \dots
+\times N_A$ points, `on_grid` costs $\sum_a N_a$ network evaluations instead of
+$\prod_a N_a$, which makes full-grid physics residuals cheap.
+
+```python
+import jax.numpy as jnp, jax.random as jr
+from geonnax import SeparableINR
+
+f = SeparableINR.init(3, rank=16, hidden_features=32, depth=3, key=jr.PRNGKey(0))
+t, x, y = jnp.linspace(0, 1, 10), jnp.linspace(-1, 1, 64), jnp.linspace(-1, 1, 64)
+u = f.on_grid((t, x, y))  # (1, 10, 64, 64)
+```
+
+::: geonnax.separable
 
 ## Multiplicative Filter Networks
 
@@ -74,12 +96,13 @@ import geonnax
 from geonnax import diffops
 
 enc = geonnax.SphericalHarmonicEncoder(l_max=8, input_mode="cartesian")
-net = geonnax.SIREN.init(in_features=81, hidden_features=64, out_features=1,
-                         depth=3, key=jr.PRNGKey(0))
-ssh = lambda n: net(enc(n))[0]                      # field on the unit sphere
+net = geonnax.SIREN.init(
+    in_features=81, hidden_features=64, out_features=1, depth=3, key=jr.PRNGKey(0)
+)
+ssh = lambda n: net(enc(n))[0]  # field on the unit sphere
 
 lonlat = jnp.array([[3.0, 40.0], [5.5, 38.2]])
-grad_en = jax.vmap(diffops.surface_grad_enu(ssh))(lonlat)   # (2, 2): east, north
+grad_en = jax.vmap(diffops.surface_grad_enu(ssh))(lonlat)  # (2, 2): east, north
 ```
 
 ::: geonnax.diffops
