@@ -24,8 +24,8 @@ library, since they ``isinstance``-dispatch on kernel classes):
 - `legendre_polynomials` / `associated_legendre` /
   `associated_legendre_indices` / `gauss_legendre` — the 1-D Legendre
   building blocks of the spherical bases, and Gauss–Legendre quadrature.
-- `fibonacci_sphere` / `gauss_legendre_grid` / `latlon_grid` — point sets
-  and quadrature grids on the sphere, returned with their weights.
+- `fibonacci_sphere` / `gauss_legendre_grid` / `latlon_grid` / `healpix_grid` —
+  point sets and quadrature grids on the sphere, returned with their weights.
 - `icosphere` — the subdivided-icosahedron triangle mesh of the sphere.
 - `mesh_vertex_areas` / `cotangent_laplacian_eigpairs` — lumped vertex areas
   and the cotangent Laplace–Beltrami eigenpairs of any triangle mesh.
@@ -105,6 +105,7 @@ from geonnax._basis._slepian_region import (
 from geonnax._basis._sphere_grids import (
     fibonacci_sphere,
     gauss_legendre_grid,
+    healpix_grid,
     latlon_grid,
 )
 from geonnax._basis._spherical import harmonic_degrees, real_spherical_harmonics
@@ -134,6 +135,7 @@ __all__ = [
     "gauss_legendre_grid",
     "graph_laplacian_eigpairs",
     "harmonic_degrees",
+    "healpix_grid",
     "icosphere",
     "latlon_grid",
     "legendre_polynomials",
