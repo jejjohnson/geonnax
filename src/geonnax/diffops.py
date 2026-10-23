@@ -208,9 +208,8 @@ def laplacian(f: ScalarField) -> Callable[[Float[Array, " D"]], Float[Array, ""]
 
 
 def _unit(x: Float[Array, " 3"]) -> Float[Array, " 3"]:
-    # x / |x|, guarded by the shared `_safe_sqrt`: the origin has no direction, so
-    # it maps to
-    # itself with finite gradients (masked padding rows stay NaN-free).
+    # x / |x|, guarded by the shared `_safe_sqrt`: the origin has no direction,
+    # so it maps to itself with finite gradients (masked padding stays NaN-free).
     sq = jnp.sum(x**2)
     return x / jnp.where(sq > 0.0, _safe_sqrt(sq), 1.0)
 
