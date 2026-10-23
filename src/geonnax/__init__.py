@@ -16,6 +16,9 @@ Submodules:
   (RBF), and overcomplete (Gabor frame) spatial bases.
 - `geonnax._basis` — implementation home for the spatial bases above
   (re-exported through `geonnax.basis`).
+- `geonnax.diffops` — coordinate derivatives of continuous fields
+  (``grad``, ``laplacian``, ``surface_grad``, ``laplace_beltrami``, …),
+  Euclidean and on the unit sphere.
 - `geonnax.encoders` — coordinate encoders (``Deg2Rad``, …,
   ``SphericalHarmonicEncoder``) and ``GeoContextEncoder`` for
   lon/lat/time/covariate context vectors.
@@ -47,6 +50,7 @@ from geonnax import (
     cno,
     conditioning,
     crf,
+    diffops,
     encoders,
     ensemble,
     fno,
@@ -269,6 +273,7 @@ __all__ = [
     "cno_receptive_radius",
     "conditioning",
     "crf",
+    "diffops",
     "encoders",
     "ensemble",
     "fno",

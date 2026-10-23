@@ -29,7 +29,8 @@ lands where the next person will find and reuse it.
 It is one package, `src/geonnax/`. The public API is `geonnax.__all__` plus
 the public submodules (each with its own `__all__`); names reachable only
 from a submodule are the bases (`geonnax.basis`), the lon/lat helpers
-(`geonnax.geo`), `geonnax.layers.dwt` / `idwt` / `nonuniform_rfft` /
+(`geonnax.geo`), the field-derivative operators (`geonnax.diffops`),
+`geonnax.layers.dwt` / `idwt` / `nonuniform_rfft` /
 `nonuniform_irfft` / `Factorization` / `Wavelet`,
 `geonnax.mswt.WaveletDownsample` / `WaveletUpsample` and
 `geonnax.unet.BlockType`.
@@ -42,14 +43,15 @@ from a submodule are the bases (`geonnax.basis`), the lon/lat helpers
 | Neural operators | `fno.py`, `sfno.py`, `wno.py`, `mswt.py`, `manifold_no.py`, `cno.py`, `lno.py` | `FNO`, `SFNO`, `WNO`, `MSWT`, `ManifoldNO`, `CNO` and their blocks; `LNO`, a local core marched in time |
 | U-Net | `unet.py` | `UNet` (alias `XUNet`), `Stage`, `NestedResidualUNet` |
 | Implicit neural representations | `siren.py`, `multi_scale_siren.py`, `mfn.py`, `conditioning.py` | `SIREN`, `SirenDense`, the SIREN init rules, `MultiScaleSIREN`, `FourierNet` / `GaborNet`, conditioners (`ConcatConditioner`, `AffineModulation` = `FiLM`, `HyperLinear`), `ConditionedINR`, `HyperSIREN` |
+| Field derivatives | `diffops.py` | `grad`, `jacobian`, `divergence`, `curl2d`, `laplacian`; on the unit sphere `surface_grad`, `surface_grad_enu`, `laplace_beltrami` (operators on single-example fields, not losses) |
 | Uncertainty-aware cores | `randfeat.py`, `sngp.py`, `vssgp.py`, `spectral_norm.py`, `ensemble.py`, `heteroscedastic.py`, `mixture.py`, `crf.py`, `ncp.py` | Random Fourier features, the SNGP head and its Laplace covariance, the deep VSSGP core, spectral normalisation, BatchEnsemble layers, heteroscedastic heads, mixture-density head, linear-chain CRF, NCP input perturbation — each the deterministic half of a probabilistic layer pyrox builds |
 
 Imports point one way: `_basis` imports nothing else in geonnax; `layers`
 imports only itself and `_basis`; `geo` → `_basis`; the model modules import
 `layers` / `_basis` / `geo`, and only these model-to-model edges exist:
 `conditioning` and `multi_scale_siren` → `siren`, `vssgp` → `randfeat`,
-`slepian` → `encoders` / `geo`, `geofno` → `fno`, `lno` → `cno`. No test
-enforces this; keep it.
+`slepian` → `encoders` / `geo`, `geofno` → `fno`, `lno` → `cno`;
+`diffops` imports `geo` and `_basis` only. No test enforces this; keep it.
 
 ### Boundaries
 

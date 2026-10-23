@@ -48,6 +48,7 @@ PUBLIC_MODULES: list[str] = [
     "geonnax.layers",
     "geonnax.conditioning",
     "geonnax.crf",
+    "geonnax.diffops",
     "geonnax.encoders",
     "geonnax.ensemble",
     "geonnax.fno",
