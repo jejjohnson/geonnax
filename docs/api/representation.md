@@ -31,3 +31,30 @@ MFNs (Fathony et al., 2021) build an output by repeatedly multiplying a linear m
 a Fourier or Gabor filter of the input, giving an analytically tractable basis.
 
 ::: geonnax.mfn
+
+## Derivatives of fields
+
+A neural field is differentiable in its coordinates, so geostrophic velocities,
+elevation-change rates and PDE residuals come from automatic differentiation.
+`geonnax.diffops` turns a single-example field into its gradient, Jacobian,
+divergence, planar curl or Laplacian, and — for fields of a unit vector $n \in S^2$ —
+its surface gradient (Cartesian or east/north) and Laplace–Beltrami operator, using
+the radially constant extension $g(x) = f(x/\lVert x\rVert)$ so that
+$\Delta_S f = \Delta g$ on the unit sphere. They are operators, not losses: build
+residual costs from them in your own training code.
+
+```python
+import jax, jax.numpy as jnp, jax.random as jr
+import geonnax
+from geonnax import diffops
+
+enc = geonnax.SphericalHarmonicEncoder(l_max=8, input_mode="cartesian")
+net = geonnax.SIREN.init(in_features=81, hidden_features=64, out_features=1,
+                         depth=3, key=jr.PRNGKey(0))
+ssh = lambda n: net(enc(n))[0]                      # field on the unit sphere
+
+lonlat = jnp.array([[3.0, 40.0], [5.5, 38.2]])
+grad_en = jax.vmap(diffops.surface_grad_enu(ssh))(lonlat)   # (2, 2): east, north
+```
+
+::: geonnax.diffops
