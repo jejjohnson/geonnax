@@ -50,7 +50,8 @@ Imports point one way: `_basis` imports nothing else in geonnax; `layers`
 imports only itself and `_basis`; `geo` → `_basis`; the model modules import
 `layers` / `_basis` / `geo`, and only these model-to-model edges exist:
 `conditioning` and `multi_scale_siren` → `siren`, `vssgp` → `randfeat`,
-`slepian` → `encoders` / `geo`, `geofno` → `fno`, `lno` → `cno`;
+`slepian` → `encoders` / `geo`, `geofno` → `fno`, `lno` → `cno`,
+`encoders` → `randfeat` (`GaussianFourierEncoder` reuses `rff_forward`);
 `diffops` imports `geo` and `_basis` only. No test enforces this; keep it.
 
 ### Boundaries

@@ -31,6 +31,7 @@ from geonnax.geo import (
     lonlat_scale,
     lonlat_to_cartesian3d,
 )
+from geonnax.randfeat import rff_forward
 
 
 def _as_scalar(value: Num[Array, ""] | float, name: str) -> Float[Array, ""]:
@@ -524,9 +525,10 @@ class GaussianFourierEncoder(eqx.Module):
     resolves finer structure and overfits noise sooner. Inputs should be
     rescaled to roughly unit range first (for example with `LonLatScale`).
 
-    Unlike `OrthogonalRandomFeatures` / `geonnax.randfeat.rff_forward`, which
-    approximate a kernel and carry a lengthscale and a $1/\sqrt{M}$ factor,
-    this is an unnormalised positional encoding for coordinate networks.
+    Unlike `OrthogonalRandomFeatures`, which approximates a kernel with a
+    lengthscale and a $1/\sqrt{M}$ factor, this is an unnormalised positional
+    encoding for coordinate networks. It shares the feature map: the forward
+    is $\sqrt{M}\,$`rff_forward`$(B^\top, \ell = 1/(2\pi), M, x)$.
 
     Attributes:
         B: Frequency matrix, shape ``(num_frequencies, in_features)``; frozen.
@@ -606,7 +608,7 @@ class GaussianFourierEncoder(eqx.Module):
             >>> import jax.numpy as jnp, jax.random as jr
             >>> from geonnax import GaussianFourierEncoder
             >>> enc = GaussianFourierEncoder.init(2, 4, sigma=1.0, key=jr.PRNGKey(0))
-            >>> enc(jnp.zeros(2)).tolist()  # cos(0) = 1, sin(0) = 0
+            >>> (enc(jnp.zeros(2)) + 0.0).tolist()  # cos(0) = 1, sin(0) = 0
             [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0]
         """
         if x.shape != (self.in_features,):
@@ -618,9 +620,12 @@ class GaussianFourierEncoder(eqx.Module):
         # The phase reaches tens of radians, so it is formed in at least
         # float32 (half precision would ruin it) and cast back afterwards.
         work = jnp.promote_types(x.dtype, jnp.float32)
-        B = jax.lax.stop_gradient(self.B).astype(work)
-        z = 2.0 * jnp.pi * einx.dot("m d, d -> m", B, x.astype(work))
-        return jnp.concatenate([jnp.cos(z), jnp.sin(z)]).astype(x.dtype)
+        W = einx.id("m d -> d m", jax.lax.stop_gradient(self.B).astype(work))
+        # The shared map is sqrt(1/M)·[cos(xW/ℓ), sin(xW/ℓ)]; ℓ = 1/(2π) gives the
+        # 2πBx phase, and the sqrt(M) undoes its kernel-approximation scaling.
+        m = self.num_frequencies
+        feats = rff_forward(W, 1.0 / (2.0 * jnp.pi), m, x.astype(work))
+        return (jnp.sqrt(jnp.asarray(m, dtype=work)) * feats).astype(x.dtype)
 
 
 __all__ = [
