@@ -39,6 +39,7 @@ import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
+from geonnax._basis._rbf import _safe_sqrt
 from geonnax.geo import _promote_to_floating, enu_basis, lonlat_to_cartesian3d
 
 
@@ -207,12 +208,11 @@ def laplacian(f: ScalarField) -> Callable[[Float[Array, " D"]], Float[Array, ""]
 
 
 def _unit(x: Float[Array, " 3"]) -> Float[Array, " 3"]:
-    # x / |x| with a double `where`: the origin has no direction, so it maps to
+    # x / |x|, guarded by the shared `_safe_sqrt`: the origin has no direction, so
+    # it maps to
     # itself with finite gradients (masked padding rows stay NaN-free).
     sq = jnp.sum(x**2)
-    positive = sq > 0.0
-    norm = jnp.where(positive, jnp.sqrt(jnp.where(positive, sq, 1.0)), 1.0)
-    return x / norm
+    return x / jnp.where(sq > 0.0, _safe_sqrt(sq), 1.0)
 
 
 def _radial_extension(f: ScalarField) -> ScalarField:
