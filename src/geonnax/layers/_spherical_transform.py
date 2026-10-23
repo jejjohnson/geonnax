@@ -121,7 +121,13 @@ class SphericalHarmonicTransform(eqx.Module):
                 f"got n_lon={n_lon}, l_max={l_max}."
             )
         xyz, weights = _gauss_legendre_grid(n_lat, n_lon)
-        synth = np.asarray(real_spherical_harmonics(jnp.asarray(xyz), l_max))
+        # The tables are construction-time constants, so build them in float64
+        # (finite and orthonormal far beyond float32's l_max ≈ 180 limit of
+        # `real_spherical_harmonics`, #122) and cast to the default dtype once.
+        with jax.enable_x64(True):
+            synth = np.asarray(
+                real_spherical_harmonics(jnp.asarray(xyz, dtype=jnp.float64), l_max)
+            )
         analy = (synth * weights[:, None]).T
         return cls(
             synth=jnp.asarray(synth),
