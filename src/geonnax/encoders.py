@@ -1,8 +1,10 @@
 """Deterministic coordinate encoders for lon/lat and spherical inputs.
 
 Pure ``equinox.Module`` wrappers around the helpers in
-`geonnax.geo` and `geonnax._basis`. No PRNG, no learnable
-parameters — they compose into ``eqx.nn.Sequential``.
+`geonnax.geo` and `geonnax._basis`. No learnable parameters — they compose
+into ``eqx.nn.Sequential``. All are constructed without a key except
+`GaussianFourierEncoder`, whose random frequency matrix is drawn once in
+``init`` and then frozen.
 
 All encoders take a single example as input; use `jax.vmap` to
 batch over leading dimensions.
@@ -12,9 +14,11 @@ from __future__ import annotations
 
 from typing import Literal
 
+import einx
 import equinox as eqx
+import jax
 import jax.numpy as jnp
-from jaxtyping import Array, Float, Num
+from jaxtyping import Array, Float, Num, PRNGKeyArray
 
 from geonnax._basis import real_spherical_harmonics
 from geonnax.geo import (
@@ -503,10 +507,123 @@ class GeoContextEncoder(eqx.Module):
         return jnp.concatenate(blocks)  # blocks of (k_i,) -> (F,)
 
 
+class GaussianFourierEncoder(eqx.Module):
+    r"""Gaussian random Fourier-feature positional encoding (Tancik et al., 2020).
+
+    $$
+    \gamma(x) = \big[\cos(2\pi B x),\ \sin(2\pi B x)\big],
+    \qquad B_{ij} \sim \mathcal{N}(0, \sigma^2),
+    $$
+
+    with $B \in \mathbb{R}^{M \times D}$ drawn once in `init` and held as a
+    frozen leaf (read through `jax.lax.stop_gradient`). The scale $\sigma$
+    sets the bandwidth an MLP behind the encoding can fit: the induced neural
+    tangent kernel is stationary with spectral density
+    $\approx \mathcal{N}(0, \sigma^2)$ in frequency, so a larger $\sigma$
+    resolves finer structure and overfits noise sooner. Inputs should be
+    rescaled to roughly unit range first (for example with `LonLatScale`).
+
+    Unlike `OrthogonalRandomFeatures` / `geonnax.randfeat.rff_forward`, which
+    approximate a kernel and carry a lengthscale and a $1/\sqrt{M}$ factor,
+    this is an unnormalised positional encoding for coordinate networks.
+
+    Attributes:
+        B: Frequency matrix, shape ``(num_frequencies, in_features)``; frozen.
+        in_features: Input dimension $D$.
+        num_frequencies: Number of frequencies $M$; the output has $2M$
+            entries.
+
+    References:
+        Tancik, M., et al. (2020). Fourier features let networks learn high
+        frequency functions in low dimensional domains. *NeurIPS*.
+
+    Examples:
+        >>> import jax, jax.numpy as jnp, jax.random as jr
+        >>> from geonnax import GaussianFourierEncoder
+        >>> enc = GaussianFourierEncoder.init(3, 64, sigma=10.0, key=jr.PRNGKey(0))
+        >>> enc(jnp.array([0.1, 0.2, 0.3])).shape
+        (128,)
+        >>> jax.vmap(enc)(jnp.zeros((5, 3))).shape
+        (5, 128)
+    """
+
+    B: Float[Array, "M D"]
+    in_features: int = eqx.field(static=True)
+    num_frequencies: int = eqx.field(static=True)
+
+    @classmethod
+    def init(
+        cls,
+        in_features: int,
+        num_frequencies: int,
+        sigma: float,
+        *,
+        key: PRNGKeyArray,
+    ) -> GaussianFourierEncoder:
+        """Draw the frequency matrix B ~ N(0, σ²) once.
+
+        Args:
+            in_features: Input dimension (``>= 1``).
+            num_frequencies: Number of frequencies $M$ (``>= 1``).
+            sigma: Standard deviation of the frequencies (``> 0``).
+            key: PRNG key for $B$.
+
+        Returns:
+            A new `GaussianFourierEncoder`.
+
+        Raises:
+            ValueError: If a size is below 1 or ``sigma`` is not positive.
+        """
+        if in_features < 1 or num_frequencies < 1:
+            raise ValueError(
+                "in_features and num_frequencies must be >= 1; "
+                f"got {in_features} and {num_frequencies}."
+            )
+        if not sigma > 0.0:
+            raise ValueError(f"sigma must be > 0; got {sigma}.")
+        B = sigma * jax.random.normal(key, (num_frequencies, in_features))
+        return cls(B=B, in_features=in_features, num_frequencies=num_frequencies)
+
+    @property
+    def num_features(self) -> int:
+        """Output width, ``2 * num_frequencies``."""
+        return 2 * self.num_frequencies
+
+    def __call__(self, x: Float[Array, " D"]) -> Float[Array, " two_M"]:
+        """Encode one point.
+
+        Args:
+            x: Input of shape ``(in_features,)``.
+
+        Returns:
+            ``[cos(2πBx), sin(2πBx)]``, shape ``(2 * num_frequencies,)``.
+
+        Raises:
+            ValueError: If ``x`` is not of shape ``(in_features,)``.
+
+        Examples:
+            >>> import jax.numpy as jnp, jax.random as jr
+            >>> from geonnax import GaussianFourierEncoder
+            >>> enc = GaussianFourierEncoder.init(2, 4, sigma=1.0, key=jr.PRNGKey(0))
+            >>> enc(jnp.zeros(2)).tolist()  # cos(0) = 1, sin(0) = 0
+            [1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.0]
+        """
+        if x.shape != (self.in_features,):
+            raise ValueError(
+                f"x must have shape ({self.in_features},); got {x.shape}. "
+                "Use jax.vmap to encode a batch."
+            )
+        x = _promote_to_floating(x)
+        B = jax.lax.stop_gradient(self.B).astype(x.dtype)
+        z = 2.0 * jnp.pi * einx.dot("m d, d -> m", B, x)
+        return jnp.concatenate([jnp.cos(z), jnp.sin(z)])
+
+
 __all__ = [
     "Cartesian3DEncoder",
     "CyclicEncoder",
     "Deg2Rad",
+    "GaussianFourierEncoder",
     "GeoContextEncoder",
     "LonLatScale",
     "SphericalHarmonicEncoder",
