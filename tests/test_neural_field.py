@@ -33,7 +33,8 @@ def _reference_batch(m: NeuralFieldMLP, x: jax.Array) -> jax.Array:
     Mirrors ``pyrox_nn._bnf.BayesianNeuralField.__call__`` step by step, with
     the sampled sites replaced by the module's fields.
     """
-    scaled = x / (jnp.asarray(m.input_scales) * jnp.exp(m.log_scale_adjustment))
+    scales = jnp.asarray(m.input_scales, dtype=jnp.float32)  # as pyrox-nn builds them
+    scaled = x / (scales * jnp.exp(m.log_scale_adjustment))
     blocks = [scaled]
     for c, d in enumerate(m.fourier_degrees):
         if d > 0:
@@ -91,6 +92,7 @@ def test_matches_bayesnf_reference_forward():
         jr.PRNGKey(1),
     )
     x = jr.normal(jr.PRNGKey(2), (32, 3)) * jnp.array([100.0, 1.0, 1.0])
+    # float32: the same operations reordered (single example vs batch).
     np.testing.assert_allclose(
         jax.vmap(m)(x), _reference_batch(m, x), rtol=1e-5, atol=1e-5
     )
@@ -137,6 +139,7 @@ def test_init_is_unit_gain_and_zero_readout_gives_bias():
     [
         (dict(input_scales=()), "input_scales"),
         (dict(input_scales=(1.0, 0.0)), "input_scales"),
+        (dict(input_scales=(1.0, float("nan"))), "input_scales"),
         (dict(width=0), "width"),
         (dict(fourier_degrees=(1,)), "one entry per input"),
         (dict(fourier_degrees=(1, -1)), ">= 0"),
@@ -195,3 +198,22 @@ def test_jit_vmap_grad():
 def test_neural_field_module_no_numpyro():
     src = pathlib.Path(nf_mod.__file__).read_text()
     assert "numpyro" not in src
+
+
+def test_integer_inputs_are_promoted_before_scaling():
+    # Integer day indices must not truncate non-integer scales (365.25 -> 365).
+    m = NeuralFieldMLP.init((365.25, 1.5), width=8, depth=1, key=KEY)
+    x = jnp.array([730, 3], dtype=jnp.int32)
+    np.testing.assert_allclose(
+        m.features(x)[:2], jnp.array([730 / 365.25, 2.0]), rtol=1e-6
+    )
+    np.testing.assert_allclose(m(x), m(x.astype(jnp.float32)), rtol=1e-6)
+
+
+def test_hidden_parameters_are_immutable_tuples():
+    m = NeuralFieldMLP.init((1.0, 1.0), width=4, depth=2, key=KEY)
+    assert isinstance(m.layers_W, tuple) and isinstance(m.layers_b, tuple)
+    swapped = eqx.tree_at(
+        lambda m: m.layers_W, m, tuple(jnp.zeros_like(w) for w in m.layers_W)
+    )
+    assert all(bool(jnp.all(w == 0)) for w in swapped.layers_W)

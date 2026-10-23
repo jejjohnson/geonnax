@@ -24,6 +24,7 @@ import jax.numpy as jnp
 from jaxtyping import Array, Float, PRNGKeyArray
 
 from geonnax.basis import fourier_features, interaction_features, seasonal_features
+from geonnax.geo import _promote_to_floating
 
 
 # softplus(_UNIT_GAIN) == 1, so a fresh model applies unit gains everywhere.
@@ -68,9 +69,13 @@ class NeuralFieldMLP(eqx.Module):
     parameter values.
 
     Initialisation (deterministic training from scratch): dense weights
-    $\mathcal{N}(0, 1)$ (the NTK convention; the $1/\sqrt{\text{fan-in}}$
-    lives in the forward pass), zero biases, zero scale adjustments, every gain
-    at $\mathrm{softplus}^{-1}(1)$ and $\beta = 0$ ($\alpha = 1/2$).
+    $\mathcal{N}(0, 1)$ with the $1/\sqrt{\text{fan-in}}$ in the forward pass
+    (the NTK parameterisation of Jacot et al., 2018; Lee et al., 2018), which
+    keeps activations unit-scale across depth; zero biases and scale
+    adjustments; every gain at $\mathrm{softplus}^{-1}(1)$; $\beta = 0$
+    ($\alpha = 1/2$). This deliberately departs from BayesNF, whose MAP and
+    ensemble fits start from Logistic(0, 1) prior draws (variance
+    $\pi^2/3$); pyrox-nn restores that when it wraps the core.
 
     Named parameter fields (swapped by pyrox-nn for sample sites):
     ``log_scale_adjustment``, ``feature_gain``, ``logit_activation_weight``,
@@ -81,8 +86,8 @@ class NeuralFieldMLP(eqx.Module):
         log_scale_adjustment: Learned per-input log scale $a$, shape ``(D,)``.
         feature_gain: Gate logits $g_k$, one per feature block, shape ``(B,)``.
         logit_activation_weight: Activation-mix logit $\beta$, scalar.
-        layers_W: Hidden weights, ``depth`` arrays of shape ``(I, width)``.
-        layers_b: Hidden biases, ``depth`` arrays of shape ``(width,)``.
+        layers_W: Hidden weights, a tuple of ``depth`` arrays ``(I, width)``.
+        layers_b: Hidden biases, a tuple of ``depth`` arrays ``(width,)``.
         layers_gain: Hidden-layer gain logits $c_\ell$, shape ``(depth,)``.
         output_W: Readout weights, shape ``(width, K)``.
         output_b: Readout bias, shape ``(K,)``.
@@ -101,6 +106,9 @@ class NeuralFieldMLP(eqx.Module):
         out_features: Output dimension $K$.
 
     References:
+        Jacot, A., Gabriel, F., Hongler, C. (2018). Neural tangent kernel.
+        *NeurIPS*. Lee, J., et al. (2018). Deep neural networks as Gaussian
+        processes. *ICLR*.
         Saad, F. A., et al. (2024). Scalable spatiotemporal prediction with
         Bayesian neural fields. *Nature Communications* 15, 7942.
     """
@@ -108,8 +116,8 @@ class NeuralFieldMLP(eqx.Module):
     log_scale_adjustment: Float[Array, " D"]
     feature_gain: Float[Array, " B"]
     logit_activation_weight: Float[Array, ""]
-    layers_W: list[Float[Array, "I O"]]
-    layers_b: list[Float[Array, " O"]]
+    layers_W: tuple[Float[Array, "I O"], ...]
+    layers_b: tuple[Float[Array, " O"], ...]
     layers_gain: Float[Array, " L"]
     output_W: Float[Array, "O K"]
     output_b: Float[Array, " K"]
@@ -167,7 +175,7 @@ class NeuralFieldMLP(eqx.Module):
         """
         input_scales = tuple(float(s) for s in input_scales)
         d = len(input_scales)
-        if d == 0 or any(s <= 0.0 for s in input_scales):
+        if d == 0 or any(not math.isfinite(s) or s <= 0.0 for s in input_scales):
             raise ValueError(
                 f"input_scales must be non-empty and positive; got {input_scales}."
             )
@@ -199,7 +207,10 @@ class NeuralFieldMLP(eqx.Module):
         if any(p <= 0.0 for p in seasonality_periods) or any(
             h < 0 for h in num_seasonal_harmonics
         ):
-            raise ValueError("periods must be > 0 and harmonics >= 0.")
+            raise ValueError(
+                "periods must be > 0 and harmonics >= 0; got "
+                f"{seasonality_periods} and {num_seasonal_harmonics}."
+            )
         if not 0 <= time_col < d:
             raise ValueError(f"time_col must be in [0, {d}); got {time_col}.")
 
@@ -224,8 +235,8 @@ class NeuralFieldMLP(eqx.Module):
             log_scale_adjustment=jnp.zeros((d,)),
             feature_gain=jnp.full((len(block_widths),), _UNIT_GAIN),
             logit_activation_weight=jnp.zeros(()),
-            layers_W=layers_W,
-            layers_b=layers_b,
+            layers_W=tuple(layers_W),
+            layers_b=tuple(layers_b),
             layers_gain=jnp.full((depth,), _UNIT_GAIN),
             output_W=jax.random.normal(keys[depth], (fan_in, out_features)),
             output_b=jnp.zeros((out_features,)),
@@ -273,6 +284,7 @@ class NeuralFieldMLP(eqx.Module):
                 f"extra must have shape ({self.extra_features},); got {extra.shape}."
             )
 
+        x = _promote_to_floating(x)
         scales = jnp.asarray(self.input_scales, dtype=x.dtype)
         scaled = x / (scales * jnp.exp(self.log_scale_adjustment))
         row = einx.id("d -> 1 d", scaled)
