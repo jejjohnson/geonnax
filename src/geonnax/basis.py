@@ -41,11 +41,6 @@ import einx
 import jax.numpy as jnp
 from jaxtyping import Array, Float, Int
 
-# The eigenfunction, localized, and overcomplete bases live in the
-# ``geonnax._basis`` implementation package; re-export them here so the whole
-# basis zoo — feature transforms (defined in this module) plus the spatial
-# bases — is reachable from the single public ``geonnax.basis`` surface, and
-# downstream libraries never have to import the private namespace.
 from geonnax._basis import (
     SlepianBasis,
     SlepianCapBasis,
@@ -91,6 +86,13 @@ from geonnax._basis import (
     wendland_c4,
 )
 
+# The eigenfunction, localized, and overcomplete bases live in the
+# ``geonnax._basis`` implementation package; re-export them here so the whole
+# basis zoo — feature transforms (defined in this module) plus the spatial
+# bases — is reachable from the single public ``geonnax.basis`` surface, and
+# downstream libraries never have to import the private namespace.
+from geonnax.geo import _promote_to_floating
+
 
 def fourier_features(
     x: Float[Array, " N"],
@@ -129,7 +131,9 @@ def fourier_features(
         >>> fourier_features(jnp.linspace(0.0, 1.0, 5), max_degree=3).shape
         (5, 6)
     """
-    degrees = jnp.arange(max_degree)
+    x = _promote_to_floating(x)
+    # Degrees in x's dtype so a float32 input stays float32 under x64.
+    degrees = jnp.arange(max_degree, dtype=x.dtype)
     # Broadcast x to (N, D) frequencies without an explicit reshape.
     z = einx.id("n -> n d", x, d=max_degree) * (2.0 * jnp.pi * 2.0**degrees)
     feats = jnp.concatenate([jnp.cos(z), jnp.sin(z)], axis=-1)
@@ -224,10 +228,13 @@ def seasonal_features(
         >>> seasonal_features(x, [7.0, 365.0], [1, 2]).shape
         (4, 6)
     """
+    x = _promote_to_floating(x)
     _, freq_list = seasonal_frequencies(periods, harmonics)
     if not freq_list:
         return jnp.zeros((x.shape[0], 0), dtype=x.dtype)
-    freqs = jnp.asarray(freq_list, dtype=jnp.float32)
+    # Frequencies in x's dtype: a float64 time axis (e.g. seconds since an
+    # epoch) keeps a float64 phase instead of a float32-rounded 1/period.
+    freqs = jnp.asarray(freq_list, dtype=x.dtype)
     z = einx.id("n -> n f", x, f=freqs.shape[0]) * (2.0 * jnp.pi * freqs)
     feats = jnp.concatenate([jnp.cos(z), jnp.sin(z)], axis=-1)
     if rescale:
@@ -235,7 +242,7 @@ def seasonal_features(
         h_within_list: list[float] = []
         for n_h in harmonics:
             h_within_list.extend(range(1, int(n_h) + 1))
-        h_within = jnp.asarray(h_within_list, dtype=jnp.float32)
+        h_within = jnp.asarray(h_within_list, dtype=x.dtype)
         denom = jnp.concatenate([h_within, h_within])
         feats = feats / denom
     return feats

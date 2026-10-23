@@ -47,7 +47,8 @@ from a submodule are the bases (`geonnax.basis`), the lon/lat helpers
 | Uncertainty-aware cores | `randfeat.py`, `sngp.py`, `vssgp.py`, `spectral_norm.py`, `ensemble.py`, `heteroscedastic.py`, `mixture.py`, `crf.py`, `ncp.py` | Random Fourier features, the SNGP head and its Laplace covariance, the deep VSSGP core, spectral normalisation, BatchEnsemble layers, heteroscedastic heads, mixture-density head, linear-chain CRF, NCP input perturbation — each the deterministic half of a probabilistic layer pyrox builds |
 
 Imports point one way: `_basis` imports nothing else in geonnax; `layers`
-imports only itself and `_basis`; `geo` → `_basis`; the model modules import
+imports only itself and `_basis`; `geo` → `_basis`; `basis` → `_basis` and
+`geo` (only `_promote_to_floating`); the model modules import
 `layers` / `_basis` / `geo`, and only these model-to-model edges exist:
 `conditioning`, `multi_scale_siren` and `separable` → `siren`, `vssgp` → `randfeat`,
 `slepian` → `encoders` / `geo`, `geofno` → `fno`, `lno` → `cno`,
