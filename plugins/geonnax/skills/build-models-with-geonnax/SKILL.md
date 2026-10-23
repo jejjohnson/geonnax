@@ -47,6 +47,7 @@ it up:
 | Layers to compose your own model | `geonnax.layers` (`StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `WindowedAttention`, `SpectralConv`, `WaveletConv`, `Downsample` / `Upsample`, `dwt` / `idwt`, …) |
 | An implicit neural representation | `geonnax.SIREN`, `geonnax.SirenDense`, `geonnax.MultiScaleSIREN`, `geonnax.FourierNet`, `geonnax.GaborNet` |
 | A spatiotemporal field from scattered observations (BayesNF-style) | `geonnax.NeuralFieldMLP` (learned input scales, gated Fourier / seasonal / interaction blocks, an optional `extra` block such as `geonnax.SphericalHarmonicEncoder` features, NTK-scaled layers; one point `(D,) -> (K,)`; pyrox-nn puts the priors on it) |
+| A field on a tensor-product grid (full-grid physics residuals over `(t, x, y)`) | `geonnax.SeparableINR` (one SIREN or tanh MLP per axis, rank-r sum of products; `on_grid((t, x, y)) -> (K, Nt, Nx, Ny)` costs `Nt + Nx + Ny` network calls; one point `(A,) -> (K,)`) |
 | Derivatives of a field with respect to its coordinates | `geonnax.diffops` (`grad`, `jacobian`, `divergence`, `curl2d`, `laplacian`; on the unit sphere `surface_grad`, `surface_grad_enu` for east/north components, `laplace_beltrami`) — operators returning callables, not losses |
 | Conditioning on a latent or context vector | `geonnax.AffineModulation` (`geonnax.FiLM`), `geonnax.ConcatConditioner`, `geonnax.HyperLinear`, `geonnax.ConditionedINR`, `geonnax.HyperSIREN` |
 | Lon/lat and time encodings | `geonnax.geo` (`deg2rad`, `lonlat_scale`, `lonlat_to_cartesian3d`, `cyclic_encode`, `spherical_harmonic_encode`); modules `geonnax.SphericalHarmonicEncoder`, `geonnax.Cartesian3DEncoder`, `geonnax.CyclicEncoder`, `geonnax.GeoContextEncoder`, `geonnax.SlepianEncoder`; Gaussian Fourier features for coordinate MLPs, `geonnax.GaussianFourierEncoder` (`init(in_features, num_frequencies, sigma, key=…)`, frozen frequencies) |
@@ -175,6 +176,7 @@ to the training features).
 | `[cos 2πBx, sin 2πBx]` with `B ~ N(0, σ²)` in front of an MLP | `geonnax.GaussianFourierEncoder` |
 | `jax.grad` / Hessian traces of a field, tangent projections on the sphere | `geonnax.diffops.grad`, `geonnax.diffops.laplacian`, `geonnax.diffops.surface_grad_enu`, `geonnax.diffops.laplace_beltrami` |
 | The BayesNF network (scaled inputs, gated feature blocks, elu/tanh mix) | `geonnax.NeuralFieldMLP` |
+| Per-axis networks combined by a rank-r product (SPINN) | `geonnax.SeparableINR` |
 | `lon * π / 180`, lon/lat → xyz, `[cos θ, sin θ]` | `geonnax.geo.deg2rad`, `geonnax.geo.lonlat_to_cartesian3d`, `geonnax.geo.cyclic_encode` |
 | Laplacian eigenfunctions on a box, RBF / Gabor columns, EOFs | `geonnax.basis.fourier_basis`, `geonnax.basis.rbf_basis`, `geonnax.basis.gabor_frame_grid`, `geonnax.basis.eof_basis` |
 | Power iteration for a Lipschitz layer | `geonnax.SpectralNormalization` |

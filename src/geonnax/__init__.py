@@ -25,6 +25,8 @@ Submodules:
 - `geonnax.neural_field` — ``NeuralFieldMLP``, the Bayesian Neural Field
   architecture (Saad et al., 2024) as a deterministic core.
 - `geonnax.ncp` — ``NCPContinuousPerturb`` input perturbation.
+- `geonnax.separable` — ``SeparableINR``, a rank-r separable neural field
+  evaluated on tensor-product grids (SPINN; Cho et al., 2023).
 - `geonnax.siren` — ``SirenDense``, ``SIREN`` (Sitzmann et al.,
   2020).
 - `geonnax.multi_scale_siren` — ``MultiScaleSIREN``, parallel
@@ -69,6 +71,7 @@ from geonnax import (
     ncp,
     neural_field,
     randfeat,
+    separable,
     sfno,
     siren,
     slepian,
@@ -158,6 +161,7 @@ from geonnax.randfeat import (
     rff_cosine_forward,
     rff_forward,
 )
+from geonnax.separable import SeparableINR
 from geonnax.sfno import SFNO, SphericalFNOBlock
 from geonnax.siren import (
     SIREN,
@@ -246,6 +250,7 @@ __all__ = [
     "RandomFeatureGaussianProcess",
     "Rank1ProjInit",
     "ResnetBlock",
+    "SeparableINR",
     "SirenDense",
     "SirenLayerSpec",
     "SirenLayerType",
@@ -305,6 +310,7 @@ __all__ = [
     "randfeat",
     "rff_cosine_forward",
     "rff_forward",
+    "separable",
     "sfno",
     "siren",
     "siren_W_limit",
