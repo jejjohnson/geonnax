@@ -146,6 +146,35 @@ def test_finite_at_high_degree(dtype):
     )
 
 
+@pytest.mark.parametrize("l_max", [191, pytest.param(255, marks=pytest.mark.slow)])
+def test_float32_matches_float64_beyond_old_limit(l_max):
+    # #122: near the poles Q̄ grows like sin^{-m}θ and (x + iy)^m shrinks like
+    # sin^m θ; before the exponent carry float32 overflowed to NaN from
+    # l_max ≈ 180. Half the points lie within 0.15 rad of a pole, plus the poles.
+    # Measured max |Y32 − Y64| = 2.1e-3 (191) and 3.8e-3 (255) with max |Y| ≈ 6:
+    # float32 rounding accumulated over ~l_max recurrence steps; 6e-3 leaves margin.
+    rng = np.random.default_rng(0)
+    theta = np.r_[rng.uniform(0, np.pi, 30), rng.uniform(0, 0.15, 30)]
+    phi = rng.uniform(0, 2 * np.pi, 60)
+    pts = np.stack(
+        [np.sin(theta) * np.cos(phi), np.sin(theta) * np.sin(phi), np.cos(theta)], -1
+    )
+    pts = np.concatenate([pts, [[0.0, 0.0, 1.0], [0.0, 0.0, -1.0]]])
+    with jax.enable_x64(True):
+        y64 = np.asarray(real_spherical_harmonics(jnp.asarray(pts, jnp.float64), l_max))
+    y32 = np.asarray(real_spherical_harmonics(jnp.asarray(pts, jnp.float32), l_max))
+    assert np.isfinite(y32).all()
+    np.testing.assert_allclose(y32, y64, rtol=0, atol=6e-3)
+
+
+def test_float32_finite_at_exact_poles_at_very_high_degree():
+    # #122: at the exact poles (x + iy)^m is exactly zero while Q̄'s exponent
+    # passes float32's range near l_max ≈ 370; the power-of-two scaling must
+    # give 0, not 0 · inf.
+    pts = jnp.array([[0.0, 0.0, 1.0], [0.0, 0.0, -1.0]], dtype=jnp.float32)
+    assert bool(jnp.isfinite(real_spherical_harmonics(pts, 400)).all())
+
+
 def test_trace_size_independent_of_degree():
     x = jnp.asarray(_unit_points(4), dtype=jnp.float32)
 
@@ -155,12 +184,13 @@ def test_trace_size_independent_of_degree():
     assert n_eqns(10) == n_eqns(60)
 
 
-def test_gradient_finite_at_poles():
+@pytest.mark.parametrize("l_max", [20, pytest.param(200, marks=pytest.mark.slow)])
+def test_gradient_finite_at_poles(l_max):
     poles = jnp.array([[0.0, 0.0, 1.0], [0.0, 0.0, -1.0]])
-    jac = jax.vmap(jax.jacfwd(lambda p: real_spherical_harmonics(p[None], 20)[0]))(
+    jac = jax.vmap(jax.jacfwd(lambda p: real_spherical_harmonics(p[None], l_max)[0]))(
         poles
     )
-    assert jac.shape == (2, 21**2, 3)
+    assert jac.shape == (2, (l_max + 1) ** 2, 3)
     assert bool(jnp.isfinite(jac).all())
 
 

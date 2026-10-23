@@ -30,9 +30,9 @@ import einx
 import jax
 import jax.numpy as jnp
 import numpy as np
-from jaxtyping import Array, Float
+from jaxtyping import Array, Float, Int
 
-from geonnax._basis._legendre import _legendre_table, _sectoral_scale
+from geonnax._basis._legendre import _ldexp, _legendre_table_carry, _sectoral_scale
 
 
 def harmonic_degrees(l_max: int) -> tuple[int, ...]:
@@ -54,21 +54,29 @@ def harmonic_degrees(l_max: int) -> tuple[int, ...]:
 
 def _xy_powers(
     x: Float[Array, " N"], y: Float[Array, " N"], m_max: int
-) -> tuple[Float[Array, "M N"], Float[Array, "M N"]]:
-    """Real and imaginary parts of $(x + iy)^m$ for ``m = 0, 1, ..., m_max``.
+) -> tuple[Float[Array, "M N"], Float[Array, "M N"], Int[Array, "M N"]]:
+    r"""$(x + iy)^m$ for ``m = 0, 1, ..., m_max`` as mantissas and a binary exponent.
 
-    One `jax.lax.scan` over ``m``; rows are indexed by ``m``.
+    One `jax.lax.scan` over ``m``; rows are indexed by ``m``. The magnitude is
+    $(x^2 + y^2)^{m/2} = \sin^m\theta$, which underflows float32 near the
+    poles, so the real and imaginary parts share an int32 exponent and are
+    renormalised by a power of two after every step: the value is
+    ``(re + i im) · 2^exp`` (#122).
     """
 
     def step(carry, _):
-        re, im = carry
+        re, im, expo = carry
         # (x + iy) * (re + i im) = (x re - y im) + i (x im + y re)
-        return (x * re - y * im, x * im + y * re), carry
+        new_re, new_im = x * re - y * im, x * im + y * re
+        biggest = jnp.maximum(jnp.abs(new_re), jnp.abs(new_im))
+        _, shift = jnp.frexp(biggest)
+        shift = jnp.where(biggest > 0, shift, 0)
+        new_carry = (_ldexp(new_re, -shift), _ldexp(new_im, -shift), expo + shift)
+        return new_carry, carry
 
-    _, (re, im) = jax.lax.scan(
-        step, (jnp.ones_like(x), jnp.zeros_like(x)), None, length=m_max + 1
-    )
-    return re, im
+    init = (jnp.ones_like(x), jnp.zeros_like(x), jnp.zeros(x.shape, dtype=jnp.int32))
+    _, (re, im, expo) = jax.lax.scan(step, init, None, length=m_max + 1)
+    return re, im, expo
 
 
 def real_spherical_harmonics(
@@ -120,16 +128,23 @@ def real_spherical_harmonics(
     stays at a second or so at ``l_max = 100``), and no factorial ratio is
     ever formed, so it does not overflow where the unnormalised
     $Q_l^m \sim (2m-1)!!$ would (near $l_{\max} \approx 30$ in float32,
-    $85$ in float64). $\bar Q_l^m$ itself grows like roughly $e^{0.48 l}$
-    at the poles, so float32 stays finite up to $l_{\max} \approx 180$.
+    $85$ in float64). Near the poles $\bar Q_l^m$ itself grows like
+    $\sin^{-m}\theta$ and $(x+iy)^m$ shrinks like $\sin^m\theta$, so each
+    factor alone leaves float32's range from $l_{\max} \approx 180$ while
+    their product is $O(1)$. Both are therefore carried as a mantissa and an
+    int32 binary exponent, renormalised with `jnp.frexp` at every step, and
+    combined by one power-of-two scaling at the end (#122): float32 stays finite
+    (checked to $l_{\max} = 511$, poles included) and within about $4 \times 10^{-3}$
+    of float64 at $l_{\max} = 255$.
 
     Pseudocode:
 
-        c[m]   = Q̄_m^m constants                      # cumulative product, host
-        Q[l]   = scan over l of the 3-term recurrence  # (l, N, m)
-        P[m]   = (x + iy)^m                            # scan over m
+        c[m]       = Q̄_m^m constants                      # cumulative product, host
+        Q[l], eQ   = scan over l of the 3-term recurrence  # (l, N, m), with exponents
+        P[m], eP   = (x + iy)^m                            # scan over m, with exponents
         for each column (l, m), l outer, m = -l..l inner:
-            Y[:, (l, m)] = Q[l, :, |m|] * {1/√(2π), Re P[m]/√π, Im P[|m|]/√π}
+            Y[:, (l, m)] = ldexp(Q[l, :, |m|] * {1/√(2π), Re P[m]/√π, Im P[|m|]/√π},
+                                 eQ[l, :, |m|] + eP[|m|])
 
     Args:
         unit_xyz: Inputs of shape ``(N, 3)``; assumed to lie on the unit
@@ -171,8 +186,13 @@ def real_spherical_harmonics(
     # constants instead of P̄_m^m = c_m (1 - z²)^{m/2}.
     seeds = jnp.asarray(_sectoral_scale(l_max), dtype=dtype)
     sectoral = einx.multiply("n, m -> n m", jnp.ones_like(z), seeds)
-    Q = _legendre_table(z, sectoral, l_max)  # (l, N, m)
-    re, im = _xy_powers(x, y, l_max)  # (m, N)
+    # Both factors leave float32's range near the poles (Q̄ grows like s^{-m},
+    # (x + iy)^m shrinks like s^m) while their product is O(1), so each is
+    # carried as mantissa · 2^exponent and they are combined once (#122).
+    q_mant, q_exp = _legendre_table_carry(
+        z, sectoral, jnp.zeros(sectoral.shape, dtype=jnp.int32), l_max
+    )  # (l, N, m) each
+    re, im, xy_exp = _xy_powers(x, y, l_max)  # (m, N) each
 
     # Host-side column layout: l outer, m = -l, ..., l inner.
     ell = np.asarray(harmonic_degrees(l_max))
@@ -182,12 +202,14 @@ def real_spherical_harmonics(
         order == 0, 1.0 / math.sqrt(2.0 * math.pi), 1.0 / math.sqrt(math.pi)
     )
 
-    q_cols = Q[ell, :, am]  # (F, N)
+    q_cols = q_mant[ell, :, am]  # (F, N) mantissas
     trig = jnp.where(
         einx.id("f -> f 1", jnp.asarray(order > 0)),
         re[am],
         jnp.where(einx.id("f -> f 1", jnp.asarray(order < 0)), im[am], 1.0),
-    )  # (F, N)
-    return einx.multiply(
-        "f n, f n, f -> n f", q_cols, trig, jnp.asarray(scale, dtype=dtype)
+    )  # (F, N) mantissas; the m = 0 branch is exactly 1 with exponent 0
+    expo = q_exp[ell, :, am] + xy_exp[am]  # (F, N)
+    mant = einx.multiply(
+        "f n, f n, f -> f n", q_cols, trig, jnp.asarray(scale, dtype=dtype)
     )
+    return einx.id("f n -> n f", _ldexp(mant, expo))

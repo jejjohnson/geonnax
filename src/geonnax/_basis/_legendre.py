@@ -243,40 +243,21 @@ def _sectoral_carry(
     return jnp.moveaxis(mant, 0, -1), jnp.moveaxis(expo, 0, -1)
 
 
-def _legendre_table(
-    t: Float[Array, "..."], sectoral: Float[Array, "... L"], l_max: int
-) -> Float[Array, "L ... L"]:
-    r"""Run the orthonormal recurrence in $l$ for every order $m$ at once.
-
-    Given the sectoral row ``sectoral[..., m]`` $= \bar P_m^m$, fills
-    $\bar P_{m+1}^m = \sqrt{2m+3}\,t\,\bar P_m^m$ and
-    $\bar P_l^m = a_{lm}(t\,\bar P_{l-1}^m - b_{lm}\,\bar P_{l-2}^m)$ in one
-    `jax.lax.scan` over $l$, so the trace size does not grow with ``l_max``.
-    The map is linear in ``sectoral``: passing the constants of
-    `_sectoral_scale` (without $(1-t^2)^{m/2}$) gives the pole-free
-    polynomials $\bar P_l^m(t) / (1-t^2)^{m/2}$ that `real_spherical_harmonics`
-    uses.
-
-    This is `_legendre_table_carry` with a zero seed exponent, returned as
-    values.
-
-    Returns:
-        Array of shape ``(l_max + 1,) + t.shape + (l_max + 1,)``, indexed
-        ``[l, ..., m]``; entries with ``m > l`` are zero.
-    """
-    mant, expo = _legendre_table_carry(
-        t, sectoral, jnp.zeros(sectoral.shape, dtype=jnp.int32), l_max
-    )
-    return _ldexp(mant, expo)
-
-
 def _legendre_table_carry(
     t: Float[Array, "..."],
     sectoral: Float[Array, "... L"],
     sectoral_exp: Int[Array, "... L"],
     l_max: int,
 ) -> tuple[Float[Array, "L ... L"], Int[Array, "L ... L"]]:
-    r"""The recurrence of `_legendre_table` with a binary-exponent carry.
+    r"""Run the orthonormal recurrence in $l$ for every order $m$ at once.
+
+    Given the sectoral row $\bar P_m^m$ (as ``sectoral`` mantissas and
+    ``sectoral_exp`` exponents), fills $\bar P_{m+1}^m = \sqrt{2m+3}\,t\,\bar P_m^m$
+    and $\bar P_l^m = a_{lm}(t\,\bar P_{l-1}^m - b_{lm}\,\bar P_{l-2}^m)$ in one
+    `jax.lax.scan` over $l$, so the trace size does not grow with ``l_max``.
+    The map is linear in the seeds: passing the constants of `_sectoral_scale`
+    (without $(1-t^2)^{m/2}$) gives the pole-free polynomials
+    $\bar P_l^m(t) / (1-t^2)^{m/2}$ that `real_spherical_harmonics` uses.
 
     Each order $m$ is carried as a mantissa and an integer exponent,
     $\bar P_l^m = \mathfrak m_l^m\,2^{e^m}$. The recurrence is linear and
