@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="492" viewBox="0 0 960 492" role="img" aria-label="geonnax has two families: coordinate networks map a point to a value through an encoder, a representation network and an optional uncertainty head; neural operators map a gridded field to a field. Both draw on one basis library.">
+<title>Coordinates in, fields out</title>
+<defs><marker id="hero-light-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9CA3AF"/></marker></defs>
+<text x="20" y="26" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1F2937" xml:space="preserve">Coordinate networks</text>
+<text x="186" y="26" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#6B7280" xml:space="preserve">x ↦ f(x), one point at a time</text>
+<rect x="20" y="44" width="104" height="172" rx="12" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1"/>
+<text x="72" y="124" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" font-weight="700" fill="#1F2937" xml:space="preserve">(λ, φ, t)</text>
+<text x="72" y="148" text-anchor="middle" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#6B7280" xml:space="preserve">one point</text>
+<rect x="146" y="44" width="226" height="172" rx="12" fill="#F0FDF4" stroke="#16A34A" stroke-width="2"/>
+<text x="162" y="70" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#15803D" xml:space="preserve">encode</text>
+<text x="162" y="90" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#6B7280" xml:space="preserve">coordinates → features</text>
+<text x="162" y="124" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">Cartesian3DEncoder</text>
+<text x="162" y="146" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">CyclicEncoder</text>
+<text x="162" y="168" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">SphericalHarmonicEncoder</text>
+<text x="162" y="190" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">SlepianEncoder</text>
+<rect x="394" y="44" width="200" height="172" rx="12" fill="#F0FDF4" stroke="#16A34A" stroke-width="2"/>
+<text x="410" y="70" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#15803D" xml:space="preserve">represent</text>
+<text x="410" y="90" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#6B7280" xml:space="preserve">features → hidden</text>
+<text x="410" y="124" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">SIREN</text>
+<text x="410" y="146" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">MultiScaleSIREN</text>
+<text x="410" y="168" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">FourierNet · GaborNet</text>
+<text x="410" y="190" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">ConditionedINR</text>
+<rect x="616" y="44" width="236" height="172" rx="12" fill="#F0FDF4" stroke="#16A34A" stroke-width="2"/>
+<text x="632" y="70" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#15803D" xml:space="preserve">head</text>
+<text x="632" y="90" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#6B7280" xml:space="preserve">hidden → value, spread</text>
+<text x="632" y="124" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">RandomFeatureGaussianProcess</text>
+<text x="632" y="146" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">HeteroscedasticHead</text>
+<text x="632" y="168" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">MixtureOfGaussiansDenseHead</text>
+<text x="632" y="190" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12.5" font-weight="600" fill="#1F2937" xml:space="preserve">DeepVSSGPCore</text>
+<rect x="874" y="44" width="66" height="172" rx="12" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1"/>
+<text x="907" y="124" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" font-weight="700" fill="#1F2937" xml:space="preserve">f(x)</text>
+<text x="907" y="148" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="13" font-weight="400" fill="#6B7280" xml:space="preserve">σ(x)</text>
+<path d="M124 130.0 L144 130.0" fill="none" stroke="#9CA3AF" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#hero-light-head)"/>
+<path d="M372 130.0 L392 130.0" fill="none" stroke="#9CA3AF" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#hero-light-head)"/>
+<path d="M594 130.0 L614 130.0" fill="none" stroke="#9CA3AF" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#hero-light-head)"/>
+<path d="M852 130.0 L872 130.0" fill="none" stroke="#9CA3AF" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#hero-light-head)"/>
+<text x="20" y="252" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1F2937" xml:space="preserve">Neural operators</text>
+<text x="156" y="252" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#6B7280" xml:space="preserve">u ↦ 𝒢(u), a whole field at a time</text>
+<rect x="20" y="270" width="104" height="96" rx="12" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1"/>
+<text x="72" y="312" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" font-weight="700" fill="#1F2937" xml:space="preserve">u</text>
+<text x="72" y="336" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="12" font-weight="400" fill="#6B7280" xml:space="preserve">(C, H, W)</text>
+<rect x="146" y="270" width="706" height="96" rx="12" fill="#F0FDF4" stroke="#16A34A" stroke-width="2"/>
+<text x="162" y="296" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="700" fill="#15803D" xml:space="preserve">operate</text>
+<text x="232" y="296" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#6B7280" xml:space="preserve">grid → grid, on the plane or the sphere</text>
+<text x="223.0" y="336" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="15" font-weight="700" fill="#1F2937" xml:space="preserve">UNet</text>
+<text x="361.0" y="336" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="15" font-weight="700" fill="#1F2937" xml:space="preserve">FNO</text>
+<text x="499.0" y="336" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="15" font-weight="700" fill="#1F2937" xml:space="preserve">SFNO</text>
+<text x="637.0" y="336" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="15" font-weight="700" fill="#1F2937" xml:space="preserve">WNO</text>
+<text x="775.0" y="336" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="15" font-weight="700" fill="#1F2937" xml:space="preserve">MSWT</text>
+<rect x="874" y="270" width="66" height="96" rx="12" fill="#F9FAFB" stroke="#D1D5DB" stroke-width="1"/>
+<text x="907" y="324" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" font-weight="700" fill="#1F2937" xml:space="preserve">𝒢(u)</text>
+<path d="M124 318.0 L144 318.0" fill="none" stroke="#9CA3AF" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#hero-light-head)"/>
+<path d="M852 318.0 L872 318.0" fill="none" stroke="#9CA3AF" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#hero-light-head)"/>
+<rect x="20" y="406" width="920" height="66" rx="12" fill="#F3F4F6"/>
+<text x="40" y="434" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" font-weight="700" fill="#15803D" xml:space="preserve">geonnax.basis</text>
+<text x="40" y="456" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#6B7280" xml:space="preserve">shared by both lanes, and by kernellib and pyrox-gp</text>
+<text x="920" y="446" text-anchor="end" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#1F2937" xml:space="preserve">spherical harmonics · Slepian · needlets · wavelets · Fourier · EOFs · graph Laplacian</text>
+</svg>
