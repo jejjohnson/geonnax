@@ -1,8 +1,10 @@
 """Random Fourier feature primitives.
 
-Shared deterministic helpers (``rff_forward``, ``rff_cosine_forward``,
-``orthogonal_blocks``) and the lone fully-deterministic feature map
-(`OrthogonalRandomFeatures`). The Bayesian feature-map family
+``orthogonal_blocks``, which draws orthogonal frequency blocks, and the lone
+fully-deterministic feature map (`OrthogonalRandomFeatures`). The feature maps
+``rff_forward`` and ``rff_cosine_forward`` moved to `functax.basis.features`
+(jejjohnson/geonnax#153); their names still resolve here for one release,
+with a `DeprecationWarning`. The Bayesian feature-map family
 (``RBF/Matern/Laplace {Fourier,Cosine}Features`` etc.) lives in the
 consuming library as thin sample-wrappers built on top of these
 helpers.
@@ -10,61 +12,13 @@ helpers.
 
 from __future__ import annotations
 
-import einx
 import equinox as eqx
+import functax.basis.features as _features
 import jax
 import jax.numpy as jnp
 from jaxtyping import Array, Float
 
-
-def rff_forward(
-    W: Float[Array, "D_in n_features"],
-    lengthscale: float | Float[Array, ""],
-    n_features: int,
-    x: Float[Array, " D_in"],
-) -> Float[Array, " D_rff"]:
-    r"""Shared RFF feature map: ``sqrt(1/D) [cos(xW/l), sin(xW/l)]``.
-
-    Concatenating cos and sin doubles the width, so the output has
-    ``2 * n_features`` entries.
-
-    Examples:
-        >>> import jax.numpy as jnp, jax.random as jr
-        >>> from geonnax.randfeat import rff_forward
-        >>> W = jr.normal(jr.PRNGKey(0), (3, 4))
-        >>> rff_forward(W, 1.0, 4, jnp.ones(3)).shape
-        (8,)
-    """
-    # z = xW / ℓ ; (D_in,)·(D_in, n_features) -> (n_features,)
-    z = einx.dot("din, din f -> f", x, W) / lengthscale
-    scale = jnp.sqrt(1.0 / n_features)
-    # [cos z, sin z] : (n_features,) ++ (n_features,) -> (2 * n_features,)
-    return scale * jnp.concatenate([jnp.cos(z), jnp.sin(z)], axis=-1)
-
-
-def rff_cosine_forward(
-    W: Float[Array, "D_in n_features"],
-    b: Float[Array, " n_features"],
-    lengthscale: float | Float[Array, ""],
-    n_features: int,
-    x: Float[Array, " D_in"],
-) -> Float[Array, " n_features"]:
-    r"""Shared single-cosine RFF feature map: ``sqrt(2/D) cos(xW/l + b)``.
-
-    Single cosine map (no sin), so the output width equals
-    ``n_features``.
-
-    Examples:
-        >>> import jax.numpy as jnp, jax.random as jr
-        >>> from geonnax.randfeat import rff_cosine_forward
-        >>> W = jr.normal(jr.PRNGKey(0), (3, 4))
-        >>> b = jnp.zeros(4)
-        >>> rff_cosine_forward(W, b, 1.0, 4, jnp.ones(3)).shape
-        (4,)
-    """
-    # proj = xW / ℓ + b ; (D_in,)·(D_in, n_features) -> (n_features,)
-    proj = einx.dot("din, din f -> f", x, W) / lengthscale + b
-    return jnp.sqrt(2.0 / n_features) * jnp.cos(proj)
+from geonnax._deprecation import Moved, deprecated_dir, deprecated_getattr
 
 
 def orthogonal_blocks(
@@ -193,12 +147,18 @@ class OrthogonalRandomFeatures(eqx.Module):
             (8,)
         """
         # (D_in,) -> (2 * n_features,)
-        return rff_forward(self.W, self.lengthscale, self.n_features, x)
+        return _features.rff_forward(self.W, self.lengthscale, self.n_features, x)
 
 
-__all__ = [
-    "OrthogonalRandomFeatures",
-    "orthogonal_blocks",
-    "rff_cosine_forward",
-    "rff_forward",
-]
+#: names that moved to functax, served with a DeprecationWarning until removal
+_MOVED: dict[str, Moved] = {
+    "rff_cosine_forward": Moved(
+        "functax.basis.features.rff_cosine_forward", _features.rff_cosine_forward
+    ),
+    "rff_forward": Moved("functax.basis.features.rff_forward", _features.rff_forward),
+}
+
+__all__ = ["OrthogonalRandomFeatures", "orthogonal_blocks"]
+
+__getattr__ = deprecated_getattr(__name__, _MOVED)
+__dir__ = deprecated_dir(__all__, _MOVED)

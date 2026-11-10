@@ -18,12 +18,10 @@ from collections.abc import Callable
 
 import equinox as eqx
 import jax
+from functax.transform import SphericalHarmonicTransform
 from jaxtyping import Array, Float
 
-from geonnax.layers._spherical_transform import (
-    SphericalHarmonicTransform,
-    SphericalSpectralConv,
-)
+from geonnax.layers._spherical_conv import SphericalSpectralConv
 from geonnax.layers._utils import pointwise
 
 
@@ -40,7 +38,7 @@ class SphericalFNOBlock(eqx.Module):
 
     Examples:
         >>> import jax.numpy as jnp, jax.random as jr
-        >>> from geonnax.layers import SphericalHarmonicTransform
+        >>> from functax.transform import SphericalHarmonicTransform
         >>> from geonnax.sfno import SphericalFNOBlock
         >>> sht = SphericalHarmonicTransform.init(12, 24, 8)
         >>> blk = SphericalFNOBlock.init(4, 8, key=jr.PRNGKey(0))

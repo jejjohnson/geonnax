@@ -1,7 +1,7 @@
 """Deterministic coordinate encoders for lon/lat and spherical inputs.
 
 Pure ``equinox.Module`` wrappers around the helpers in
-`geonnax.geo` and `geonnax._basis`. No learnable parameters — they compose
+`geonnax.geo` and `functax.basis`. No learnable parameters — they compose
 into ``eqx.nn.Sequential``. All are constructed without a key except
 `GaussianFourierEncoder`, whose random frequency matrix is drawn once in
 ``init`` and then frozen.
@@ -19,9 +19,10 @@ import einx
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from functax.basis.features import rff_forward
+from functax.basis.sphere import real_spherical_harmonics
 from jaxtyping import Array, Float, Num, PRNGKeyArray
 
-from geonnax._basis import real_spherical_harmonics
 from geonnax.geo import (
     _promote_to_floating,
     _validate_input_unit,
@@ -31,7 +32,6 @@ from geonnax.geo import (
     lonlat_scale,
     lonlat_to_cartesian3d,
 )
-from geonnax.randfeat import rff_forward
 
 
 def _as_scalar(value: Num[Array, ""] | float, name: str) -> Float[Array, ""]:
@@ -194,7 +194,7 @@ class SphericalHarmonicEncoder(eqx.Module):
     """Real spherical-harmonic features on the unit 2-sphere for a single point.
 
     Stateless wrapper that evaluates
-    `geonnax._basis.real_spherical_harmonics` on either an already-
+    `functax.basis.sphere.real_spherical_harmonics` on either an already-
     cartesian input (``input_mode='cartesian'``) or a lon/lat pair
     (``input_mode='lonlat'``, assumed in radians).
 
@@ -352,7 +352,7 @@ class GeoContextEncoder(eqx.Module):
         if self.time_encoding not in {"cyclic", "raw"}:
             hint = (
                 " ('fourier' is planned but not yet implemented; compose "
-                "geonnax.basis.seasonal_features for multi-harmonic features.)"
+                "functax.basis.features.seasonal_features for multi-harmonic features.)"
                 if self.time_encoding == "fourier"
                 else ""
             )

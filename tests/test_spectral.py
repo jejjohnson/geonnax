@@ -8,15 +8,13 @@ import jax.numpy as jnp
 import jax.random as jr
 import pytest
 from _point_invariance import assert_point_refinement_converges, grid_nodes
+from functax.transform import SphericalHarmonicTransform
 
 import geonnax
 from geonnax.fno import FNO, DomainPadding, FNOBlock, FourierNeuralOperator
 from geonnax.layers._factorized import init_factorized_tensor
 from geonnax.layers._spectral import SpectralConv
-from geonnax.layers._spherical_transform import (
-    SphericalHarmonicTransform,
-    SphericalSpectralConv,
-)
+from geonnax.layers._spherical_conv import SphericalSpectralConv
 from geonnax.sfno import SFNO
 
 
@@ -372,18 +370,6 @@ def test_sht_shapes():
     assert sht.inverse(coeffs).shape == (2, 10, 20)
 
 
-def test_sht_rejects_negative_l_max():
-    with pytest.raises(ValueError, match="l_max must be"):
-        SphericalHarmonicTransform.init(8, 16, -1)
-
-
-def test_sht_rejects_under_resolved_grid():
-    with pytest.raises(ValueError, match="n_lat must exceed l_max"):
-        SphericalHarmonicTransform.init(8, 64, 12)
-    with pytest.raises(ValueError, match="n_lon must exceed 2"):
-        SphericalHarmonicTransform.init(32, 16, 12)
-
-
 def test_spherical_spectral_conv():
     l_max, n_lat, n_lon = 8, 12, 24
     sht = SphericalHarmonicTransform.init(n_lat, n_lon, l_max)
@@ -430,7 +416,6 @@ def test_public_exports_present():
         "FNO",
         "SFNO",
         "SpectralConv",
-        "SphericalHarmonicTransform",
         "SphericalSpectralConv",
         "DomainPadding",
         "CPTensor",
@@ -445,8 +430,9 @@ def test_public_exports_present():
 
 def test_fno_curvilinear_grid_with_coordinate_channels():
     """Case A: plain FNO on a 30x20 curvilinear grid with (x, y) channels."""
+    from functax.geometry import local_tangent_plane
+
     from geonnax import FNO
-    from geonnax.geo import local_tangent_plane
 
     n1, n2 = 30, 20
     s = jnp.linspace(0.0, 1.0, n1)[:, None]
@@ -454,7 +440,9 @@ def test_fno_curvilinear_grid_with_coordinate_channels():
     lon = 5.0 + 2.0 * s + 0.5 * p
     lat = 45.0 + 3.0 * s - 0.1 * p
     lonlat = jnp.stack([lon.ravel(), lat.ravel()], -1)
-    enu = local_tangent_plane(lonlat, jnp.array([lon.mean(), lat.mean()]))
+    enu = local_tangent_plane(
+        lonlat, jnp.array([lon.mean(), lat.mean()]), radius=6371.0088, unit="degrees"
+    )
     coords = enu.T.reshape(2, n1, n2) / 100.0
     x = jnp.concatenate([jnp.sin(3.0 * s * p)[None], coords], axis=0)
     op = FNO.init(

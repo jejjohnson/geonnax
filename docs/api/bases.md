@@ -1,127 +1,28 @@
 # Bases
 
-Deterministic feature transforms and basis matrices used as inputs to, or
-components of, the models above.
+The bases geonnax used to hold now live in [functax](https://github.com/jejjohnson/functax), which geonnax depends on (jejjohnson/geonnax#153). geonnax keeps the networks and imports functax for the maths, so there is one copy of each basis in the stack.
 
-## The basis contract
+## Where each basis went
 
-Every basis exposes two things, so a downstream probabilistic library can build
-a prior over any of them uniformly:
+The names did not change, only their module:
 
-1. an **evaluation** that returns the basis matrix $\Phi \in \mathbb{R}^{N\times M}$
-   from a set of $N$ input points (`name_basis` / `name_features`, or
-   `name_frame` for overcomplete dictionaries); and
-2. the **half a prior needs** — *eigenvalues* $\lambda$ for the spectral bases
-   (the prior variance is the kernel spectral density at $\sqrt{\lambda}$), or
-   *per-atom geometry* (centres/widths, or centres/scales/wavenumbers) for the
-   localized and frame bases (variance prescribed, or following a spectral law
-   in the per-atom wavenumber).
+- `functax.basis.fourier`: the box eigenpairs `fourier_basis`, `fourier_basis_1d`, `fourier_eigenvalues` and `fourier_eigenvalues_1d`, with Dirichlet, Neumann or periodic boundaries.
+- `functax.basis.vector`: the divergence-free and curl-free box bases `divfree_basis` and `curlfree_basis`.
+- `functax.basis.sphere`: `real_spherical_harmonics`, `harmonic_degrees`, `vector_spherical_harmonics`, the needlets (`needlet_basis`, `needlet_window`) and `shell_basis`.
+- `functax.basis.slepian`: the cap, polar-gap and region Slepian bases, `SlepianBasis`, `SlepianCapBasis`, `shannon_number` and `spherical_polygon_mask`.
+- `functax.basis.local`: `rbf_basis`, `spherical_rbf_basis`, the Wendland kernels, the Gabor frames and the DWT matrices `wavelet_basis_1d` and `wavelet_basis_2d`.
+- `functax.basis.eigen`: `eof_basis`, `graph_laplacian_eigpairs` and `cotangent_laplacian_eigpairs`.
+- `functax.basis.polynomial`: `legendre_polynomials`, `associated_legendre` and `associated_legendre_indices`.
+- `functax.basis.features`: `fourier_features`, `seasonal_features`, `seasonal_frequencies`, `gaussian_window_features`, and the random Fourier feature maps `rff_forward` and `rff_cosine_forward`.
+- `functax.geometry`: the sphere grids (`fibonacci_sphere`, `gauss_legendre_grid`, `latlon_grid`, `healpix_grid`), `icosphere` and `mesh_vertex_areas`.
+- `functax.quad`: `gauss_legendre`, which returns a `Rule` that unpacks to `(nodes, weights)`.
 
-geonnax returns geometry; the variance, kernel spectral density, and sample
-sites stay in the consuming library. Note the leading axis $N$ is the set of
-evaluation points (the rows of $\Phi$), **not** a batch axis — these are pure
-functions of arrays, so `jax.vmap` / `jax.jit` over any extra leading axis as
-needed.
+## Deprecated paths
 
-Everything below is importable from the single public `geonnax.basis` module
-(the spatial bases are re-exported there from the `geonnax._basis`
-implementation package), so downstream libraries never import a private
-namespace.
+Every moved name still resolves from `geonnax.basis` until geonnax 0.0.13, and emits a `DeprecationWarning` naming its functax path. The sphere grids and `spherical_polygon_mask` keep geonnax's defaults there (radians for grid output, degrees for polygon vertices). functax takes an explicit `unit=` with no default, so a caller who relied on a default gets an error instead of wrong numbers.
 
-## Feature transforms
+## What stays in geonnax
 
-Fourier, seasonal, and interaction feature maps, the localized Gaussian-in-time
-window, and standardisation helpers.
-
-## Eigenfunction, localized & overcomplete bases
-
-Closed-form and graph-based eigenpairs — 1D Dirichlet/Fourier modes, the
-divergence-free vector basis `divfree_basis` (skew gradients of the box stream
-functions, for incompressible flow) and its curl-free companion
-`curlfree_basis` (gradients of potentials) — the box bases accept
-`boundary="dirichlet" | "neumann" | "periodic"`, per axis — real spherical harmonics $Y_\ell^m$,
-Slepian functions on a cap, and graph-Laplacian ($L = D - A$) eigenvectors —
-alongside the **placeable** radial bases (`rbf_basis` / `spherical_rbf_basis`,
-with Gaussian or compactly-supported Wendland kernels in Euclidean or geodesic
-distance), the fixed **overcomplete** multiscale `gabor_frame` /
-`gabor_frame_grid`, and the **orthonormal** DWT matrices `wavelet_basis_1d` /
-`wavelet_basis_2d`. The spectral bases return eigenvalues; the localized and
-frame bases return per-atom geometry instead.
-
-## Slepian functions of general regions
-
-`slepian_region_basis` builds Slepian functions for any region from a
-quadrature over it (for example a `gauss_legendre_grid` masked with
-`spherical_polygon_mask`), and `slepian_polar_gap_basis` handles the band
-between two polar caps exactly. Both return a `SlepianBasis` whose
-concentrations sum to the Shannon number $(l_{\max}+1)^2 A/4\pi$.
-
-## Needlets
-
-`needlet_basis` returns spherical needlets (Narcowich, Petrushev & Ward 2006)
-over scales $j = 0, \ldots, j_{\max}$, centred on Gauss–Legendre cubature
-nodes and built from the smooth window `needlet_window`: a localised,
-multiscale tight frame on the sphere.
-
-## Spherical shells
-
-`shell_basis` multiplies real spherical harmonics by orthonormal Legendre (or
-Chebyshev) polynomials in radius, a product basis for fields with depth or
-altitude on $r_0 \le \lVert x\rVert \le r_1$.
-
-## Vector spherical harmonics
-
-`vector_spherical_harmonics` returns the gradient (curl-free)
-$\Psi_{lm} = \nabla_S Y_{lm}$ and toroidal (divergence-free)
-$\Phi_{lm} = \hat r\times\nabla_S Y_{lm}$ fields, an orthonormal basis for
-tangent vector fields on the sphere (e.g. winds and ocean currents), in
-Cartesian or east/north components.
-
-## Legendre primitives and quadrature
-
-`legendre_polynomials` and `associated_legendre` (orthonormal, Schmidt or
-classical normalisation, ordered by `associated_legendre_indices`) are the 1-D
-building blocks of the spherical bases, evaluated by stable recurrences.
-`gauss_legendre` returns the Gauss–Legendre nodes and weights on $[-1, 1]$ used
-for exact polynomial quadrature.
-
-## Sphere grids and quadrature
-
-`fibonacci_sphere` (near-uniform points), `gauss_legendre_grid` (exact for
-spherical-harmonic products up to a stated degree), `latlon_grid` (regular
-cells with exact area weights) and `healpix_grid` (HEALPix pixel centres in
-ring or nested order, equal-area weights; not an exact quadrature rule) return
-points on the unit sphere together with quadrature weights that sum to $4\pi$. `icosphere(level)` returns the
-subdivided-icosahedron triangle mesh ($10\cdot4^{\ell} + 2$ vertices,
-outward-oriented triangles) for mesh Laplacians and finite elements on the
-sphere.
-
-## Mesh Laplace–Beltrami eigenbasis
-
-`mesh_vertex_areas` returns the lumped (barycentric) vertex areas of any
-triangle mesh — its mass matrix and quadrature weights — and
-`cotangent_laplacian_eigpairs` returns `(eigvals, eigvecs, areas)`, the
-smallest eigenpairs of the cotangent Laplacian $L\varphi = \lambda M\varphi$
-with $M$-orthonormal eigenvectors. Unlike the graph Laplacian it converges to
-the surface's Laplace–Beltrami eigenfunctions under refinement (on
-`icosphere(3)`: $0, 2.00^{\times 3}, 5.97^{\times 5}, 11.83^{\times 7}$ against
-$\ell(\ell+1)$), so it is the basis for spectral operators on an exact ocean,
-basin or ice-sheet mesh (NORM). Meshes with a boundary get natural (Neumann)
-conditions.
-
-!!! note "Large graphs"
-    `graph_laplacian_eigpairs` and `cotangent_laplacian_eigpairs` are dense
-    eigendecompositions ($O(V^3)$), practical up to a few thousand nodes. For large or structured graphs use
-    [`kernellib.laplacian_eigpairs`](https://github.com/jejjohnson/kernellib),
-    which works on sparse graph types and solves by an exact Kronecker product
-    on grid graphs, Lanczos or ARPACK.
-
-## Data-driven basis
-
-`eof_basis` returns the empirical orthogonal functions (PCA) of a data matrix —
-the leading right singular vectors with their singular-value spectrum — for a
-basis that adapts to the covariance actually present in the data.
-
-## API
+The feature-engineering helpers stay here: `interaction_features` (products of selected column pairs) and `standardize` / `unstandardize` (an affine map with a precomputed mean and standard deviation).
 
 ::: geonnax.basis

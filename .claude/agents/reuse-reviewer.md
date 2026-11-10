@@ -45,16 +45,16 @@ in `AGENTS.md`.
    - an FFT conv truncating modes, a CP / Tucker / TT weight →
      `geonnax.layers.SpectralConv`, `init_factorized_tensor`;
    - a spherical harmonic transform, a Gauss–Legendre grid, real spherical
-     harmonics → `geonnax.layers.SphericalHarmonicTransform`,
-     `geonnax.basis.real_spherical_harmonics`;
+     harmonics → `functax.transform.SphericalHarmonicTransform`,
+     `functax.basis.sphere.real_spherical_harmonics`;
    - a DWT / IDWT, wavelet filter taps → `geonnax.layers.dwt` / `idwt`,
-     `_wavelet._filter_bank`, `geonnax.basis.wavelet_basis_1d` / `_2d`;
+     `_wavelet._filter_bank`, `functax.basis.local.wavelet_basis_1d` / `_2d`;
    - Laplacian eigenfunctions, RBF / Wendland / Gabor columns, Slepian
      functions, EOFs, Fourier / seasonal features → `geonnax.basis`;
    - degree / radian conversion, lon/lat → unit sphere, cyclic sin/cos,
      lon/lat rescaling → `geonnax.geo` and the encoder modules;
    - `cos(xW/ℓ)` / `sin` random features, orthogonal frequency blocks →
-     `geonnax.rff_forward`, `rff_cosine_forward`, `orthogonal_blocks`;
+     `functax.basis.features.rff_forward` / `rff_cosine_forward`, `geonnax.orthogonal_blocks`;
    - a SIREN `U(-a, a)` init, FiLM / concat / hypernetwork conditioning,
      spectral normalisation, an SNGP head, rank-1 ensemble layers →
      `siren_W_limit`, `AffineModulation`, `ConcatConditioner`,

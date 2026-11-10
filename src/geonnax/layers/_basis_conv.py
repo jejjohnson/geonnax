@@ -38,13 +38,12 @@ import einx
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from functax.basis.eigen import cotangent_laplacian_eigpairs
 from jaxtyping import Array, Float, Int
-
-from geonnax._basis._mesh import cotangent_laplacian_eigpairs
 
 
 if TYPE_CHECKING:
-    from geonnax._basis._slepian_region import SlepianBasis
+    from functax.basis.slepian import SlepianBasis
 
 
 def _check_table(name: str, table: Array, n_modes: int | None = None) -> None:
@@ -99,7 +98,8 @@ class BasisTransform(eqx.Module):
         A Slepian basis of a 60° polar cap, analysed over the cap and
         synthesised anywhere on the sphere:
 
-        >>> from geonnax.basis import gauss_legendre_grid, slepian_region_basis
+        >>> from functax.basis.slepian import slepian_region_basis
+        >>> from functax.geometry import gauss_legendre_grid
         >>> points, weights = gauss_legendre_grid(12)
         >>> cap = points[:, 2] > 0.5
         >>> basis = slepian_region_basis(5, points[cap], weights[cap])
@@ -211,7 +211,8 @@ class BasisTransform(eqx.Module):
 
         Examples:
             >>> import jax.numpy as jnp
-            >>> from geonnax.basis import gauss_legendre_grid, slepian_region_basis
+            >>> from functax.basis.slepian import slepian_region_basis
+            >>> from functax.geometry import gauss_legendre_grid
             >>> from geonnax.layers import BasisTransform
             >>> points, weights = gauss_legendre_grid(12)
             >>> cap = points[:, 2] > 0.5   # a cap of half-angle 60°
@@ -280,7 +281,7 @@ class BasisTransform(eqx.Module):
                 ``num_basis``).
 
         Examples:
-            >>> from geonnax.basis import icosphere
+            >>> from functax.geometry import icosphere
             >>> from geonnax.layers import BasisTransform
             >>> vertices, triangles = icosphere(2)
             >>> transform = BasisTransform.from_mesh(vertices, triangles, num_basis=9)
@@ -340,7 +341,8 @@ class BasisSpectralConv(eqx.Module):
 
     Examples:
         >>> import jax.numpy as jnp, jax.random as jr
-        >>> from geonnax.basis import gauss_legendre_grid, slepian_region_basis
+        >>> from functax.basis.slepian import slepian_region_basis
+        >>> from functax.geometry import gauss_legendre_grid
         >>> from geonnax.layers import BasisSpectralConv, BasisTransform
         >>> points, weights = gauss_legendre_grid(12)
         >>> cap = points[:, 2] > 0.5

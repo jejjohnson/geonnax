@@ -57,7 +57,7 @@ or [`FNO`](#geonnax.fno.FNO).
 
 ::: geonnax.layers.SphericalSpectralConv
 
-::: geonnax.layers.SphericalHarmonicTransform
+The transform an `SFNO` shares across its blocks is `functax.transform.SphericalHarmonicTransform`, which moved there from `geonnax.layers` (jejjohnson/geonnax#153).
 
 ## Manifold neural operator
 

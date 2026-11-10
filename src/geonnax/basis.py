@@ -1,285 +1,36 @@
-"""The public basis surface: feature transforms + the eigenfunction/frame zoo.
+"""Feature engineering helpers, and the old home of the bases now in functax.
 
-This module is the single public entry point for geonnax's bases. It *defines*
-the pure-JAX feature transforms below and *re-exports* the eigenfunction,
-localized, and overcomplete spatial bases from the ``geonnax._basis``
-implementation package, so a downstream library imports everything it needs
-(``fourier_basis``, ``graph_laplacian_eigpairs``, ``real_spherical_harmonics``,
-``slepian_cap_basis``, ``rbf_basis``, ``gabor_frame_grid``, …) from
-``geonnax.basis`` without reaching into a private namespace. See the basis
-contract in ``docs/api/bases.md``.
+geonnax's bases moved to functax (jejjohnson/geonnax#153): the eigenfunction,
+localized and frame bases to the family submodules of `functax.basis`, the
+sphere grids and meshes to `functax.geometry`, and ``gauss_legendre`` to
+`functax.quad`. Their names still resolve here for one release, with a
+`DeprecationWarning` naming the functax path; see the ``_MOVED`` table.
 
-All functions are pure, stateless, and take only JAX arrays — no
-``equinox.Module``, no NumPyro sites, no pandas. ``equinox.Module``
-wrappers built atop these helpers (``Standardization``,
-``FourierFeatures``, ``SeasonalFeatures``, ``InteractionFeatures``)
-live with the consuming library.
+The feature-engineering helpers stay in geonnax:
 
-Feature transforms provided directly here:
-
-* `fourier_features` — cos/sin basis at frequencies $2\\pi
-  \\cdot 2^d$ for $d = 0, \\dots, D-1$.
-* `seasonal_frequencies` — flatten ``(periods, harmonics)`` pairs
-  into a 1D frequency list.
-* `seasonal_features` — cos/sin basis at multiples of
-  $2\\pi / \\tau_p$ for each period $\\tau_p$.
-* `interaction_features` — element-wise products on selected
-  pairs of input columns.
-* `standardize` / `unstandardize` — affine transform with a
-  precomputed mean and std.
-
-Implementation uses `einx` (``einx.id`` for broadcasts/reshapes,
-``einx.prod`` for axis reductions) for any non-trivial reshaping, per the
-project convention.
+* `interaction_features` — element-wise products on selected pairs of input
+  columns.
+* `standardize` / `unstandardize` — affine transform with a precomputed mean
+  and std.
 """
 
 from __future__ import annotations
 
-from collections.abc import Sequence
-
 import einx
+import functax.basis.eigen as _eigen
+import functax.basis.features as _features
+import functax.basis.fourier as _fourier
+import functax.basis.local as _local
+import functax.basis.polynomial as _polynomial
+import functax.basis.slepian as _slepian
+import functax.basis.sphere as _sphere
+import functax.basis.vector as _vector
+import functax.geometry as _geometry
 import jax.numpy as jnp
 from jaxtyping import Array, Float, Int
 
-from geonnax._basis import (
-    SlepianBasis,
-    SlepianCapBasis,
-    associated_legendre,
-    associated_legendre_indices,
-    cotangent_laplacian_eigpairs,
-    curlfree_basis,
-    divfree_basis,
-    eof_basis,
-    fibonacci_sphere,
-    fourier_basis,
-    fourier_basis_1d,
-    fourier_eigenvalues,
-    fourier_eigenvalues_1d,
-    gabor_frame,
-    gabor_frame_grid,
-    gauss_legendre,
-    gauss_legendre_grid,
-    graph_laplacian_eigpairs,
-    harmonic_degrees,
-    healpix_grid,
-    icosphere,
-    latlon_grid,
-    legendre_polynomials,
-    mesh_vertex_areas,
-    needlet_basis,
-    needlet_window,
-    rbf_basis,
-    real_spherical_harmonics,
-    shannon_number,
-    shell_basis,
-    slepian_cap_basis,
-    slepian_cap_eigh_per_m,
-    slepian_concentration_matrix,
-    slepian_polar_gap_basis,
-    slepian_region_basis,
-    spherical_polygon_mask,
-    spherical_rbf_basis,
-    vector_spherical_harmonics,
-    wavelet_basis_1d,
-    wavelet_basis_2d,
-    wendland_c2,
-    wendland_c4,
-)
-
-# The eigenfunction, localized, and overcomplete bases live in the
-# ``geonnax._basis`` implementation package; re-export them here so the whole
-# basis zoo — feature transforms (defined in this module) plus the spatial
-# bases — is reachable from the single public ``geonnax.basis`` surface, and
-# downstream libraries never have to import the private namespace.
-from geonnax.geo import _promote_to_floating
-
-
-def fourier_features(
-    x: Float[Array, " N"],
-    max_degree: int,
-    *,
-    rescale: bool = False,
-) -> Float[Array, "N two_max_degree"]:
-    r"""Cos/sin Fourier basis at dyadic frequencies.
-
-    For each input element and each degree $d \in \{0, \dots,
-    D-1\}$, evaluates
-
-    $$
-    \phi_{d, \cos}(x) = \cos(2\pi \cdot 2^d \cdot x), \qquad
-    \phi_{d, \sin}(x) = \sin(2\pi \cdot 2^d \cdot x).
-    $$
-
-
-    Returns the columns concatenated as ``[cos_0, ..., cos_{D-1},
-    sin_0, ..., sin_{D-1}]``, matching Google's bayesnf layout.
-
-    Args:
-        x: Length-``N`` input vector.
-        max_degree: Number of dyadic frequencies ``D``. Output has
-            ``2 * max_degree`` columns.
-        rescale: If ``True``, divide each ``(cos_d, sin_d)`` pair by
-            ``d + 1`` to bias the prior toward lower-frequency basis
-            functions.
-
-    Returns:
-        Array of shape ``(N, 2 * max_degree)``.
-
-    Examples:
-        >>> import jax.numpy as jnp
-        >>> from geonnax.basis import fourier_features
-        >>> fourier_features(jnp.linspace(0.0, 1.0, 5), max_degree=3).shape
-        (5, 6)
-    """
-    x = _promote_to_floating(x)
-    # Degrees in x's dtype so a float32 input stays float32 under x64.
-    degrees = jnp.arange(max_degree, dtype=x.dtype)
-    # Broadcast x to (N, D) frequencies without an explicit reshape.
-    z = einx.id("n -> n d", x, d=max_degree) * (2.0 * jnp.pi * 2.0**degrees)
-    feats = jnp.concatenate([jnp.cos(z), jnp.sin(z)], axis=-1)
-    if rescale:
-        denom = jnp.concatenate([degrees + 1, degrees + 1])
-        feats = feats / denom
-    return feats
-
-
-def seasonal_frequencies(
-    periods: Sequence[float],
-    harmonics: Sequence[int],
-) -> tuple[list[int], list[float]]:
-    r"""Flatten ``(period, harmonic_count)`` pairs into Python lists.
-
-    For each period $\tau_p$ with $H_p$ harmonics, emits
-    frequencies $f_{p, h} = h / \tau_p$ for $h = 1, \dots,
-    H_p$. The total length is $F = \sum_p H_p$.
-
-    Inputs are **Python sequences**, not JAX arrays, so this helper
-    runs at trace time and never triggers a concretization error under
-    ``jax.jit``. Most callers won't use it directly; it's exposed for
-    symmetry with `seasonal_features`.
-
-    Args:
-        periods: Period values.
-        harmonics: Number of harmonics per period.
-
-    Returns:
-        ``(period_index, frequency)``: two Python lists of length
-        $F = \sum_p H_p$.
-
-    Examples:
-        >>> from geonnax.basis import seasonal_frequencies
-        >>> # periods (7, 365) with (1, 2) harmonics -> F = 1 + 2 = 3 freqs
-        >>> idx, freqs = seasonal_frequencies([7.0, 365.0], [1, 2])
-        >>> idx
-        [0, 1, 1]
-        >>> len(freqs)
-        3
-    """
-    period_index: list[int] = []
-    freqs: list[float] = []
-    for p_idx, (period, n_h) in enumerate(zip(periods, harmonics, strict=True)):
-        for h in range(1, int(n_h) + 1):
-            period_index.append(p_idx)
-            freqs.append(float(h) / float(period))
-    return period_index, freqs
-
-
-def seasonal_features(
-    x: Float[Array, " N"],
-    periods: Sequence[float],
-    harmonics: Sequence[int],
-    *,
-    rescale: bool = False,
-) -> Float[Array, "N two_F"]:
-    r"""Cos/sin features at multiples of $2\pi / \tau_p$.
-
-    For each period $\tau_p$ with $H_p$ harmonics, evaluates
-
-    $$
-    \phi_{p, h, \cos}(x) = \cos(2\pi h x / \tau_p), \qquad
-    \phi_{p, h, \sin}(x) = \sin(2\pi h x / \tau_p),
-    $$
-
-
-    for $h = 1, \dots, H_p$. Returns the cos columns concatenated
-    with the sin columns, length $F = \sum_p H_p$ each.
-
-    ``periods`` and ``harmonics`` are **Python sequences** (tuples,
-    lists, or 0-d JAX arrays wrapped at the call site). Keeping them as
-    Python values lets the function run cleanly under ``jax.jit`` and
-    ``lax.scan`` without triggering a concretization error.
-
-    Args:
-        x: Time/index input, shape ``(N,)``.
-        periods: Period values.
-        harmonics: Harmonics per period.
-        rescale: If ``True``, divide each ``(cos, sin)`` pair by its
-            within-period harmonic index, biasing the prior toward
-            longer-wavelength modes within each period.
-
-    Returns:
-        Array of shape ``(N, 2 * F)``.
-
-    Examples:
-        >>> import jax.numpy as jnp
-        >>> from geonnax.basis import seasonal_features
-        >>> x = jnp.linspace(0.0, 10.0, 4)
-        >>> # F = 1 + 2 = 3 frequencies -> 2 * F = 6 columns
-        >>> seasonal_features(x, [7.0, 365.0], [1, 2]).shape
-        (4, 6)
-    """
-    x = _promote_to_floating(x)
-    _, freq_list = seasonal_frequencies(periods, harmonics)
-    if not freq_list:
-        return jnp.zeros((x.shape[0], 0), dtype=x.dtype)
-    # Frequencies in x's dtype: a float64 time axis (e.g. seconds since an
-    # epoch) keeps a float64 phase instead of a float32-rounded 1/period.
-    freqs = jnp.asarray(freq_list, dtype=x.dtype)
-    z = einx.id("n -> n f", x, f=freqs.shape[0]) * (2.0 * jnp.pi * freqs)
-    feats = jnp.concatenate([jnp.cos(z), jnp.sin(z)], axis=-1)
-    if rescale:
-        # Rescale by within-period harmonic index (1, 2, ..., H_p).
-        h_within_list: list[float] = []
-        for n_h in harmonics:
-            h_within_list.extend(range(1, int(n_h) + 1))
-        h_within = jnp.asarray(h_within_list, dtype=x.dtype)
-        denom = jnp.concatenate([h_within, h_within])
-        feats = feats / denom
-    return feats
-
-
-def gaussian_window_features(
-    t: Float[Array, " N"],
-    centers: Float[Array, " M"],
-    widths: Float[Array, " M"],
-) -> Float[Array, "N M"]:
-    r"""Gaussian-window-in-time basis, the temporal analogue of an RBF column.
-
-    $$\chi_a(t) = e^{-(t - \tau_a)^2 / (2 T_a^2)}.$$
-
-    A localized counterpart to `seasonal_features` (Fourier-in-time): each
-    column is a soft gate centred at $\tau_a$ with width $T_a$, for building
-    localized space-time constructions. Returns only the feature matrix; the
-    geometry (``centers``, ``widths``) is the caller's.
-
-    Args:
-        t: Time / index input, shape ``(N,)``.
-        centers: Window centres $\tau_a$, shape ``(M,)``.
-        widths: Window widths $T_a$, shape ``(M,)``.
-
-    Returns:
-        Array of shape ``(N, M)``.
-
-    Examples:
-        >>> import jax.numpy as jnp
-        >>> from geonnax.basis import gaussian_window_features
-        >>> t = jnp.linspace(0.0, 10.0, 5)
-        >>> c, w = jnp.array([2.0, 8.0]), jnp.array([1.0, 1.0])
-        >>> gaussian_window_features(t, c, w).shape
-        (5, 2)
-    """
-    z = einx.divide("n m, m -> n m", einx.subtract("n, m -> n m", t, centers), widths)
-    return jnp.exp(-0.5 * z**2)
+from geonnax import _compat
+from geonnax._deprecation import Moved, deprecated_dir, deprecated_getattr
 
 
 def interaction_features(
@@ -354,54 +105,149 @@ def unstandardize(
     return z * std + mu
 
 
-__all__ = [
-    "SlepianBasis",
-    "SlepianCapBasis",
-    "associated_legendre",
-    "associated_legendre_indices",
-    "cotangent_laplacian_eigpairs",
-    "curlfree_basis",
-    "divfree_basis",
-    "eof_basis",
-    "fibonacci_sphere",
-    "fourier_basis",
-    "fourier_basis_1d",
-    "fourier_eigenvalues",
-    "fourier_eigenvalues_1d",
-    "fourier_features",
-    "gabor_frame",
-    "gabor_frame_grid",
-    "gauss_legendre",
-    "gauss_legendre_grid",
-    "gaussian_window_features",
-    "graph_laplacian_eigpairs",
-    "harmonic_degrees",
-    "healpix_grid",
-    "icosphere",
-    "interaction_features",
-    "latlon_grid",
-    "legendre_polynomials",
-    "mesh_vertex_areas",
-    "needlet_basis",
-    "needlet_window",
-    "rbf_basis",
-    "real_spherical_harmonics",
-    "seasonal_features",
-    "seasonal_frequencies",
-    "shannon_number",
-    "shell_basis",
-    "slepian_cap_basis",
-    "slepian_cap_eigh_per_m",
-    "slepian_concentration_matrix",
-    "slepian_polar_gap_basis",
-    "slepian_region_basis",
-    "spherical_polygon_mask",
-    "spherical_rbf_basis",
-    "standardize",
-    "unstandardize",
-    "vector_spherical_harmonics",
-    "wavelet_basis_1d",
-    "wavelet_basis_2d",
-    "wendland_c2",
-    "wendland_c4",
-]
+#: names that moved to functax, served with a DeprecationWarning until removal
+_MOVED: dict[str, Moved] = {
+    "SlepianBasis": Moved("functax.basis.slepian.SlepianBasis", _slepian.SlepianBasis),
+    "SlepianCapBasis": Moved(
+        "functax.basis.slepian.SlepianCapBasis", _slepian.SlepianCapBasis
+    ),
+    "associated_legendre": Moved(
+        "functax.basis.polynomial.associated_legendre", _polynomial.associated_legendre
+    ),
+    "associated_legendre_indices": Moved(
+        "functax.basis.polynomial.associated_legendre_indices",
+        _polynomial.associated_legendre_indices,
+    ),
+    "cotangent_laplacian_eigpairs": Moved(
+        "functax.basis.eigen.cotangent_laplacian_eigpairs",
+        _eigen.cotangent_laplacian_eigpairs,
+    ),
+    "curlfree_basis": Moved(
+        "functax.basis.vector.curlfree_basis", _vector.curlfree_basis
+    ),
+    "divfree_basis": Moved("functax.basis.vector.divfree_basis", _vector.divfree_basis),
+    "eof_basis": Moved("functax.basis.eigen.eof_basis", _eigen.eof_basis),
+    "fibonacci_sphere": Moved(
+        "functax.geometry.fibonacci_sphere",
+        _compat.fibonacci_sphere,
+        "Note that it takes unit= in place of output_unit=, with no default.",
+    ),
+    "fourier_basis": Moved(
+        "functax.basis.fourier.fourier_basis", _fourier.fourier_basis
+    ),
+    "fourier_basis_1d": Moved(
+        "functax.basis.fourier.fourier_basis_1d", _fourier.fourier_basis_1d
+    ),
+    "fourier_eigenvalues": Moved(
+        "functax.basis.fourier.fourier_eigenvalues", _fourier.fourier_eigenvalues
+    ),
+    "fourier_eigenvalues_1d": Moved(
+        "functax.basis.fourier.fourier_eigenvalues_1d", _fourier.fourier_eigenvalues_1d
+    ),
+    "fourier_features": Moved(
+        "functax.basis.features.fourier_features", _features.fourier_features
+    ),
+    "gabor_frame": Moved("functax.basis.local.gabor_frame", _local.gabor_frame),
+    "gabor_frame_grid": Moved(
+        "functax.basis.local.gabor_frame_grid", _local.gabor_frame_grid
+    ),
+    "gauss_legendre": Moved(
+        "functax.quad.gauss_legendre",
+        _compat.gauss_legendre,
+        "Note that it returns a Rule, which unpacks to (nodes, weights).",
+    ),
+    "gauss_legendre_grid": Moved(
+        "functax.geometry.gauss_legendre_grid",
+        _compat.gauss_legendre_grid,
+        "Note that it takes unit= in place of output_unit=, with no default.",
+    ),
+    "gaussian_window_features": Moved(
+        "functax.basis.features.gaussian_window_features",
+        _features.gaussian_window_features,
+    ),
+    "graph_laplacian_eigpairs": Moved(
+        "functax.basis.eigen.graph_laplacian_eigpairs", _eigen.graph_laplacian_eigpairs
+    ),
+    "harmonic_degrees": Moved(
+        "functax.basis.sphere.harmonic_degrees", _sphere.harmonic_degrees
+    ),
+    "healpix_grid": Moved(
+        "functax.geometry.healpix_grid",
+        _compat.healpix_grid,
+        "Note that it takes unit= in place of output_unit=, with no default.",
+    ),
+    "icosphere": Moved("functax.geometry.icosphere", _geometry.icosphere),
+    "latlon_grid": Moved(
+        "functax.geometry.latlon_grid",
+        _compat.latlon_grid,
+        "Note that it takes unit= in place of output_unit=, with no default.",
+    ),
+    "legendre_polynomials": Moved(
+        "functax.basis.polynomial.legendre_polynomials",
+        _polynomial.legendre_polynomials,
+    ),
+    "mesh_vertex_areas": Moved(
+        "functax.geometry.mesh_vertex_areas", _geometry.mesh_vertex_areas
+    ),
+    "needlet_basis": Moved("functax.basis.sphere.needlet_basis", _sphere.needlet_basis),
+    "needlet_window": Moved(
+        "functax.basis.sphere.needlet_window", _sphere.needlet_window
+    ),
+    "rbf_basis": Moved("functax.basis.local.rbf_basis", _local.rbf_basis),
+    "real_spherical_harmonics": Moved(
+        "functax.basis.sphere.real_spherical_harmonics",
+        _sphere.real_spherical_harmonics,
+    ),
+    "seasonal_features": Moved(
+        "functax.basis.features.seasonal_features", _features.seasonal_features
+    ),
+    "seasonal_frequencies": Moved(
+        "functax.basis.features.seasonal_frequencies", _features.seasonal_frequencies
+    ),
+    "shannon_number": Moved(
+        "functax.basis.slepian.shannon_number", _slepian.shannon_number
+    ),
+    "shell_basis": Moved("functax.basis.sphere.shell_basis", _sphere.shell_basis),
+    "slepian_cap_basis": Moved(
+        "functax.basis.slepian.slepian_cap_basis", _slepian.slepian_cap_basis
+    ),
+    "slepian_cap_eigh_per_m": Moved(
+        "functax.basis.slepian.slepian_cap_eigh_per_m", _slepian.slepian_cap_eigh_per_m
+    ),
+    "slepian_concentration_matrix": Moved(
+        "functax.basis.slepian.slepian_concentration_matrix",
+        _slepian.slepian_concentration_matrix,
+    ),
+    "slepian_polar_gap_basis": Moved(
+        "functax.basis.slepian.slepian_polar_gap_basis",
+        _slepian.slepian_polar_gap_basis,
+    ),
+    "slepian_region_basis": Moved(
+        "functax.basis.slepian.slepian_region_basis", _slepian.slepian_region_basis
+    ),
+    "spherical_polygon_mask": Moved(
+        "functax.basis.slepian.spherical_polygon_mask",
+        _compat.spherical_polygon_mask,
+        "Note that it takes unit= in place of input_unit=, with no default.",
+    ),
+    "spherical_rbf_basis": Moved(
+        "functax.basis.local.spherical_rbf_basis", _local.spherical_rbf_basis
+    ),
+    "vector_spherical_harmonics": Moved(
+        "functax.basis.sphere.vector_spherical_harmonics",
+        _sphere.vector_spherical_harmonics,
+    ),
+    "wavelet_basis_1d": Moved(
+        "functax.basis.local.wavelet_basis_1d", _local.wavelet_basis_1d
+    ),
+    "wavelet_basis_2d": Moved(
+        "functax.basis.local.wavelet_basis_2d", _local.wavelet_basis_2d
+    ),
+    "wendland_c2": Moved("functax.basis.local.wendland_c2", _local.wendland_c2),
+    "wendland_c4": Moved("functax.basis.local.wendland_c4", _local.wendland_c4),
+}
+
+__all__ = ["interaction_features", "standardize", "unstandardize"]
+
+__getattr__ = deprecated_getattr(__name__, _MOVED)
+__dir__ = deprecated_dir(__all__, _MOVED)

@@ -8,13 +8,10 @@ import jax
 import jax.numpy as jnp
 import jax.random as jr
 import pytest
+from functax.basis.eigen import cotangent_laplacian_eigpairs
+from functax.basis.slepian import slepian_region_basis
+from functax.geometry import gauss_legendre_grid, icosphere
 
-from geonnax.basis import (
-    cotangent_laplacian_eigpairs,
-    gauss_legendre_grid,
-    icosphere,
-    slepian_region_basis,
-)
 from geonnax.layers import BasisTransform
 from geonnax.manifold_no import ManifoldNO, ManifoldNOBlock
 

@@ -21,9 +21,10 @@ import einx
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from functax.basis.features import fourier_features, seasonal_features
 from jaxtyping import Array, Float, PRNGKeyArray
 
-from geonnax.basis import fourier_features, interaction_features, seasonal_features
+from geonnax.basis import interaction_features
 from geonnax.geo import _promote_to_floating
 
 
@@ -45,9 +46,9 @@ class NeuralFieldMLP(eqx.Module):
     log-scale adjustments $a$, the rescaled input is
     $\tilde x = x \oslash (s \odot e^{a})$. Feature blocks $F_k$ are built from
     it: $\tilde x$ itself, dyadic Fourier features of each column with a
-    positive degree (`geonnax.basis.fourier_features`, ``rescale=True``),
+    positive degree (`functax.basis.features.fourier_features`, ``rescale=True``),
     seasonal features of the **raw** time column ``x[time_col]``
-    (`geonnax.basis.seasonal_features`, ``rescale=True``), pairwise
+    (`functax.basis.features.seasonal_features`, ``rescale=True``), pairwise
     interaction products of $\tilde x$, and an optional ``extra`` block
     passed at call time (for example `SphericalHarmonicEncoder` features).
     Each block is gated by $\mathrm{softplus}(g_k)$ and the blocks are

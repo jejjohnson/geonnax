@@ -13,7 +13,7 @@ large parameter count for a compact, regularised one (Kossaifi et al., 2023).
 
 `SpectralConv.from_points` / `SpectralConv.to_points` reuse the same weights
 between a point cloud and a uniform latent grid through the weighted
-non-uniform transforms of `geonnax.layers._nonuniform` (the Geo-FNO layers of
+non-uniform transforms of `functax.transform` (the Geo-FNO layers of
 Li et al., 2023).
 """
 
@@ -25,6 +25,7 @@ import einx
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from functax.transform import nonuniform_irfft, nonuniform_rfft
 from jaxtyping import Array, Complex, Float
 
 from geonnax.layers._factorized import (
@@ -35,7 +36,6 @@ from geonnax.layers._factorized import (
     TuckerTensor,
     init_factorized_tensor,
 )
-from geonnax.layers._nonuniform import nonuniform_irfft, nonuniform_rfft
 from geonnax.layers._utils import _corner_slices
 
 

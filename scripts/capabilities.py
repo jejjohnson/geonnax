@@ -48,7 +48,6 @@ PUBLIC_MODULES: list[str] = [
     "geonnax.layers",
     "geonnax.conditioning",
     "geonnax.crf",
-    "geonnax.diffops",
     "geonnax.encoders",
     "geonnax.ensemble",
     "geonnax.fno",
@@ -112,12 +111,6 @@ PRIVATE_HELPERS: dict[str, str] = {
     ),
     "geonnax.spectral_norm._l2_normalize": (
         "`x / max(‖x‖, eps)`, finite gradients at 0 (power iteration)"
-    ),
-    "geonnax._basis._rbf._safe_sqrt": (
-        "double-`where` sqrt: exact 0 at 0 with finite gradients"
-    ),
-    "geonnax._basis._rbf._safe_arccos": (
-        "double-`where` arccos: finite gradients at c = ±1 (geodesic distance)"
     ),
     "geonnax.geo._validate_lonlat_shape": "require an `(N, 2)` lon/lat array",
     "geonnax.geo._validate_range": "require `min < max` for a range argument",

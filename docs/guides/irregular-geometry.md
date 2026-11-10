@@ -84,9 +84,9 @@ return u[c_out, n1, n2]
 ## Running it
 
 The example builds a small synthetic swath: a tilted track whose footprint widens away
-from nadir. It uses only `geonnax.FNO` and `geonnax.geo.local_tangent_plane`
-(`local_tangent_plane(lonlat, origin, *, projection, radius, input_unit)` returns east
-and north offsets in the units of `radius`, kilometres by default).
+from nadir. It uses only `geonnax.FNO` and `functax.geometry.local_tangent_plane`
+(`local_tangent_plane(lonlat, origin, *, radius, projection, unit)` returns east
+and north offsets in the units of `radius`).
 
 ```python
 import jax
@@ -94,7 +94,7 @@ import jax.numpy as jnp
 import jax.random as jr
 
 from geonnax import FNO
-from geonnax.geo import local_tangent_plane
+from functax.geometry import local_tangent_plane
 
 n_scan, n_pix = 40, 24
 
@@ -109,7 +109,7 @@ xch4 = jnp.sin(3.0 * s) * jnp.cos(2.0 * p)  # (n_scan, n_pix)
 # Metric coordinates (km) about the swath centre, scaled to O(1).
 lonlat = jnp.stack([lon.ravel(), lat.ravel()], -1)  # (N, 2)
 origin = jnp.array([lon.mean(), lat.mean()])
-enu = local_tangent_plane(lonlat, origin)  # (N, 2) km
+enu = local_tangent_plane(lonlat, origin, radius=6371.0088, unit="degrees")  # (N, 2) km
 coords = enu.T.reshape(2, n_scan, n_pix) / 100.0  # (2, n_scan, n_pix)
 
 x = jnp.concatenate([xch4[None], coords], axis=0)  # (3, n_scan, n_pix)
