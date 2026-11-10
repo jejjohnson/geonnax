@@ -8,8 +8,9 @@ the docs, git and PR rules).
 
 The essentials, in case you only read this file:
 
-- One package, `src/geonnax/`: pure-JAX bases (`_basis/`, public through
-  `geonnax.basis`), lon/lat helpers and encoders (`geo`, `encoders`,
+- One package, `src/geonnax/`, which imports its bases, sphere geometry,
+  field derivatives and transforms from functax: feature helpers
+  (`geonnax.basis`), lon/lat helpers and encoders (`geo`, `encoders`,
   `slepian`), building blocks (`layers/`), neural operators (`fno`, `sfno`,
   `wno`, `mswt`), the U-Net, implicit neural representations (`siren`,
   `multi_scale_siren`, `mfn`, `conditioning`) and uncertainty-aware cores
@@ -27,9 +28,8 @@ The essentials, in case you only read this file:
     `init(..., *, key)`; one example per call (`(D,)` or `(C, *spatial)`),
     batched with `jax.vmap`; state updates return a new module; stochastic
     forward passes take an explicit `key`;
-  - **bases**: pure functions returning `Φ (N, M)` plus eigenvalues or
-    per-atom geometry, implemented in `_basis/` and re-exported from
-    `geonnax.basis`;
+  - **bases**: they live in functax (`functax.basis`); a new one goes
+    there, and geonnax imports it;
   - **numerics**: published init scales, dtypes that follow the input,
     no Python control flow on traced values, double-`where` guards at
     singular points; prefer einx for reshapes, transposes and contractions.

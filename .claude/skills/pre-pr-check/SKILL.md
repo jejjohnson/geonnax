@@ -35,8 +35,8 @@ uv run pytest -o addopts= --doctest-modules src/geonnax/<module>.py   # or the p
 
 `make test` runs every tier of the whole suite; `make doctest` every
 docstring example. A layer or operator change runs `tests/test_unet.py`,
-`tests/test_spectral.py` and the wavelet tests; a basis change
-`tests/test_new_bases.py` and `tests/test_localized_bases.py`; an
+`tests/test_spectral.py` and the wavelet tests; a change to the
+functax imports or the deprecated aliases `tests/test_deprecations.py`; an
 uncertainty core `tests/test_geonnax.py`, `test_heads.py`,
 `test_spectral_norm.py`.
 
