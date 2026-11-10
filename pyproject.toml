@@ -25,6 +25,7 @@ dependencies = [
     "jaxtyping>=0.2",
     "einops>=0.8.2",
     "einx>=0.4.3",
+    "functax[jax] @ git+https://github.com/jejjohnson/functax.git@v0.0.6",
 ]
 
 [project.urls]
@@ -65,6 +66,9 @@ docs = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/geonnax"]

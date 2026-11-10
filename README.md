@@ -46,7 +46,7 @@ geonnax is not on PyPI yet; install it from GitHub with [uv](https://docs.astral
 uv add "geonnax @ git+https://github.com/jejjohnson/geonnax.git"
 ```
 
-It depends on jax, equinox, jaxtyping, einx and einops, and on nothing else.
+It depends on jax, equinox, jaxtyping, einx, einops and [functax](https://github.com/jejjohnson/functax), which holds the bases, sphere grids, field derivatives and transforms that geonnax's networks are built on.
 Training loops are yours to write; the example below uses [optax](https://github.com/google-deepmind/optax) (`uv add optax`).
 
 ## Quick start
@@ -58,6 +58,7 @@ import equinox as eqx
 import geonnax as gnx
 import jax
 import jax.numpy as jnp
+from functax.basis.slepian import slepian_cap_basis
 import jax.random as jr
 from jaxtyping import Array, Float
 
@@ -82,7 +83,7 @@ v: Float[Array, "1 P Q"] = op(u)                                    # (C, P, Q) 
 
 # C · Basis functions: features for any model (least squares, a GP, your own network)
 # gₖ = argmax_g ∫_R g² / ∫_S² g²,  band-limited to l ≤ 20,  R a 40° cap at the pole
-cap = gnx.basis.slepian_cap_basis(20, 0.7, n_modes=40)              # basis
+cap = slepian_cap_basis(20, 0.7, n_modes=40)                        # functax
 phi: Float[Array, "N K"] = jax.vmap(gnx.SlepianEncoder(cap))(lonlat)  # (N, 2) → (N, K)  slepian
 ```
 
@@ -107,6 +108,8 @@ import jax
 import jax.numpy as jnp
 import jax.random as jr
 import optax
+from functax.basis.slepian import slepian_cap_basis
+from functax.basis.sphere import real_spherical_harmonics
 from jaxtyping import Array, Bool, Float
 
 
@@ -131,7 +134,7 @@ def xch4(u: Float[Array, "P 3"]) -> Float[Array, " P"]:
     cos_d = einx.dot("p d, s d -> p s", u, c_s)            # (P, 3), (S, 3) → (P, S)
     width = 1.0 - jnp.cos(jnp.deg2rad(src[:, 2]))          # (S,)
     plumes = einx.dot("p s, s -> p", jnp.exp(-(1.0 - cos_d) / width), src[:, 3])  # (P,)
-    xi = gnx.basis.real_spherical_harmonics(u, 28) @ beta  # (P, 3) → (P, M) → (P,)
+    xi = real_spherical_harmonics(u, 28) @ beta  # (P, 3) → (P, M) → (P,)
     return 1880.0 + 25.0 * u[:, 2] + plumes + xi           # (P,)  ppb
 
 
@@ -185,7 +188,7 @@ rmse_sh = {l_max: float(sh_fit(l_max)) for l_max in (8, 16, 28)}
 
 # gₖ = argmax_g ∫_R g² / ∫_S² g²,  band-limited to l ≤ 28,  R a 20° cap over South Asia
 c_R = jnp.deg2rad(jnp.array([78.0, 25.0]))                 # cap centre (λ, φ), rad
-cap = gnx.basis.slepian_cap_basis(28, jnp.deg2rad(20.0), n_modes=60, lonlat_centre=c_R)
+cap = slepian_cap_basis(28, jnp.deg2rad(20.0), n_modes=60, lonlat_centre=c_R)
 G: Float[Array, "N K"] = jax.vmap(gnx.SlepianEncoder(cap))(lonlat)  # (N, 2) → (N, K)  geonnax
 u_R = gnx.geo.lonlat_to_cartesian3d(einx.id("d -> 1 d", c_R))[0]  # (3,)
 in_R: Bool[Array, " N"] = jnp.arccos(u @ u_R) < jnp.deg2rad(20.0)  # (N,)  inside the cap
@@ -326,8 +329,8 @@ Each family links to its API page; [`docs/api/capabilities.md`](docs/api/capabil
 | [Uncertainty heads](https://jejjohnson.github.io/geonnax/api/uncertainty/) | `randfeat`, `sngp`, `vssgp`, `spectral_norm`, `ensemble`, `heteroscedastic`, `mixture`, `crf`, `ncp` | `OrthogonalRandomFeatures`, `RandomFeatureGaussianProcess`, `DeepVSSGPCore`, `SpectralNormalization`, `LayerNormEnsemble`, `MultiHeadAttentionBE`, `HeteroscedasticHead`, `MixtureOfGaussiansDenseHead`, `LinearChainCRF`, `NCPContinuousPerturb` |
 | [Neural operators](https://jejjohnson.github.io/geonnax/api/operators/) | `fno`, `sfno`, `wno`, `mswt`, `manifold_no` | `FNO` (dense, CP, Tucker or TT spectral weights), `SFNO`, `WNO`, `MSWT`, `ManifoldNO` |
 | [U-Nets](https://jejjohnson.github.io/geonnax/api/unet/) | `unet` | `UNet`, `XUNet`, `NestedResidualUNet` (U²-Net stages), 1-D, 2-D or 3-D |
-| [Building blocks](https://jejjohnson.github.io/geonnax/api/layers/) | `layers` | `StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `SpectralConv`, `SphericalHarmonicTransform`, `WaveletConv`, `SphericalWaveletConv`, `WaveletAttention`, `Downsample`, `Upsample`, … |
-| [Bases](https://jejjohnson.github.io/geonnax/api/bases/) | `basis` | `real_spherical_harmonics`, `vector_spherical_harmonics`, `slepian_cap_basis`, `slepian_region_basis`, `needlet_basis`, `wavelet_basis_2d`, `fourier_basis`, `eof_basis`, `graph_laplacian_eigpairs`, `spherical_rbf_basis`, `gabor_frame`; grids `latlon_grid`, `gauss_legendre_grid`, `fibonacci_sphere`, `icosphere` |
+| [Building blocks](https://jejjohnson.github.io/geonnax/api/layers/) | `layers` | `StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `SpectralConv`, `SphericalSpectralConv`, `WaveletConv`, `SphericalWaveletConv`, `WaveletAttention`, `Downsample`, `Upsample`, … |
+| [Bases](https://jejjohnson.github.io/geonnax/api/bases/) | `basis` | `interaction_features`, `standardize`; the bases and sphere grids moved to `functax.basis` and `functax.geometry` |
 
 Every module acts on one example, channels first: a 2-D field is `(channels, height, width)` and a coordinate is `(2,)`.
 Use `jax.vmap` for a batch.
@@ -341,7 +344,7 @@ Use `jax.vmap` for a batch.
   </picture>
 </p>
 
-geonnax sits at the bottom of the stack and imports none of it.
+geonnax sits near the bottom of the stack and imports only functax from it.
 [kernellib](https://github.com/jejjohnson/kernellib) takes its basis functions and random-feature arithmetic, [pyrox-gp](https://github.com/jejjohnson/pyrox) re-exports its eigenfunction bases for inducing features, and [pyrox-nn](https://github.com/jejjohnson/pyrox) wraps its SIREN, MFN, SNGP and VSSGP cores as Bayesian layers.
 That is why parameter names here are stable: pyrox addresses them by name.
 

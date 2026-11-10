@@ -10,10 +10,11 @@ import jax.numpy as jnp
 import jax.random as jr
 import numpy as np
 import pytest
+from functax.basis.features import fourier_features, seasonal_features
 
 import geonnax.neural_field as nf_mod
 from geonnax import NeuralFieldMLP
-from geonnax.basis import fourier_features, interaction_features, seasonal_features
+from geonnax.basis import interaction_features
 
 
 KEY = jr.PRNGKey(0)

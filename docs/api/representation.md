@@ -83,7 +83,7 @@ a Fourier or Gabor filter of the input, giving an analytically tractable basis.
 
 A neural field is differentiable in its coordinates, so geostrophic velocities,
 elevation-change rates and PDE residuals come from automatic differentiation.
-`geonnax.diffops` turns a single-example field into its gradient, Jacobian,
+`functax.diffops` (moved from `geonnax.diffops` in jejjohnson/geonnax#153) turns a single-example field into its gradient, Jacobian,
 divergence, planar curl or Laplacian, and — for fields of a unit vector $n \in S^2$ —
 its surface gradient (Cartesian or east/north) and Laplace–Beltrami operator, using
 the radially constant extension $g(x) = f(x/\lVert x\rVert)$ so that
@@ -93,7 +93,7 @@ residual costs from them in your own training code.
 ```python
 import jax, jax.numpy as jnp, jax.random as jr
 import geonnax
-from geonnax import diffops
+from functax import diffops
 
 enc = geonnax.SphericalHarmonicEncoder(l_max=8, input_mode="cartesian")
 net = geonnax.SIREN.init(
@@ -102,7 +102,7 @@ net = geonnax.SIREN.init(
 ssh = lambda n: net(enc(n))[0]  # field on the unit sphere
 
 lonlat = jnp.array([[3.0, 40.0], [5.5, 38.2]])
-grad_en = jax.vmap(diffops.surface_grad_enu(ssh))(lonlat)  # (2, 2): east, north
+grad_en = jax.vmap(diffops.surface_grad_enu(ssh, unit="degrees"))(lonlat)  # (2, 2): east, north
 ```
 
-::: geonnax.diffops
+The old `geonnax.diffops` names still resolve until geonnax 0.0.13, with a `DeprecationWarning`; `grad` and `jacobian` are `functax.diffops.gradient` and `jacobian_field` there.

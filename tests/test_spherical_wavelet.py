@@ -6,9 +6,9 @@ import jax.numpy as jnp
 import jax.random as jr
 import numpy as np
 import pytest
+from functax.transform import SphericalHarmonicTransform
 
 import geonnax
-from geonnax.layers import SphericalHarmonicTransform
 from geonnax.layers._spherical_wavelet import (
     SphericalWaveletConv,
     SphericalWaveletTransform,

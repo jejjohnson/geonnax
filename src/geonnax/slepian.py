@@ -12,9 +12,9 @@ from typing import Literal
 
 import equinox as eqx
 import jax.numpy as jnp
+from functax.basis.slepian import SlepianCapBasis, slepian_cap_basis
 from jaxtyping import Array, Float
 
-from geonnax._basis import SlepianCapBasis, slepian_cap_basis
 from geonnax.encoders import SphericalHarmonicEncoder
 from geonnax.geo import lonlat_to_cartesian3d
 

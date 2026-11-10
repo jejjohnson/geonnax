@@ -10,15 +10,11 @@ sample / param sites.
 Submodules:
 
 - `geonnax.geo` — lon/lat helpers (``deg2rad``, ``lonlat_scale``, …).
-- `geonnax.basis` — the public basis surface: Fourier / seasonal /
-  interaction feature transforms, plus the re-exported eigenfunction
-  (Dirichlet, spherical-harmonic, Slepian, graph-Laplacian), localized
-  (RBF), and overcomplete (Gabor frame) spatial bases.
-- `geonnax._basis` — implementation home for the spatial bases above
-  (re-exported through `geonnax.basis`).
-- `geonnax.diffops` — coordinate derivatives of continuous fields
-  (``grad``, ``laplacian``, ``surface_grad``, ``laplace_beltrami``, …),
-  Euclidean and on the unit sphere.
+- `geonnax.basis` — the feature-engineering helpers
+  (``interaction_features``, ``standardize``, ``unstandardize``), and the
+  deprecated paths of the bases that moved to `functax.basis`.
+- `geonnax.diffops` — the deprecated paths of the field derivatives that
+  moved to `functax.diffops`.
 - `geonnax.encoders` — coordinate encoders (``Deg2Rad``, …,
   ``SphericalHarmonicEncoder``) and ``GeoContextEncoder`` for
   lon/lat/time/covariate context vectors.
@@ -45,9 +41,17 @@ Submodules:
   band-limited, discretisation-invariant U-Net; Raonić et al., NeurIPS 2023).
 - `geonnax.lno` — ``LNO``, the local neural operator: a local core marched
   in time with a boundary treatment (Li et al., CMAME 2024).
-- `geonnax.randfeat` — ``OrthogonalRandomFeatures`` +
-  ``rff_forward`` / ``rff_cosine_forward`` helpers.
+- `geonnax.randfeat` — ``OrthogonalRandomFeatures`` and
+  ``orthogonal_blocks``.
+
+The bases, sphere geometry, field derivatives and transforms live in functax,
+which geonnax depends on (jejjohnson/geonnax#153). ``rff_forward``,
+``rff_cosine_forward`` and ``SphericalHarmonicTransform`` still resolve here
+for one release, with a `DeprecationWarning` naming the functax path.
 """
+
+import functax.basis.features as _features
+import functax.transform as _transform
 
 from geonnax import (
     basis,
@@ -81,6 +85,7 @@ from geonnax import (
     vssgp,
     wno,
 )
+from geonnax._deprecation import Moved, deprecated_dir, deprecated_getattr
 from geonnax.cno import CNO, CNOBlock, CNOResBlock, ConvolutionalNeuralOperator
 from geonnax.conditioning import (
     AbstractConditioner,
@@ -133,7 +138,6 @@ from geonnax.layers import (
     LinearAttention,
     ResnetBlock,
     SpectralConv,
-    SphericalHarmonicTransform,
     SphericalSpectralConv,
     SphericalWaveletConv,
     SphericalWaveletTransform,
@@ -159,8 +163,6 @@ from geonnax.neural_field import NeuralFieldMLP
 from geonnax.randfeat import (
     OrthogonalRandomFeatures,
     orthogonal_blocks,
-    rff_cosine_forward,
-    rff_forward,
 )
 from geonnax.separable import SeparableINR
 from geonnax.sfno import SFNO, SphericalFNOBlock
@@ -261,7 +263,6 @@ __all__ = [
     "SpectralNormalization",
     "SphericalFNOBlock",
     "SphericalHarmonicEncoder",
-    "SphericalHarmonicTransform",
     "SphericalSpectralConv",
     "SphericalWaveletConv",
     "SphericalWaveletTransform",
@@ -310,8 +311,6 @@ __all__ = [
     "neural_field",
     "orthogonal_blocks",
     "randfeat",
-    "rff_cosine_forward",
-    "rff_forward",
     "separable",
     "sfno",
     "siren",
@@ -323,3 +322,18 @@ __all__ = [
     "vssgp",
     "wno",
 ]
+
+#: names that moved to functax, served with a DeprecationWarning until removal
+_MOVED: dict[str, Moved] = {
+    "SphericalHarmonicTransform": Moved(
+        "functax.transform.SphericalHarmonicTransform",
+        _transform.SphericalHarmonicTransform,
+    ),
+    "rff_cosine_forward": Moved(
+        "functax.basis.features.rff_cosine_forward", _features.rff_cosine_forward
+    ),
+    "rff_forward": Moved("functax.basis.features.rff_forward", _features.rff_forward),
+}
+
+__getattr__ = deprecated_getattr(__name__, _MOVED)
+__dir__ = deprecated_dir(__all__, _MOVED)

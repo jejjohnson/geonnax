@@ -28,33 +28,36 @@ lands where the next person will find and reuse it.
 
 It is one package, `src/geonnax/`. The public API is `geonnax.__all__` plus
 the public submodules (each with its own `__all__`); names reachable only
-from a submodule are the bases (`geonnax.basis`), the lon/lat helpers
-(`geonnax.geo`), the field-derivative operators (`geonnax.diffops`),
-`geonnax.layers.dwt` / `idwt` / `nonuniform_rfft` /
-`nonuniform_irfft` / `Factorization` / `Wavelet`,
+from a submodule are the feature helpers (`geonnax.basis`), the lon/lat
+helpers (`geonnax.geo`), `geonnax.layers.dwt` / `idwt` / `Factorization` /
+`Wavelet`,
 `geonnax.mswt.WaveletDownsample` / `WaveletUpsample` and
 `geonnax.unet.BlockType`.
 
+The bases, sphere grids and frames, field derivatives and transforms moved to
+functax (jejjohnson/geonnax#153), which geonnax depends on. Their old geonnax
+paths are deprecated aliases until 0.0.13: each module lists them in a
+`_MOVED` table served by `geonnax._deprecation`, and `geonnax._compat` keeps
+the old signature where functax changed it. New maths goes to functax, not
+here.
+
 | Family | Modules | Owns |
 |---|---|---|
-| Bases (pure functions) | `_basis/` (implementation), `basis.py` (the public surface) | Dirichlet / Fourier eigenpairs on a box, divergence-free atoms, real spherical harmonics, Slepian cap bases, graph-Laplacian eigenpairs, RBF / Wendland and Gabor frames, DWT matrices, EOFs; Fourier / seasonal / interaction / time-window features, `standardize` |
+| Feature helpers | `basis.py` | `interaction_features`, `standardize` / `unstandardize`; the bases themselves are in `functax.basis` |
 | Geography | `geo.py`, `encoders.py`, `slepian.py` | lon/lat helpers (`deg2rad`, `lonlat_scale`, `lonlat_to_cartesian3d`, `cyclic_encode`, `spherical_harmonic_encode`); parameter-free encoder modules, plus `GaussianFourierEncoder` (a frozen random frequency matrix drawn in `init`); `GeoContextEncoder`; Slepian encoders |
-| Building blocks | `layers/` | `StandardizedConv`, `Downsample` / `Upsample`, `band_limited_resize` / `AntiAliasedActivation`, `Block`, `ResnetBlock`, `ConvNeXtBlock`, `SqueezeExcitation`, `GlobalResponseNorm`, attention (`Attention`, `LinearAttention`, `WindowedAttention`, `WaveletAttention`), `SpectralConv` + factorized weights (`DenseTensor`, `CPTensor`, `TuckerTensor`, `TTTensor`), `nonuniform_rfft` / `nonuniform_irfft`, spherical harmonic / wavelet transforms and convs, `dwt` / `idwt`, `WaveletConv` |
+| Building blocks | `layers/` | `StandardizedConv`, `Downsample` / `Upsample`, `band_limited_resize` / `AntiAliasedActivation`, `Block`, `ResnetBlock`, `ConvNeXtBlock`, `SqueezeExcitation`, `GlobalResponseNorm`, attention (`Attention`, `LinearAttention`, `WindowedAttention`, `WaveletAttention`), `SpectralConv` + factorized weights (`DenseTensor`, `CPTensor`, `TuckerTensor`, `TTTensor`), the spherical spectral conv, spherical wavelet transforms and convs, `dwt` / `idwt`, `WaveletConv` |
 | Neural operators | `fno.py`, `sfno.py`, `wno.py`, `mswt.py`, `manifold_no.py`, `cno.py`, `lno.py` | `FNO`, `SFNO`, `WNO`, `MSWT`, `ManifoldNO`, `CNO` and their blocks; `LNO`, a local core marched in time |
 | U-Net | `unet.py` | `UNet` (alias `XUNet`), `Stage`, `NestedResidualUNet` |
 | Implicit neural representations | `siren.py`, `multi_scale_siren.py`, `mfn.py`, `neural_field.py`, `separable.py`, `conditioning.py` | `SIREN`, `SirenDense`, the SIREN init rules, `MultiScaleSIREN`, `FourierNet` / `GaborNet`, `NeuralFieldMLP` (the BayesNF network), `SeparableINR` (rank-r per-axis networks, `on_grid`), conditioners (`ConcatConditioner`, `AffineModulation` = `FiLM`, `HyperLinear`), `ConditionedINR`, `HyperSIREN` |
-| Field derivatives | `diffops.py` | `grad`, `jacobian`, `divergence`, `curl2d`, `laplacian`; on the unit sphere `surface_grad`, `surface_grad_enu`, `laplace_beltrami` (operators on single-example fields, not losses) |
 | Uncertainty-aware cores | `randfeat.py`, `sngp.py`, `vssgp.py`, `spectral_norm.py`, `ensemble.py`, `heteroscedastic.py`, `mixture.py`, `crf.py`, `ncp.py` | Random Fourier features, the SNGP head and its Laplace covariance, the deep VSSGP core, spectral normalisation, BatchEnsemble layers, heteroscedastic classification heads and the Gaussian regression head (`GaussianRegressionHead`), mixture-density head, linear-chain CRF, NCP input perturbation — each the deterministic half of a probabilistic layer pyrox builds |
 
-Imports point one way: `_basis` imports nothing else in geonnax; `layers`
-imports only itself and `_basis`; `geo` → `_basis`; `basis` → `_basis` and
-`geo` (only `_promote_to_floating`); the model modules import
-`layers` / `_basis` / `geo`, and only these model-to-model edges exist:
+Imports point one way: the maths comes from functax; `layers` imports only
+itself and functax; `geo` imports functax; the model modules import
+`layers` / `geo` / functax, and only these model-to-model edges exist:
 `conditioning`, `multi_scale_siren` and `separable` → `siren`, `vssgp` → `randfeat`,
 `slepian` → `encoders` / `geo`, `geofno` → `fno`, `lno` → `cno`,
-`encoders` → `randfeat` (`GaussianFourierEncoder` reuses `rff_forward`);
-`neural_field` → `basis` (the public feature transforms it gates);
-`diffops` imports `geo` and `_basis` only. No test enforces this; keep it.
+`neural_field` → `basis` (`interaction_features`). No test enforces this;
+keep it.
 
 ### Boundaries
 
@@ -67,8 +70,8 @@ imports only itself and `_basis`; `geo` → `_basis`; `basis` → `_basis` and
 - **No kernels.** Kernel objects, spectral densities and kernel-aware feature
   maps live in kernellib (and `pyrox_gp`); geonnax returns kernel-free
   geometry (eigenvalues, centres and widths, frequency matrices).
-- **Runtime dependencies** are jax, equinox, jaxtyping, einx and einops
-  (`pyproject.toml`); NumPy (a jax dependency) is used only for eager,
+- **Runtime dependencies** are jax, equinox, jaxtyping, einx, einops and
+  functax (`pyproject.toml`, pinned by git tag); NumPy (a jax dependency) is used only for eager,
   construction-time tables. No new runtime dependency without discussion.
 
 ## What geonnax is built on
@@ -97,15 +100,14 @@ exists:
 2. **Search the shared private helpers** (the end of the index): einx
    shuffle patterns, the GroupNorm group count, the dropout and key-splitting
    helpers, the rank resolver, the Fourier corner slices, wavelet filter
-   banks, Glorot inits, the double-`where` `_safe_sqrt` / `_safe_arccos`,
-   lon/lat validators.
+   banks, Glorot inits, lon/lat validators.
 3. **If it is missing, add it to the module that owns the concept** — a
-   building block to `layers/`, a basis to `_basis/` (re-exported from
-   `geonnax.basis`), a helper two modules need to the owner's `_utils` or the
+   building block to `layers/`, a basis, grid or transform to functax, a
+   helper two modules need to the owner's `_utils` or the
    lowest module both already import — not inline in the one caller you have
    today. Copies already exist (`_glorot_uniform` in `ensemble` /
-   `heteroscedastic`, `_require_positive` in `siren` / `mfn`, `_safe_sqrt` in
-   `_rbf` / `_gabor`); don't add more.
+   `heteroscedastic`, `_require_positive` in `siren` / `mfn`); don't add
+   more.
 4. **One object, one name.** A name means one thing across `geonnax` and its
    submodules (`tests/test_capabilities.py`); the deliberate exceptions are
    listed with a reason in `ALLOWED_SHARED_NAMES` in
@@ -118,19 +120,19 @@ exists:
 | Pixel-shuffle down / up-sampling, space-to-depth | `geonnax.layers.Downsample` / `Upsample`; the patterns in `layers._utils.shuffle_patterns` |
 | Self-attention over a grid | `geonnax.layers.Attention`, `LinearAttention`, `WindowedAttention`, `WaveletAttention` |
 | An FFT conv keeping the low modes | `geonnax.layers.SpectralConv` (dense / CP / Tucker / TT weights via `init_factorized_tensor`) |
-| A spherical harmonic transform on a lat/lon grid | `geonnax.layers.SphericalHarmonicTransform`, `SphericalSpectralConv`; for wavelets `SphericalWaveletTransform` |
-| A discrete wavelet transform | `geonnax.layers.dwt` / `idwt`, `WaveletConv`; as matrices `geonnax.basis.wavelet_basis_1d` / `_2d` |
-| Real spherical harmonics, Laplacian eigenfunctions, RBF / Gabor / Slepian columns, EOFs | `geonnax.basis` (`real_spherical_harmonics`, `fourier_basis`, `rbf_basis`, `gabor_frame_grid`, `slepian_cap_basis`, `eof_basis`, …) |
-| Fourier / seasonal / interaction features | `geonnax.basis.fourier_features`, `seasonal_features`, `interaction_features`, `gaussian_window_features` |
+| A spherical harmonic transform on a lat/lon grid | `functax.transform.SphericalHarmonicTransform`, `SphericalSpectralConv`; for wavelets `SphericalWaveletTransform` |
+| A discrete wavelet transform | `geonnax.layers.dwt` / `idwt`, `WaveletConv`; as matrices `functax.basis.local.wavelet_basis_1d` / `_2d` |
+| Real spherical harmonics, Laplacian eigenfunctions, RBF / Gabor / Slepian columns, EOFs | `functax.basis` (`sphere.real_spherical_harmonics`, `fourier.fourier_basis`, `local.rbf_basis`, `local.gabor_frame_grid`, `slepian.slepian_cap_basis`, `eigen.eof_basis`, …) |
+| Fourier / seasonal / interaction features | `functax.basis.features.fourier_features`, `seasonal_features`, `gaussian_window_features`; `geonnax.basis.interaction_features` |
 | Degrees → radians, lon/lat → unit sphere, cyclic sin/cos | `geonnax.geo` functions; as modules `geonnax.Deg2Rad`, `Cartesian3DEncoder`, `CyclicEncoder`, `SphericalHarmonicEncoder`, `GeoContextEncoder` |
-| `cos(xW/ℓ)`, `sin(xW/ℓ)` random features, orthogonal frequency blocks | `geonnax.rff_forward`, `rff_cosine_forward`, `orthogonal_blocks`, `OrthogonalRandomFeatures` |
+| `cos(xW/ℓ)`, `sin(xW/ℓ)` random features, orthogonal frequency blocks | `functax.basis.features.rff_forward`, `rff_cosine_forward`; `geonnax.orthogonal_blocks`, `OrthogonalRandomFeatures` |
 | A SIREN layer or its `U(-a, a)` init | `geonnax.SirenDense`, `SIREN`, `siren_W_limit`, `build_siren_specs` |
 | FiLM / concat / hypernetwork conditioning | `geonnax.AffineModulation` (`FiLM`), `ConcatConditioner`, `HyperLinear`, `ConditionedINR`, `HyperSIREN` |
 | Spectral normalisation, power iteration | `geonnax.SpectralNormalization` |
 | A mean plus input-dependent log σ regression head | `geonnax.GaussianRegressionHead` |
 | An SNGP head, an EMA Laplace precision | `geonnax.RandomFeatureGaussianProcess`, `LaplaceRandomFeatureCovariance` |
 | BatchEnsemble rank-1 layers | `geonnax.DenseRank1`, `LayerNormEnsemble`, `MultiHeadAttentionBE`, `init_rank1_proj` / `apply_rank1_proj` |
-| Glorot init, positive-argument checks, a safe `sqrt` / `arccos` | the private helpers in the index (`ensemble._glorot_uniform`, `siren._require_positive`, `_basis._rbf._safe_sqrt`, …) |
+| Glorot init, positive-argument checks, a safe `sqrt` / `arccos` | the private helpers in the index (`ensemble._glorot_uniform`, `siren._require_positive`, …) |
 | `x.reshape`, `x.T`, `x[:, None] * y`, `jnp.sum(x, axis=…)` in new code | einx: `einx.id("a b -> b a", x)`, `einx.multiply("n, n d -> n d", …)`, `einx.sum("[n] d", x)` |
 
 ## The contracts
@@ -183,28 +185,12 @@ rely on them. Break one and the code runs on your example, then fails under
   `b`, `proj`, `generator`, `layers`, `Omega`, `phi`, `output_linear`, … is a
   breaking change (see "The public API").
 
-### 2. Bases: evaluation plus the half a prior needs
+### 2. Bases
 
-The basis contract (long form in [`docs/api/bases.md`](docs/api/bases.md)):
-
-- Every basis evaluates to a matrix `Φ ∈ ℝ^{N×M}` from `N` input points
-  (`<name>_basis`, `<name>_features`, or `<name>_frame` for overcomplete
-  dictionaries).
-- It also returns **the half a prior needs**: eigenvalues for spectral bases
-  (`fourier_basis` → `(Φ, λ)`, `divfree_basis`, `graph_laplacian_eigpairs`,
-  `SlepianCapBasis.eigenvalues`), the spectrum for data-driven ones (`eof_basis`),
-  or per-atom geometry for localized and frame bases (`gabor_frame_grid` →
-  `(Φ, centers, scales, wavenumbers)`; `rbf_basis` takes the caller's
-  `centers` / `widths`).
-- Pure functions of arrays: no `eqx.Module` unless it caches a precomputed
-  decomposition (`SlepianCapBasis`), no PRNG, no kernel. Anything that needs
-  concrete values (an eigendecomposition with NumPy, a filter table) runs
-  eagerly and says so; the evaluation itself is `jit` / `vmap` safe.
-- Implementation in `src/geonnax/_basis/_<name>.py`, re-exported from
-  `_basis/__init__.py` **and** `geonnax/basis.py` (`__all__`), so downstream
-  code never imports the private package.
-- Gradients are finite at coincident points: use the double-`where`
-  helpers (`_safe_sqrt`, `_safe_arccos`) for distances.
+The bases and their contract (an evaluation `Φ ∈ ℝ^{N×M}` plus the half a
+prior needs: eigenvalues, a spectrum or per-atom geometry) belong to functax
+now; see `functax.basis` and [`docs/api/bases.md`](docs/api/bases.md).
+geonnax's networks consume them.
 
 ### 3. Numerics and initialisation
 
@@ -273,16 +259,10 @@ The basis contract (long form in [`docs/api/bases.md`](docs/api/bases.md)):
 | `tests/test_unet.py`, `test_unet_dropout.py` | U-Net shapes, batching, gradients; dropout key threading and `inference_mode` |
 | `tests/test_spectral_norm.py` | Power-iteration state, the realised Lipschitz constant, the all-zero weight |
 | `tests/test_heads.py` | Mixture-density head; CRF forward / Viterbi against brute-force enumeration |
-| `tests/test_new_bases.py`, `test_localized_bases.py` | Orthonormality and exactness of the EOF, divergence-free, spherical-RBF, wavelet, RBF / Wendland and Gabor bases |
 | `tests/test_multi_scale_siren.py`, `test_geo_context_encoder.py`, `test_geonnax.py` | `MultiScaleSIREN`; `GeoContextEncoder`; smoke and forward checks for the rest of the public surface |
 | ruff (`RUF022`, …), ty | Sorted `__all__`, lint, types (`src/geonnax`) |
 
-`real_spherical_harmonics` is tested in
-`tests/test_real_spherical_harmonics.py` (orthonormality on a quadrature grid,
-the addition theorem, the pre-#73 values, degree 150). The other closed-form
-eigenbases (`fourier_basis`, `slepian_cap_basis`, `graph_laplacian_eigpairs`)
-are covered only by their doctests and a smoke import; a change to them needs
-tests.
+`tests/test_deprecations.py` checks every deprecated path: it warns, names its functax home, and returns the functax result.
 
 ## Recipes
 
@@ -294,7 +274,7 @@ agent can read and follow them):
 |---|---|
 | Add a building block to `geonnax.layers` (conv, block, norm, attention, spectral / spherical / wavelet transform) | `add-layer` |
 | Add a model (neural operator, U-Net variant, implicit neural representation) | `add-model` |
-| Add a basis or feature transform (`_basis/`, re-exported from `geonnax.basis`) | `add-basis` |
+| Add a basis or feature transform (now in functax; the recipe predates the move) | `add-basis` |
 | Add a coordinate encoder or lon/lat helper (`geo`, `encoders`, `slepian`) | `add-encoder` |
 | Add the deterministic core of an uncertainty-aware layer (random features, GP heads, spectral norm, ensembles, output heads) | `add-uncertainty-core` |
 | Add a conditioner or a conditioned INR (`conditioning`) | `add-conditioner` |

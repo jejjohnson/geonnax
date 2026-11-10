@@ -41,7 +41,7 @@ it up:
 | A neural operator on a grid | `geonnax.FNO` (dense / CP / Tucker / TT spectral weights, `domain_padding` for non-periodic fields), `geonnax.WNO` (wavelets), `geonnax.MSWT` (wavelet-domain attention), `geonnax.CNO` (convolutional neural operator: a band-limited U-Net of local stencils for sharp features; pass `resolution=` to make it resolution-invariant by resampling onto its computational grid) |
 | An autoregressive time-stepper `u_t -> u_{t+Δt}` that runs on any domain size | `geonnax.LNO` (local neural operator: a shallow CNO core, padded by its receptive radius with a `"periodic"` / `"reflect"` / `"zero"` boundary and cropped each step; `lno.rollout(u0, n_steps)` scans to `(T, C, *spatial)`; `receptive_range=` raises if `geonnax.cno_receptive_radius` exceeds the step's domain of dependence; `LNO.from_core` wraps another core) |
 | A neural operator on per-sample point clouds (ragged, irregular geometry) | `geonnax.GeoFNO` (Geo-FNO: a learned chart `geonnax.LearnedDeformation` onto a latent torus, FNO blocks on a latent grid; `model(u (C, N), x (N, d), w (N,), x_out=…)`, batch ragged clouds by padding with `w = 0` and `jax.vmap`) |
-| An operator on the sphere (lat/lon grid) | `geonnax.SFNO`, `geonnax.SphericalHarmonicTransform`, `geonnax.SphericalSpectralConv`, `geonnax.SphericalWaveletTransform` |
+| An operator on the sphere (lat/lon grid) | `geonnax.SFNO`, `functax.transform.SphericalHarmonicTransform`, `geonnax.SphericalSpectralConv`, `geonnax.SphericalWaveletTransform` |
 | An operator on a fixed irregular domain (mesh, region on the sphere) | `geonnax.ManifoldNO` with a shared `geonnax.BasisTransform` (`from_mesh` Laplace–Beltrami eigenvectors, `from_slepian` region Slepians, `from_matrix` any basis) |
 | A U-Net (1-D / 2-D / 3-D) | `geonnax.UNet` (ResNet or ConvNeXt blocks, attention, nested U²-Net stages, MC dropout) |
 | Layers to compose your own model | `geonnax.layers` (`StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `WindowedAttention`, `SpectralConv`, `WaveletConv`, `Downsample` / `Upsample`, `dwt` / `idwt`, …) |
@@ -52,8 +52,8 @@ it up:
 | Conditioning on a latent or context vector | `geonnax.AffineModulation` (`geonnax.FiLM`), `geonnax.ConcatConditioner`, `geonnax.HyperLinear`, `geonnax.ConditionedINR`, `geonnax.HyperSIREN` |
 | Lon/lat and time encodings | `geonnax.geo` (`deg2rad`, `lonlat_scale`, `lonlat_to_cartesian3d`, `cyclic_encode`, `spherical_harmonic_encode`); modules `geonnax.SphericalHarmonicEncoder`, `geonnax.Cartesian3DEncoder`, `geonnax.CyclicEncoder`, `geonnax.GeoContextEncoder`, `geonnax.SlepianEncoder`; Gaussian Fourier features for coordinate MLPs, `geonnax.GaussianFourierEncoder` (`init(in_features, num_frequencies, sigma, key=…)`, frozen frequencies) |
 | A basis with its eigenvalues or geometry | `geonnax.basis` (`fourier_basis`, `real_spherical_harmonics`, `slepian_cap_basis`, `graph_laplacian_eigpairs`, `divfree_basis`, `rbf_basis`, `spherical_rbf_basis`, `gabor_frame_grid`, `wavelet_basis_1d`, `eof_basis`) |
-| Fourier / seasonal / interaction features | `geonnax.basis.fourier_features`, `geonnax.basis.seasonal_features`, `geonnax.basis.interaction_features`, `geonnax.basis.gaussian_window_features` |
-| Random Fourier features | `geonnax.rff_forward`, `geonnax.rff_cosine_forward`, `geonnax.orthogonal_blocks`, `geonnax.OrthogonalRandomFeatures` |
+| Fourier / seasonal / interaction features | `functax.basis.features.fourier_features`, `functax.basis.features.seasonal_features`, `geonnax.basis.interaction_features`, `functax.basis.features.gaussian_window_features` |
+| Random Fourier features | `functax.basis.features.rff_forward`, `functax.basis.features.rff_cosine_forward`, `geonnax.orthogonal_blocks`, `geonnax.OrthogonalRandomFeatures` |
 | Distance-aware uncertainty | `geonnax.SpectralNormalization`, `geonnax.RandomFeatureGaussianProcess` (SNGP head), `geonnax.DeepVSSGPCore` |
 | Ensembles and probabilistic heads | `geonnax.DenseRank1`, `geonnax.LayerNormEnsemble`, `geonnax.MultiHeadAttentionBE`, `geonnax.MCSoftmaxDenseFA`, `geonnax.GaussianRegressionHead` (mean plus clamped log σ for heteroscedastic regression), `geonnax.MixtureOfGaussiansDenseHead`, `geonnax.LinearChainCRF`, `geonnax.NCPContinuousPerturb` |
 
@@ -97,7 +97,7 @@ import jax.numpy as jnp
 import jax.random as jr
 
 import geonnax
-from geonnax.basis import fourier_basis
+from functax.basis.fourier import fourier_basis
 from geonnax.geo import deg2rad
 
 
@@ -168,17 +168,17 @@ to the training features).
 | Don't write… | Use |
 |---|---|
 | `jnp.fft.rfftn` → keep low modes → multiply → `irfftn` | `geonnax.layers.SpectralConv`, or the whole `geonnax.FNO` |
-| A spherical harmonic transform, Legendre recursions, a Gauss–Legendre grid | `geonnax.SphericalHarmonicTransform`, `geonnax.basis.real_spherical_harmonics`, `geonnax.SFNO` |
+| A spherical harmonic transform, Legendre recursions, a Gauss–Legendre grid | `functax.transform.SphericalHarmonicTransform`, `functax.basis.sphere.real_spherical_harmonics`, `geonnax.SFNO` |
 | A Haar / Daubechies DWT | `geonnax.layers.dwt` / `idwt`, `geonnax.WaveletConv`, `geonnax.WNO` |
 | `sin(ω (W x + b))` layers with hand-tuned uniform inits | `geonnax.SIREN`, `geonnax.SirenDense`, `geonnax.siren_W_limit` |
 | FiLM `γ(z) ⊙ h + β(z)` or a hypernetwork | `geonnax.AffineModulation`, `geonnax.HyperLinear`, `geonnax.ConditionedINR` |
-| `cos(xW/ℓ)` random features, orthogonal frequency blocks | `geonnax.OrthogonalRandomFeatures`, `geonnax.rff_forward`, `geonnax.orthogonal_blocks` |
+| `cos(xW/ℓ)` random features, orthogonal frequency blocks | `geonnax.OrthogonalRandomFeatures`, `functax.basis.features.rff_forward`, `geonnax.orthogonal_blocks` |
 | `[cos 2πBx, sin 2πBx]` with `B ~ N(0, σ²)` in front of an MLP | `geonnax.GaussianFourierEncoder` |
-| `jax.grad` / Hessian traces of a field, tangent projections on the sphere | `geonnax.diffops.grad`, `geonnax.diffops.laplacian`, `geonnax.diffops.surface_grad_enu`, `geonnax.diffops.laplace_beltrami` |
+| `jax.grad` / Hessian traces of a field, tangent projections on the sphere | `functax.diffops.gradient`, `functax.diffops.laplacian`, `functax.diffops.surface_grad_enu`, `functax.diffops.laplace_beltrami` |
 | The BayesNF network (scaled inputs, gated feature blocks, elu/tanh mix) | `geonnax.NeuralFieldMLP` |
 | Per-axis networks combined by a rank-r product (SPINN) | `geonnax.SeparableINR` |
 | `lon * π / 180`, lon/lat → xyz, `[cos θ, sin θ]` | `geonnax.geo.deg2rad`, `geonnax.geo.lonlat_to_cartesian3d`, `geonnax.geo.cyclic_encode` |
-| Laplacian eigenfunctions on a box, RBF / Gabor columns, EOFs | `geonnax.basis.fourier_basis`, `geonnax.basis.rbf_basis`, `geonnax.basis.gabor_frame_grid`, `geonnax.basis.eof_basis` |
+| Laplacian eigenfunctions on a box, RBF / Gabor columns, EOFs | `functax.basis.fourier.fourier_basis`, `functax.basis.local.rbf_basis`, `functax.basis.local.gabor_frame_grid`, `functax.basis.eigen.eof_basis` |
 | Power iteration for a Lipschitz layer | `geonnax.SpectralNormalization` |
 | An SNGP output layer with a Laplace covariance | `geonnax.RandomFeatureGaussianProcess` |
 | A U-Net from scratch | `geonnax.UNet` |

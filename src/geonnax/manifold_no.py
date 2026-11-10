@@ -68,7 +68,7 @@ class ManifoldNOBlock(eqx.Module):
 
     Examples:
         >>> import jax.numpy as jnp, jax.random as jr
-        >>> from geonnax.basis import icosphere
+        >>> from functax.geometry import icosphere
         >>> from geonnax.layers import BasisTransform
         >>> from geonnax.manifold_no import ManifoldNOBlock
         >>> transform = BasisTransform.from_mesh(*icosphere(2), num_basis=9)
@@ -176,7 +176,7 @@ class ManifoldNO(eqx.Module):
         vertices of an icosphere with the 9 modes of degree ``l <= 2``:
 
         >>> import jax, jax.numpy as jnp, jax.random as jr
-        >>> from geonnax.basis import icosphere
+        >>> from functax.geometry import icosphere
         >>> from geonnax.layers import BasisTransform
         >>> from geonnax.manifold_no import ManifoldNO
         >>> transform = BasisTransform.from_mesh(*icosphere(2), num_basis=9)
@@ -189,7 +189,8 @@ class ManifoldNO(eqx.Module):
 
         On a region Slepian basis of a 60° polar cap:
 
-        >>> from geonnax.basis import gauss_legendre_grid, slepian_region_basis
+        >>> from functax.basis.slepian import slepian_region_basis
+        >>> from functax.geometry import gauss_legendre_grid
         >>> points, weights = gauss_legendre_grid(12)
         >>> cap = points[:, 2] > 0.5
         >>> basis = slepian_region_basis(5, points[cap], weights[cap])

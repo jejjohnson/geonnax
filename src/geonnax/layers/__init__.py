@@ -19,23 +19,26 @@ leading channel axis and ``num_spatial_dims`` trailing spatial axes — shape
   `LinearAttention`.
 - `geonnax.layers._spectral` — `SpectralConv` (Fourier neural
   operator layer).
-- `geonnax.layers._nonuniform` — `nonuniform_rfft` / `nonuniform_irfft`
-  (weighted Fourier transforms between point sets and the truncated rfft
-  spectrum).
 - `geonnax.layers._factorized` — `DenseTensor` / `CPTensor`
   / `TuckerTensor` / `TTTensor` low-rank weight parameterisations.
 - `geonnax.layers._basis_conv` — `BasisTransform`,
   `BasisSpectralConv` (spectral convolution in any precomputed basis).
-- `geonnax.layers._spherical_transform` —
-  `SphericalHarmonicTransform`, `SphericalSpectralConv`.
+- `geonnax.layers._spherical_conv` — `SphericalSpectralConv`.
 - `geonnax.layers._spherical_wavelet` —
   `SphericalWaveletTransform`, `SphericalWaveletConv`.
 - `geonnax.layers._wavelet` — `WaveletConv` plus the `dwt` / `idwt`
   discrete wavelet transforms.
 - `geonnax.layers._wavelet_attention` — `WaveletAttention`
   (self-attention in the wavelet domain).
+
+`SphericalHarmonicTransform`, `nonuniform_rfft` and `nonuniform_irfft` moved
+to `functax.transform` (jejjohnson/geonnax#153); their names still resolve
+here for one release, with a `DeprecationWarning`.
 """
 
+import functax.transform as _transform
+
+from geonnax._deprecation import Moved, deprecated_dir, deprecated_getattr
 from geonnax.layers._antialias import AntiAliasedActivation, band_limited_resize
 from geonnax.layers._attention import (
     Attention,
@@ -58,13 +61,9 @@ from geonnax.layers._factorized import (
     TuckerTensor,
     init_factorized_tensor,
 )
-from geonnax.layers._nonuniform import nonuniform_irfft, nonuniform_rfft
 from geonnax.layers._norm import GlobalResponseNorm
 from geonnax.layers._spectral import SpectralConv
-from geonnax.layers._spherical_transform import (
-    SphericalHarmonicTransform,
-    SphericalSpectralConv,
-)
+from geonnax.layers._spherical_conv import SphericalSpectralConv
 from geonnax.layers._spherical_wavelet import (
     SphericalWaveletConv,
     SphericalWaveletTransform,
@@ -88,7 +87,6 @@ __all__ = [
     "LinearAttention",
     "ResnetBlock",
     "SpectralConv",
-    "SphericalHarmonicTransform",
     "SphericalSpectralConv",
     "SphericalWaveletConv",
     "SphericalWaveletTransform",
@@ -105,6 +103,21 @@ __all__ = [
     "dwt",
     "idwt",
     "init_factorized_tensor",
-    "nonuniform_irfft",
-    "nonuniform_rfft",
 ]
+
+#: names that moved to functax, served with a DeprecationWarning until removal
+_MOVED: dict[str, Moved] = {
+    "SphericalHarmonicTransform": Moved(
+        "functax.transform.SphericalHarmonicTransform",
+        _transform.SphericalHarmonicTransform,
+    ),
+    "nonuniform_irfft": Moved(
+        "functax.transform.nonuniform_irfft", _transform.nonuniform_irfft
+    ),
+    "nonuniform_rfft": Moved(
+        "functax.transform.nonuniform_rfft", _transform.nonuniform_rfft
+    ),
+}
+
+__getattr__ = deprecated_getattr(__name__, _MOVED)
+__dir__ = deprecated_dir(__all__, _MOVED)

@@ -1,5 +1,6 @@
 """Smoke + forward-equality tests for the geonnax public surface."""
 
+import functax.basis.features
 import jax
 import jax.numpy as jnp
 import jax.random as jr
@@ -24,8 +25,6 @@ def test_geo_module_imports():
 def test_basis_module_imports():
     from geonnax import basis
 
-    assert hasattr(basis, "fourier_features")
-    assert hasattr(basis, "seasonal_features")
     assert hasattr(basis, "interaction_features")
     assert hasattr(basis, "standardize")
     assert hasattr(basis, "unstandardize")
@@ -35,18 +34,6 @@ def test_geo_deg2rad_smoke():
     out = geonnax.geo.deg2rad(jnp.array([0.0, 90.0, 180.0]))
     assert out.shape == (3,)
     assert jnp.allclose(out, jnp.array([0.0, jnp.pi / 2, jnp.pi]), atol=1e-6)
-
-
-def test_basis_fourier_features_smoke():
-    out = geonnax.basis.fourier_features(jnp.linspace(0.0, 1.0, 5), max_degree=3)
-    assert out.shape == (5, 6)
-
-
-def test_eigenbasis_submodule():
-    from geonnax._basis import fourier_basis_1d, real_spherical_harmonics
-
-    assert callable(fourier_basis_1d)
-    assert callable(real_spherical_harmonics)
 
 
 # ---- Tier A: deterministic encoders -----------------------------------------
@@ -151,7 +138,9 @@ def test_rff_forward_helper_matches_orf():
     key = jr.PRNGKey(1)
     orf = geonnax.OrthogonalRandomFeatures.init(2, 4, key=key, lengthscale=1.0)
     x = jr.normal(jr.PRNGKey(2), (2,))
-    direct = geonnax.rff_forward(orf.W, orf.lengthscale, orf.n_features, x)
+    direct = functax.basis.features.rff_forward(
+        orf.W, orf.lengthscale, orf.n_features, x
+    )
     assert jnp.allclose(orf(x), direct)
 
 
@@ -235,8 +224,8 @@ def test_no_numpyro_import_in_package():
     for mod_name in list(sys.modules):
         if mod_name.startswith("geonnax"):
             mod = sys.modules[mod_name]
-            for attr in dir(mod):
-                obj = getattr(mod, attr, None)
+            # vars(), not dir(): dir() lists the deprecated aliases too
+            for attr, obj in list(vars(mod).items()):
                 module_name = getattr(obj, "__module__", "") or ""
                 assert "numpyro" not in module_name, (
                     f"{mod_name}.{attr} leaks numpyro symbol "

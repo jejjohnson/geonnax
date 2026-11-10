@@ -7,21 +7,15 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 import jax.random as jr
+import numpy as np
 import pytest
+from functax.basis.eigen import cotangent_laplacian_eigpairs
+from functax.basis.slepian import slepian_region_basis
+from functax.geometry import gauss_legendre_grid, icosphere
+from functax.quad import gauss_legendre
+from functax.transform import SphericalHarmonicTransform
 
-from geonnax.basis import (
-    cotangent_laplacian_eigpairs,
-    gauss_legendre_grid,
-    icosphere,
-    slepian_region_basis,
-)
-from geonnax.layers import (
-    BasisSpectralConv,
-    BasisTransform,
-    SphericalHarmonicTransform,
-    SphericalSpectralConv,
-)
-from geonnax.layers._spherical_transform import _gauss_legendre_grid
+from geonnax.layers import BasisSpectralConv, BasisTransform, SphericalSpectralConv
 
 
 KEY = jr.PRNGKey(0)
@@ -191,7 +185,8 @@ def test_conv_identity_weights_is_projector():
 def test_conv_matches_sfno_with_degree_tied_weights():
     n_lat, n_lon, l_max = 10, 20, 6
     sht = SphericalHarmonicTransform.init(n_lat, n_lon, l_max)
-    _, w = _gauss_legendre_grid(n_lat, n_lon)
+    # the SHT's quadrature: Gauss–Legendre in cos θ, times 2π/n_lon per longitude
+    w = np.repeat(gauss_legendre(n_lat).weights * (2.0 * np.pi / n_lon), n_lon)
     t = BasisTransform.from_matrix(sht.synth, jnp.asarray(w))
     assert jnp.allclose(t.analysis, sht.analy, atol=1e-6)
 

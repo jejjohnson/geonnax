@@ -12,9 +12,8 @@ import einx
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from functax.basis.features import rff_forward
 from jaxtyping import Array, Float
-
-from geonnax.randfeat import rff_forward
 
 
 class DeepVSSGPCore(eqx.Module):

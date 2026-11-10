@@ -5,6 +5,13 @@ longitude/latitude preprocessing and spherical-harmonic feature maps.
 The corresponding stateful encoders expose
 the same transforms as `equinox.Module` instances so they
 compose inside `equinox.nn.Sequential`.
+
+The Earth frames (``lonlat_to_ecef``, ``ecef_to_lonlat``, ``enu_basis``,
+``tangent_to_cartesian``, ``cartesian_to_tangent``, ``local_tangent_plane``,
+``rotation_to_pole``) moved to `functax.geometry` (jejjohnson/geonnax#153).
+Their names still resolve here for one release, with geonnax's defaults and a
+`DeprecationWarning`. functax takes ``unit=`` with no default, and
+``semi_major`` / ``flattening`` in place of the ellipsoid name.
 """
 
 from __future__ import annotations
@@ -13,21 +20,12 @@ from typing import Literal
 
 import einx
 import jax.numpy as jnp
+from functax.basis.sphere import real_spherical_harmonics
 from jaxtyping import Array, Float, Num
 
-from geonnax._basis import real_spherical_harmonics
-from geonnax._frames import (
-    EARTH_MEAN_RADIUS_M,
-    WGS84_A,
-    WGS84_F,
-    cartesian_to_tangent,
-    ecef_to_lonlat,
-    enu_basis,
-    local_tangent_plane,
-    lonlat_to_ecef,
-    rotation_to_pole,
-    tangent_to_cartesian,
-)
+from geonnax import _compat
+from geonnax._deprecation import Moved, deprecated_dir, deprecated_getattr
+from geonnax._earth import EARTH_MEAN_RADIUS_M, WGS84_A, WGS84_F
 
 
 def _validate_lonlat_shape(lonlat: Float[Array, ...], *, name: str = "lonlat") -> None:
@@ -255,20 +253,55 @@ def spherical_harmonic_encode(
     return real_spherical_harmonics(unit_xyz, l_max=l_max)  # (N, (l_max+1)^2)
 
 
+#: names that moved to functax, served with a DeprecationWarning until removal
+_MOVED: dict[str, Moved] = {
+    "cartesian_to_tangent": Moved(
+        "functax.geometry.cartesian_to_tangent",
+        _compat.cartesian_to_tangent,
+        "Note that it takes unit= in place of input_unit=, with no default.",
+    ),
+    "ecef_to_lonlat": Moved(
+        "functax.geometry.ecef_to_lonlat",
+        _compat.ecef_to_lonlat,
+        "Note that it takes unit= and semi_major= / flattening= instead.",
+    ),
+    "enu_basis": Moved(
+        "functax.geometry.enu_basis",
+        _compat.enu_basis,
+        "Note that it takes unit= in place of input_unit=, with no default.",
+    ),
+    "local_tangent_plane": Moved(
+        "functax.geometry.local_tangent_plane",
+        _compat.local_tangent_plane,
+        "Note that it takes unit= in place of input_unit=, and radius= has no default.",
+    ),
+    "lonlat_to_ecef": Moved(
+        "functax.geometry.lonlat_to_ecef",
+        _compat.lonlat_to_ecef,
+        "Note that it takes unit= and semi_major= / flattening= instead.",
+    ),
+    "rotation_to_pole": Moved(
+        "functax.geometry.rotation_to_pole",
+        _compat.rotation_to_pole,
+        "Note that it takes unit= in place of input_unit=, with no default.",
+    ),
+    "tangent_to_cartesian": Moved(
+        "functax.geometry.tangent_to_cartesian",
+        _compat.tangent_to_cartesian,
+        "Note that it takes unit= in place of input_unit=, with no default.",
+    ),
+}
+
 __all__ = [
     "EARTH_MEAN_RADIUS_M",
     "WGS84_A",
     "WGS84_F",
-    "cartesian_to_tangent",
     "cyclic_encode",
     "deg2rad",
-    "ecef_to_lonlat",
-    "enu_basis",
-    "local_tangent_plane",
     "lonlat_scale",
     "lonlat_to_cartesian3d",
-    "lonlat_to_ecef",
-    "rotation_to_pole",
     "spherical_harmonic_encode",
-    "tangent_to_cartesian",
 ]
+
+__getattr__ = deprecated_getattr(__name__, _MOVED)
+__dir__ = deprecated_dir(__all__, _MOVED)

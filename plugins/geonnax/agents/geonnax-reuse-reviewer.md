@@ -46,8 +46,8 @@ grouped by module.
      weight → `geonnax.layers.SpectralConv`; a full lifting → Fourier blocks
      → projection network → `geonnax.FNO`;
    - spherical harmonics, associated Legendre recursions, a Gauss–Legendre
-     grid, an SHT → `geonnax.basis.real_spherical_harmonics`,
-     `geonnax.SphericalHarmonicTransform`, `geonnax.SFNO`;
+     grid, an SHT → `functax.basis.sphere.real_spherical_harmonics`,
+     `functax.transform.SphericalHarmonicTransform`, `geonnax.SFNO`;
    - a Haar / Daubechies DWT, wavelet filter taps → `geonnax.layers.dwt` /
      `idwt`, `geonnax.WaveletConv`, `geonnax.WNO`;
    - a U-Net, residual / ConvNeXt blocks, pixel-shuffle resampling,
@@ -68,7 +68,7 @@ grouped by module.
      Slepian functions, EOFs (an SVD of anomalies), Fourier / seasonal time
      features → `geonnax.basis`;
    - `cos(xW/ℓ)` / `sin(xW/ℓ)` random features, orthogonal random features →
-     `geonnax.rff_forward`, `geonnax.rff_cosine_forward`,
+     `functax.basis.features.rff_forward`, `functax.basis.features.rff_cosine_forward`,
      `geonnax.OrthogonalRandomFeatures`;
    - power iteration for a Lipschitz layer, an SNGP head with a Laplace
      precision, rank-1 ensemble layers, heteroscedastic or mixture-density

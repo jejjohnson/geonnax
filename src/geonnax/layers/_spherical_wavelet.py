@@ -23,10 +23,9 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 import numpy as np
+from functax.basis.sphere import harmonic_degrees
+from functax.transform import SphericalHarmonicTransform
 from jaxtyping import Array, Float
-
-from geonnax._basis._spherical import harmonic_degrees
-from geonnax.layers._spherical_transform import SphericalHarmonicTransform
 
 
 def _meyer_nu(t: np.ndarray) -> np.ndarray:
@@ -94,7 +93,7 @@ class SphericalWaveletTransform(eqx.Module):
         Analysis returns one map per scale and reconstructs exactly:
 
         >>> import jax.numpy as jnp, jax.random as jr
-        >>> from geonnax.layers import SphericalHarmonicTransform
+        >>> from functax.transform import SphericalHarmonicTransform
         >>> from geonnax.layers._spherical_wavelet import SphericalWaveletTransform
         >>> sht = SphericalHarmonicTransform.init(16, 32, 12)
         >>> swt = SphericalWaveletTransform.init(sht)
@@ -168,7 +167,7 @@ class SphericalWaveletConv(eqx.Module):
 
     Examples:
         >>> import jax.numpy as jnp, jax.random as jr
-        >>> from geonnax.layers import SphericalHarmonicTransform
+        >>> from functax.transform import SphericalHarmonicTransform
         >>> from geonnax.layers._spherical_wavelet import (
         ...     SphericalWaveletConv, SphericalWaveletTransform)
         >>> sht = SphericalHarmonicTransform.init(16, 32, 12)

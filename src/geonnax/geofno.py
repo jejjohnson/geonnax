@@ -25,9 +25,9 @@ import einx
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from functax.basis.fourier import fourier_basis
 from jaxtyping import Array, Float
 
-from geonnax._basis import fourier_basis
 from geonnax.fno import FNOBlock
 from geonnax.layers._factorized import Factorization
 from geonnax.layers._spectral import SpectralConv
@@ -67,7 +67,7 @@ class LearnedDeformation(eqx.Module):
     - ``"fourier"``: $\delta(s) = \Phi(s - b/2)\,\beta$, where
       $\Phi \in \mathbb{R}^{N \times M}$ holds the tensor-product Dirichlet
       Laplacian eigenfunctions on $[-b/2, b/2]^d$
-      (`geonnax.basis.fourier_basis`, $M = \prod_a$ ``n_basis[a]``) and
+      (`functax.basis.fourier.fourier_basis`, $M = \prod_a$ ``n_basis[a]``) and
       $\beta$ = ``coeffs`` $\in \mathbb{R}^{M \times d}$ starts at zero. The
       Dirichlet condition gives $\delta = 0$ on the box boundary, so the
       edges of the latent box stay fixed and the chart cannot push boundary

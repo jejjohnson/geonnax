@@ -55,9 +55,7 @@ torus $[0, 1)^d$ and the truncated rfft spectrum that
 geometry-facing halves of Geo-FNO, with quadrature weights added). On a
 uniform grid with weights $1/S$ they reproduce `rfftn / S` and `irfftn`.
 
-::: geonnax.layers.nonuniform_rfft
-
-::: geonnax.layers.nonuniform_irfft
+The transforms are `functax.transform.nonuniform_rfft` and `functax.transform.nonuniform_irfft`; they moved there from `geonnax.layers` (jejjohnson/geonnax#153), and the old names still resolve until geonnax 0.0.13 with a `DeprecationWarning`.
 
 ## Spectral convolution in a precomputed basis
 
