@@ -58,6 +58,7 @@ plugins:
 nav:
   - Home: index.md
   - Examples:
+      - Map methane around the globe: guides/methane.md
       - Demo: notebooks/example_demo.ipynb
       - Western Mediterranean SSH three ways: notebooks/irregular_geometry.ipynb
   - Guides:
