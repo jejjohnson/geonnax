@@ -2,8 +2,8 @@
 
 Every output is a plain SVG written next to this file. The icon shares the
 gaussx, kernellib and pyrox tile (a 120-unit rounded square, r = 26, white
-glyph) in the geonnax green gradient. Its glyph is a globe whose equator is a
-sinusoid: a signal on the sphere.
+glyph) in the geonnax green gradient. Its glyph is a globe with a small
+network drawn across it: a network on the sphere.
 
 Diagrams come in a light and a dark variant for GitHub's
 ``<picture>`` / ``prefers-color-scheme`` switch.
@@ -13,7 +13,7 @@ Run from the repo root:
     uv run --no-project python docs/assets/render.py
 """
 
-import math
+import itertools
 from pathlib import Path
 
 
@@ -58,24 +58,29 @@ W = "#FFFFFF"
 # ---------------------------------------------------------------- glyph
 
 
-def _wave(x0: float, x1: float, yc: float, amp: float, cycles: int, n: int = 72) -> str:
-    pts = []
-    for i in range(n + 1):
-        x = x0 + (x1 - x0) * i / n
-        y = yc - amp * math.sin(2 * math.pi * cycles * i / n)
-        pts.append(f"{x:.1f} {y:.1f}")
-    return "M" + " L".join(pts)
+# (x, node heights) for each layer of the network drawn across the globe.
+NETWORK = [(42.0, [50.0, 78.0]), (64.0, [40.0, 64.0, 88.0]), (86.0, [64.0])]
 
 
-def glyph_wave_globe() -> str:
-    """A globe outline, one meridian, and a sinusoid for its equator."""
-    return (
-        f'<circle cx="64" cy="64" r="42" fill="none" stroke="{W}" stroke-width="4.5"/>'
-        f'<ellipse cx="64" cy="64" rx="17" ry="42" fill="none" stroke="{W}" '
-        'stroke-width="2.7" stroke-opacity="0.6"/>'
-        f'<path d="{_wave(22, 106, 64, 12, 3)}" fill="none" stroke="{W}" '
-        'stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>'
-    )
+def glyph_network_globe() -> str:
+    """A globe outline, its equator, and a small three-layer network across it."""
+    parts = [
+        f'<circle cx="64" cy="64" r="42" fill="none" stroke="{W}" stroke-width="4.5"/>',
+        f'<ellipse cx="64" cy="64" rx="42" ry="15" fill="none" stroke="{W}" '
+        'stroke-width="2.4" stroke-opacity="0.35"/>',
+    ]
+    for (x_in, ys_in), (x_out, ys_out) in itertools.pairwise(NETWORK):
+        for y_in in ys_in:
+            for y_out in ys_out:
+                parts.append(
+                    f'<line x1="{x_in}" y1="{y_in}" x2="{x_out}" y2="{y_out}" '
+                    f'stroke="{W}" stroke-width="2.4" stroke-opacity="0.7" '
+                    'stroke-linecap="round"/>'
+                )
+    for x, ys in NETWORK:
+        for y in ys:
+            parts.append(f'<circle cx="{x}" cy="{y}" r="6" fill="{W}"/>')
+    return "".join(parts)
 
 
 def tile(gid: str, x: float = 0, y: float = 0, size: float = 128) -> str:
@@ -87,7 +92,7 @@ def tile(gid: str, x: float = 0, y: float = 0, size: float = 128) -> str:
         "</linearGradient></defs>"
         f'<g transform="translate({x} {y}) scale({s:g})">'
         f'<rect x="4" y="4" width="120" height="120" rx="26" fill="url(#{gid})"/>'
-        f"{glyph_wave_globe()}</g>"
+        f"{glyph_network_globe()}</g>"
     )
 
 
@@ -166,7 +171,7 @@ def write_logos() -> None:
             f'font-weight="700" letter-spacing="-1.5" fill="{t["text"]}">'
             f'geonna<tspan fill="{ACCENT[mode]}">x</tspan></text>'
         )
-        (OUT / f"logo-{mode}.svg").write_text(svg(470, 140, "geonnax", "geonnax", body))
+        (OUT / f"logo-{mode}.svg").write_text(svg(510, 140, "geonnax", "geonnax", body))
 
 
 # ---------------------------------------------------------------- hero
@@ -218,7 +223,7 @@ BASES = (
 
 
 def write_hero() -> None:
-    """Two lanes, coordinates → field and field → field, over one basis library."""
+    """Two lanes, coordinates → field and field → field, over functax's bases."""
     width, height = 960, 492
     for mode, t in THEME.items():
         head = f"hero-{mode}-head"
@@ -377,7 +382,7 @@ def write_hero() -> None:
         for x1, x2 in [(124, 146), (852, 874)]:
             parts.append(line([(x1, cy2), (x2 - 2, cy2)], a, head))
 
-        # Shared basis library.
+        # The bases both lanes draw on, from functax.
         yb = 406
         parts.append(
             f'<rect x="20" y="{yb}" width="920" height="66" rx="12" '
@@ -387,7 +392,7 @@ def write_hero() -> None:
             text(
                 40,
                 yb + 28,
-                "geonnax.basis",
+                "functax.basis",
                 size=14,
                 weight=700,
                 fill=t["site"],
@@ -398,7 +403,7 @@ def write_hero() -> None:
             text(
                 40,
                 yb + 50,
-                "shared by both lanes, and by kernellib and pyrox-gp",
+                "the bases both lanes draw on, from functax",
                 size=12,
                 fill=t["muted"],
             )
@@ -409,7 +414,7 @@ def write_hero() -> None:
             "geonnax has two families: coordinate networks map a point to a value "
             "through an encoder, a representation network and an optional "
             "uncertainty head; neural operators map a gridded field to a field. "
-            "Both draw on one basis library."
+            "Both draw on functax's bases."
         )
         (OUT / f"hero-{mode}.svg").write_text(
             svg(width, height, label, "Coordinates in, fields out", "\n".join(parts))
@@ -419,9 +424,7 @@ def write_hero() -> None:
 # ---------------------------------------------------------------- layers
 
 USERS = [
-    ("kernellib", "basis functions" + DOT + "random features"),
-    ("pyrox-gp", "eigenfunction bases for inducing features"),
-    ("pyrox-nn", "Bayesian SIREN, MFN, SNGP, VSSGP"),
+    ("pyrox-nn", "Bayesian SIREN, MFN, SNGP, VSSGP, ensembles, neural fields"),
 ]
 
 
@@ -432,12 +435,12 @@ def write_layers() -> None:
         head = f"layers-{mode}-head"
         a = t["arrow"]
         parts = [arrow_defs(head, a)]
-        xs = [30, 350, 670]
+        xs = [270]
         for (name, what), x in zip(USERS, xs, strict=True):
-            parts.append(card(x, 20, 260, 76, t))
+            parts.append(card(x, 20, 420, 76, t))
             parts.append(
                 text(
-                    x + 130,
+                    x + 210,
                     52,
                     name,
                     size=16,
@@ -448,17 +451,11 @@ def write_layers() -> None:
                 )
             )
             parts.append(
-                text(x + 130, 76, what, size=12.5, fill=t["muted"], anchor="middle")
+                text(x + 210, 76, what, size=12.5, fill=t["muted"], anchor="middle")
             )
             parts.append(
                 line(
-                    [
-                        (x + 130, 96),
-                        (
-                            x + 130 if x == 350 else (x + 130 + (480 - x - 130) * 0.45),
-                            166,
-                        ),
-                    ],
+                    [(x + 210, 96), (x + 210, 166)],
                     a,
                     head,
                 )
@@ -474,7 +471,7 @@ def write_layers() -> None:
             text(
                 268,
                 248,
-                "networks, operators and bases as plain equinox.Modules",
+                "networks and operators as plain equinox.Modules",
                 size=13,
                 fill=t["muted"],
             )
@@ -487,7 +484,9 @@ def write_layers() -> None:
             text(
                 480,
                 346,
-                "jax"
+                "functax"
+                + DOT
+                + "jax"
                 + DOT
                 + "equinox"
                 + DOT
@@ -504,8 +503,8 @@ def write_layers() -> None:
             )
         )
         label = (
-            "kernellib, pyrox-gp and pyrox-nn import geonnax; geonnax depends only on "
-            "jax, equinox, jaxtyping, einx and einops."
+            "pyrox-nn imports geonnax; geonnax depends on functax, jax, equinox, "
+            "jaxtyping, einx and einops."
         )
         (OUT / f"layers-{mode}.svg").write_text(
             svg(width, height, label, "Where geonnax sits", "\n".join(parts))

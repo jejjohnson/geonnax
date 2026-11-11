@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="492" viewBox="0 0 960 492" role="img" aria-label="geonnax has two families: coordinate networks map a point to a value through an encoder, a representation network and an optional uncertainty head; neural operators map a gridded field to a field. Both draw on one basis library.">
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="492" viewBox="0 0 960 492" role="img" aria-label="geonnax has two families: coordinate networks map a point to a value through an encoder, a representation network and an optional uncertainty head; neural operators map a gridded field to a field. Both draw on functax's bases.">
 <title>Coordinates in, fields out</title>
 <defs><marker id="hero-light-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#9CA3AF"/></marker></defs>
 <text x="20" y="26" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="700" fill="#1F2937" xml:space="preserve">Coordinate networks</text>
@@ -52,7 +52,7 @@
 <path d="M124 318.0 L144 318.0" fill="none" stroke="#9CA3AF" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#hero-light-head)"/>
 <path d="M852 318.0 L872 318.0" fill="none" stroke="#9CA3AF" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#hero-light-head)"/>
 <rect x="20" y="406" width="920" height="66" rx="12" fill="#F3F4F6"/>
-<text x="40" y="434" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" font-weight="700" fill="#15803D" xml:space="preserve">geonnax.basis</text>
-<text x="40" y="456" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#6B7280" xml:space="preserve">shared by both lanes, and by kernellib and pyrox-gp</text>
+<text x="40" y="434" text-anchor="start" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-size="14" font-weight="700" fill="#15803D" xml:space="preserve">functax.basis</text>
+<text x="40" y="456" text-anchor="start" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" font-weight="400" fill="#6B7280" xml:space="preserve">the bases both lanes draw on, from functax</text>
 <text x="920" y="446" text-anchor="end" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#1F2937" xml:space="preserve">spherical harmonics · Slepian · needlets · wavelets · Fourier · EOFs · graph Laplacian</text>
 </svg>
