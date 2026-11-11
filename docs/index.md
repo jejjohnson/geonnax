@@ -54,7 +54,7 @@ phi: Float[Array, "N K"] = jax.vmap(gnx.SlepianEncoder(cap))(lonlat)  # (N, 2) â
 ```
 
 `f`, `v` and `phi` come out with shapes (1000, 1), (1, 32, 64) and (1000, 40).
-`eqx.nn.Lambda` wraps the two modules because `eqx.nn.Sequential` passes a `key` to each layer; a two-field `eqx.Module`, as in the README's [example](https://github.com/jejjohnson/geonnax#example-map-methane-around-the-globe), does the same job.
+`eqx.nn.Lambda` wraps the two modules because `eqx.nn.Sequential` passes a `key` to each layer; a two-field `eqx.Module`, as in the [methane example](guides/methane.md), does the same job.
 
 ## What's inside
 

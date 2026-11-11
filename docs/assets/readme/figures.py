@@ -1,8 +1,8 @@
-"""Render the README figures from the README's own code.
+"""Render the example and gallery figures from the docs' own code.
 
-The example's figures run the Python blocks of the README's "Example" section,
+The example's figures run the Python blocks of docs/guides/methane.md,
 verbatim and in order, then plot what they computed, so the numbers quoted in
-the README and the pictures come from the same run. The gallery figures call
+the page and the pictures come from the same run. The gallery figures call
 the basis functions directly.
 
 Run from the repo root (about 15 minutes on a laptop CPU; optax is needed by
@@ -25,15 +25,12 @@ import geonnax as gnx
 
 
 OUT = Path(__file__).parent
-README = OUT.parents[2] / "README.md"
+METHANE = OUT.parents[1] / "guides" / "methane.md"
 
 
 def example_blocks() -> list[str]:
-    """The ```python blocks between "## Example" and the next "## " heading."""
-    text = README.read_text()
-    start = text.index("\n## Example")
-    end = text.index("\n## ", start + 1)
-    return re.findall(r"```python\n(.*?)```", text[start:end], flags=re.S)
+    """The ```python blocks of the methane example page, in order."""
+    return re.findall(r"```python\n(.*?)```", METHANE.read_text(), flags=re.S)
 
 
 # ---------------------------------------------------------------- plotting
@@ -78,7 +75,7 @@ def save(fig, name):
 def example_figures() -> dict:
     ns: dict = {}
     for block in example_blocks():
-        exec(compile(block, "README.md", "exec"), ns)
+        exec(compile(block, METHANE.name, "exec"), ns)
 
     x, lonlat, mask = ns["x"], ns["lonlat"], ns["mask"]
     lo, hi = float(x.min()), float(x.max())
@@ -191,7 +188,7 @@ def gallery_figures() -> None:
 
 
 def report(ns: dict) -> None:
-    """Print the numbers the README quotes."""
+    """Print the numbers the methane example quotes."""
     for key in ("rmse_sh", "rmse_cap", "rmse_net", "rmse_gp", "sigma_ratio"):
         print(f"{key}: {ns[key]}")
     print(f"observed cells O = {int(ns['mask'].sum())}")
