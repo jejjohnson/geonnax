@@ -9,8 +9,8 @@ Standing instructions for **every** coding agent working in this repository
 geonnax is a zoo of **deterministic** neural-network building blocks for
 geoscientific machine learning in JAX: plain `equinox.Module` cores (neural
 operators, U-Nets, implicit neural representations, uncertainty-aware heads,
-coordinate encoders) and pure-JAX basis functions, with no probabilistic
-dependency. Two GeoML libraries build on it:
+coordinate encoders), with no probabilistic dependency. The basis functions
+those networks use come from functax. Two GeoML libraries build on it:
 
 - **pyrox** (`pyrox-nn`, `pyrox-gp`) wraps geonnax cores and swaps their named
   parameter fields for NumPyro sample / param sites (`eqx.tree_at` on `W`,
@@ -83,8 +83,10 @@ keep it.
 | **einx** | Named-axis contractions, transposes, broadcasts and reductions (`einx.dot`, `einx.id`, `einx.sum`, `einx.subtract`, …) | The house style for any non-trivial reshaping, as most modules already do; not enforced by lint or tests (older code mixes in `reshape`, `.T` and `axis=`), so match the module you are in and prefer einx in new code. |
 | **jaxtyping** | Shape annotations (`Float[Array, "C *spatial"]`) | Annotate every public array argument and return; ruff ignores `F722` / `F821` / `UP037` in `src/` and `tests/` for them. |
 
-geonnax builds on no other GeoML-stack library, so the capability index has
-no upstream section.
+From the GeoML stack, geonnax builds only on **functax**, which holds the
+bases, sphere grids and frames, field derivatives and transforms; import them
+from their functax family module, not through the deprecated `geonnax`
+aliases.
 
 ## Reuse before you write
 
@@ -220,7 +222,7 @@ geonnax's networks consume them.
 
 - **Export** a new public name from its module's `__all__`, and from
   `src/geonnax/__init__.py` (import and `__all__`) unless it belongs only to
-  a submodule surface (a basis lives in `geonnax.basis` only). Ruff's
+  a submodule surface (a feature helper lives in `geonnax.basis` only). Ruff's
   `RUF022` keeps every `__all__` sorted.
 - **Document** it: pages that render a whole module
   (`::: geonnax.basis`, `::: geonnax.siren`, … in `docs/api/bases.md`,
@@ -242,8 +244,8 @@ geonnax's networks consume them.
   `DeprecationWarning` that names the replacement (a module-level
   `__getattr__` for a renamed function or class, a keyword shim for an
   argument), say so in the PR, and mention that pyrox / kernellib must
-  follow when they bump the tag. There is no shared deprecation helper yet;
-  add one in the first PR that needs it.
+  follow when they bump the tag. The shared helper is
+  `geonnax._deprecation` (a `_MOVED` table and a module `__getattr__`).
 
 ## What enforces them
 
@@ -274,7 +276,7 @@ agent can read and follow them):
 |---|---|
 | Add a building block to `geonnax.layers` (conv, block, norm, attention, spectral / spherical / wavelet transform) | `add-layer` |
 | Add a model (neural operator, U-Net variant, implicit neural representation) | `add-model` |
-| Add a basis or feature transform (now in functax; the recipe predates the move) | `add-basis` |
+| Add a basis or feature transform (it goes to functax; the recipe routes it there) | `add-basis` |
 | Add a coordinate encoder or lon/lat helper (`geo`, `encoders`, `slepian`) | `add-encoder` |
 | Add the deterministic core of an uncertainty-aware layer (random features, GP heads, spectral norm, ensembles, output heads) | `add-uncertainty-core` |
 | Add a conditioner or a conditioned INR (`conditioning`) | `add-conditioner` |

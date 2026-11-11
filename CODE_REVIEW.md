@@ -78,13 +78,11 @@ see.
 
 ### 3. Bases
 
-- Evaluation returns `Φ (N, M)` from `N` points, plus eigenvalues, the
-  spectrum or per-atom geometry — the basis contract in `docs/api/bases.md`.
-- Implemented in `_basis/_<name>.py`, re-exported from `_basis/__init__.py`
-  and `geonnax.basis` (`__all__`); no PRNG, no kernel, no `eqx.Module`
-  unless it caches a decomposition.
-- Orthonormality, eigen-equations or exact reconstruction checked against a
-  closed form in the tests.
+- A new basis, sphere grid, frame or transform belongs in functax, not in
+  geonnax (jejjohnson/geonnax#153); flag one added under `src/geonnax/`.
+- Networks import bases from their functax family module
+  (`functax.basis.sphere`, …), never through the deprecated
+  `geonnax.basis` aliases.
 
 ### 4. Numerics and initialisation
 
@@ -190,10 +188,9 @@ def __call__(self, x: Float[Array, " D_in"]) -> Float[Array, " D_out"]:
 # ❌ d/dx sqrt(‖x − c‖²) is NaN at x = c
 r = jnp.sqrt(jnp.sum((x - c) ** 2))
 
-# ✅ Same value everywhere, zero gradient at x = c
-from geonnax._basis._rbf import _safe_sqrt
-
-r = _safe_sqrt(jnp.sum((x - c) ** 2))
+# ✅ Same value everywhere, zero gradient at x = c (the double where)
+r2 = jnp.sum((x - c) ** 2)
+r = jnp.where(r2 > 0, jnp.sqrt(jnp.where(r2 > 0, r2, 1.0)), 0.0)
 ```
 
 ### State updates return a new module

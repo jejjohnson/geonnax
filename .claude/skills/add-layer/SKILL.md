@@ -30,7 +30,7 @@ in `AGENTS.md` first; this is the step-by-step.
 | A normalisation | `layers/_norm.py` | `GlobalResponseNorm` |
 | Attention over a grid | `layers/_attention.py`, `_wavelet_attention.py` | `Attention`, `WindowedAttention` |
 | An FFT-domain layer | `layers/_spectral.py` (+ `_factorized.py` for a weight form) | `SpectralConv` |
-| A transform on the sphere | `layers/_spherical_transform.py`, `_spherical_wavelet.py` | `SphericalHarmonicTransform` |
+| A layer on the sphere | `layers/_spherical_conv.py`, `_spherical_wavelet.py` (the transform itself is `functax.transform.SphericalHarmonicTransform`) | `SphericalSpectralConv`, `SphericalWaveletConv` |
 | A wavelet-domain layer | `layers/_wavelet.py` | `WaveletConv`, `dwt` / `idwt` |
 
 A new family gets its own `layers/_<name>.py` with a module docstring whose

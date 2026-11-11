@@ -340,7 +340,7 @@ Use `jax.vmap` for a batch.
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/layers-dark.svg">
-    <img alt="kernellib, pyrox-gp and pyrox-nn import geonnax; geonnax depends only on jax, equinox, jaxtyping, einx and einops" src="docs/assets/layers-light.svg" width="100%">
+    <img alt="kernellib, pyrox-gp and pyrox-nn import geonnax; geonnax depends on functax, jax, equinox, jaxtyping, einx and einops" src="docs/assets/layers-light.svg" width="100%">
   </picture>
 </p>
 

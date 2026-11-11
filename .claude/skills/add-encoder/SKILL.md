@@ -33,8 +33,9 @@ argument conventions are its API.
   `_validate_lonlat_shape`; integer inputs through `_promote_to_floating`.
 - Pure `jnp`, einx for broadcasts; no clipping of out-of-range values
   (shape-only validation keeps it `jit`-safe) — say so in the docstring.
-- Spherical features reuse `geonnax._basis.real_spherical_harmonics`; never
-  re-derive harmonics.
+- Spherical features reuse `functax.basis.sphere.real_spherical_harmonics`;
+  never re-derive harmonics. Earth frames (ECEF, east/north/up, tangent
+  planes) come from `functax.geometry` with an explicit `unit=`.
 
 ## 3. Write the module (`src/geonnax/encoders.py`)
 
