@@ -17,6 +17,7 @@
 <p align="center">
   <a href="https://jejjohnson.github.io/geonnax/"><b>Docs</b></a> ·
   <a href="https://jejjohnson.github.io/geonnax/api/"><b>API</b></a> ·
+  <a href="https://jejjohnson.github.io/geonnax/#quickstart"><b>Quickstart</b></a> ·
   <a href="#example-map-methane-around-the-globe"><b>Example</b></a> ·
   <a href="#gallery"><b>Gallery</b></a>
 </p>
@@ -48,11 +49,6 @@ uv add "geonnax @ git+https://github.com/jejjohnson/geonnax.git"
 
 It depends on jax, equinox, jaxtyping, einx, einops and [functax](https://github.com/jejjohnson/functax), which holds the bases, sphere grids, field derivatives and transforms that geonnax's networks are built on.
 Training loops are yours to write; the example below uses [optax](https://github.com/google-deepmind/optax) (`uv add optax`).
-
-## Quick start
-
-The [quickstart](https://jejjohnson.github.io/geonnax/#quickstart) shows the three ways in (a coordinate network, a neural operator, and basis functions used as features in a model of your own), in one short block.
-The example below puts the coordinate networks to work on a global methane map.
 
 ## Example: map methane around the globe
 
