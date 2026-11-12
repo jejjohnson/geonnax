@@ -27,7 +27,7 @@
 geonnax has two families of models.
 Coordinate networks take one point, a longitude and latitude (and a time, if you have one), and return the field's value there: an encoder turns the point into features, a representation network such as a SIREN maps those to a value, and an optional head adds a per-point spread.
 Neural operators (U-Net, FNO, spherical FNO, wavelet operators) take a whole gridded field and return another.
-Both draw on one library of bases: spherical harmonics, Slepian functions, needlets, wavelets, Fourier modes, EOFs and graph-Laplacian eigenvectors.
+Both take their bases (spherical harmonics, Slepian functions, needlets, wavelets, Fourier modes, EOFs and graph-Laplacian eigenvectors) from [functax](https://github.com/jejjohnson/functax).
 
 Every model is a plain `equinox.Module` with an `init(..., *, key)` constructor, acting on one example, so `jit`, `vmap` and `grad` work as usual.
 Nothing in it is probabilistic: [pyrox](https://github.com/jejjohnson/pyrox) wraps these cores and swaps their parameters for NumPyro sites.
@@ -78,32 +78,33 @@ Use `jax.vmap` for a batch.
 </p>
 
 geonnax sits near the bottom of the stack and imports only functax from it.
-[kernellib](https://github.com/jejjohnson/kernellib) takes its basis functions and random-feature arithmetic, [pyrox-gp](https://github.com/jejjohnson/pyrox) re-exports its eigenfunction bases for inducing features, and [pyrox-nn](https://github.com/jejjohnson/pyrox) wraps its SIREN, MFN, SNGP and VSSGP cores as Bayesian layers.
+[pyrox-nn](https://github.com/jejjohnson/pyrox) wraps its SIREN, MFN, SNGP and VSSGP cores as Bayesian layers; [kernellib](https://github.com/jejjohnson/kernellib) and [pyrox-gp](https://github.com/jejjohnson/pyrox) take their bases from functax.
 That is why parameter names here are stable: pyrox addresses them by name.
 
 ## Gallery
 
-The encoders' building blocks, drawn by [`docs/assets/readme/figures.py`](docs/assets/readme/figures.py).
+The three stages of a coordinate network on the [methane example](https://jejjohnson.github.io/geonnax/guides/methane/), drawn by [`docs/assets/readme/figures.py`](docs/assets/readme/figures.py) from the example's own code.
+The basis gallery (spherical harmonics, Slepian functions, needlets) is in [functax's README](https://github.com/jejjohnson/functax#gallery).
 
-Global features: the real spherical harmonics behind `SphericalHarmonicEncoder`, six of the 25 with degree ℓ ≤ 4.
+Encode: least-squares fits with spherical harmonics up to degree 8, 16 and 28, and a Slepian fit inside a 20° cap.
 
-<p align="center"><img src="docs/assets/readme/sh_basis.png" alt="Six real spherical harmonics up to degree 4 on Mollweide maps" width="100%"></p>
+<p align="center"><img src="docs/assets/readme/encode.png" alt="The true XCH4 field next to its least-squares fits with spherical harmonics up to degree 8, 16 and 28, and a Slepian fit inside a 20 degree cap over South Asia" width="100%"></p>
 
-Regional features: Slepian functions for a 40° cap, ranked by λ, the share of their energy inside the cap.
-The first few sit inside it; past the Shannon number (about 52 here) they leak out.
+Represent: a ReLU MLP, a SIREN, and spherical harmonics feeding a SIREN, each trained on a 2° grid and read on a 1° grid.
 
-<p align="center"><img src="docs/assets/readme/slepian.png" alt="Six Slepian functions for a 40 degree cap; concentration falls from 1.00 to 0.05 as the modes leak outside the dashed cap boundary" width="100%"></p>
+<p align="center"><img src="docs/assets/readme/represent.png" alt="The true field on a 1 degree grid next to a ReLU MLP, a SIREN, and spherical harmonics feeding a SIREN, each trained on the 2 degree grid" width="100%"></p>
 
-Multiscale features: needlets at one centre, each scale j twice as fine as the last.
+Head: one day of track observations, a GP head's mean map, and its spread, low along the tracks and high in the gaps between them.
 
-<p align="center"><img src="docs/assets/readme/needlets.png" alt="Four needlets centred near the same point at scales 0 to 3, each more localised than the last" width="100%"></p>
+<p align="center"><img src="docs/assets/readme/head.png" alt="One day of track observations, the GP head's mean map, and its spread, which is low along the tracks and near the poles where tracks converge, and high in the gaps between tracks" width="100%"></p>
 
 ## Related projects
 
 | Project | Role |
 |---|---|
 | [gaussx](https://github.com/jejjohnson/gaussx) | Structured linear algebra, solvers, Gaussian primitives |
-| [kernellib](https://github.com/jejjohnson/kernellib) | Kernels and scalable kernel methods, on geonnax's bases and random features |
+| [functax](https://github.com/jejjohnson/functax) | Function approximation: the bases, sphere grids, derivatives and transforms geonnax builds on |
+| [kernellib](https://github.com/jejjohnson/kernellib) | Kernels and scalable kernel methods, on functax's bases and random features |
 | [pyrox](https://github.com/jejjohnson/pyrox) | Equinox–NumPyro bridge; Bayesian layers (`pyrox-nn`) over geonnax cores, GP models (`pyrox-gp`) |
 
 ## Development
