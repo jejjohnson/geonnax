@@ -25,7 +25,7 @@ dependencies = [
     "jaxtyping>=0.2",
     "einops>=0.8.2",
     "einx>=0.4.3",
-    "functax[jax] @ git+https://github.com/jejjohnson/functax.git@v0.0.6",
+    "functax[jax] @ git+https://github.com/jejjohnson/functax.git@v0.0.10",
 ]
 
 [project.urls]

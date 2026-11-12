@@ -140,7 +140,6 @@ from geonnax.layers import (
     SpectralConv,
     SphericalSpectralConv,
     SphericalWaveletConv,
-    SphericalWaveletTransform,
     SqueezeExcitation,
     StandardizedConv,
     TTTensor,
@@ -265,7 +264,6 @@ __all__ = [
     "SphericalHarmonicEncoder",
     "SphericalSpectralConv",
     "SphericalWaveletConv",
-    "SphericalWaveletTransform",
     "SqueezeExcitation",
     "Stage",
     "StandardizedConv",
@@ -328,6 +326,10 @@ _MOVED: dict[str, Moved] = {
     "SphericalHarmonicTransform": Moved(
         "functax.transform.SphericalHarmonicTransform",
         _transform.SphericalHarmonicTransform,
+    ),
+    "SphericalWaveletTransform": Moved(
+        "functax.transform.SphericalWaveletTransform",
+        _transform.SphericalWaveletTransform,
     ),
     "rff_cosine_forward": Moved(
         "functax.basis.features.rff_cosine_forward", _features.rff_cosine_forward

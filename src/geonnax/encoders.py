@@ -21,6 +21,7 @@ import jax
 import jax.numpy as jnp
 from functax.basis.features import rff_forward
 from functax.basis.sphere import real_spherical_harmonics
+from functax.geometry import lonlat_to_unit
 from jaxtyping import Array, Float, Num, PRNGKeyArray
 
 from geonnax.geo import (
@@ -30,7 +31,6 @@ from geonnax.geo import (
     cyclic_encode,
     deg2rad,
     lonlat_scale,
-    lonlat_to_cartesian3d,
 )
 
 
@@ -120,7 +120,7 @@ class LonLatScale(eqx.Module):
 class Cartesian3DEncoder(eqx.Module):
     """Lift a single lon/lat coordinate onto the unit sphere $S^2$.
 
-    Stateless wrapper around `geonnax.geo.lonlat_to_cartesian3d`.
+    Stateless wrapper around `functax.geometry.lonlat_to_unit`.
 
     Attributes:
         input_unit: Whether the input is in ``"degrees"`` or
@@ -151,9 +151,10 @@ class Cartesian3DEncoder(eqx.Module):
             >>> bool(jnp.allclose(out, jnp.array([1.0, 0.0, 0.0]), atol=1e-6))
             True
         """
-        # (2,) -> (1, 2) for the batched helper, then drop the batch dim.
-        out = lonlat_to_cartesian3d(lonlat[None, :], input_unit=self.input_unit)
-        return out[0]  # (1, 3) -> (3,)
+        if lonlat.ndim != 1 or lonlat.shape[-1] != 2:
+            raise ValueError(f"lonlat must be (2,); got shape {lonlat.shape}.")
+        # (2,) -> (3,); integers are promoted to float first, as geonnax did
+        return lonlat_to_unit(_promote_to_floating(lonlat), unit=self.input_unit)
 
 
 class CyclicEncoder(eqx.Module):
@@ -262,7 +263,7 @@ class SphericalHarmonicEncoder(eqx.Module):
                     f"x must be (2,) when input_mode='lonlat'; got shape {x.shape}."
                 )
             # (2,) lon/lat radians -> (1, 3) on the unit sphere.
-            unit_xyz = lonlat_to_cartesian3d(x[None, :], input_unit="radians")
+            unit_xyz = lonlat_to_unit(_promote_to_floating(x[None, :]), unit="radians")
         # (1, 3) -> (1, (l_max+1)^2) -> drop batch dim -> ((l_max+1)^2,)
         return real_spherical_harmonics(unit_xyz, l_max=self.l_max)[0]
 
@@ -409,7 +410,7 @@ class GeoContextEncoder(eqx.Module):
             return lonlat_scale(lonlat)[0]  # (1, 2) -> (2,)
         if self.latlon_encoding == "spherical":
             # (1, 2) degrees -> (1, 3) on the unit sphere -> (3,)
-            return lonlat_to_cartesian3d(lonlat, input_unit="degrees")[0]
+            return lonlat_to_unit(_promote_to_floating(lonlat), unit="degrees")[0]
         # "sincos": [cos λ, sin λ] from the shared helper, plus normalized ϕ.
         lon_cyc = cyclic_encode(deg2rad(lonlat[:, :1]))[0]  # (1, 1) -> (2,)
         return jnp.concatenate([lon_cyc, (lat / 90.0)[None]])  # (2,) + (1,) -> (3,)

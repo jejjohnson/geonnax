@@ -139,6 +139,27 @@ def enu_basis(
     return _fg.enu_basis(lonlat, unit=input_unit)
 
 
+def lonlat_to_cartesian3d(
+    lonlat: Float[Array, "N 2"], *, input_unit: Unit = "radians"
+) -> Float[Array, "N 3"]:
+    """`functax.geometry.lonlat_to_unit` with ``input_unit``, promoting integers.
+
+    functax takes any leading batch dims and raises on integer input; the shim
+    keeps geonnax's ``(N, 2)`` and ``input_unit`` checks and promotes integers
+    to float32 first.
+    """
+    # imported here: geonnax.geo imports this module
+    from geonnax.geo import (
+        _promote_to_floating,
+        _validate_input_unit,
+        _validate_lonlat_shape,
+    )
+
+    _validate_lonlat_shape(lonlat)
+    _validate_input_unit(input_unit)
+    return _fg.lonlat_to_unit(_promote_to_floating(lonlat), unit=input_unit)
+
+
 def tangent_to_cartesian(
     lonlat: Float[Array, "N 2"],
     uv: Float[Array, "N 2"],

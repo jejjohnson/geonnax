@@ -581,8 +581,8 @@ wheels = [
 
 [[package]]
 name = "functax"
-version = "0.0.6"
-source = { git = "https://github.com/jejjohnson/functax.git?rev=v0.0.6#7fdcd2729fe8d6a62de0ab2330ae6ae2da133ea2" }
+version = "0.0.10"
+source = { git = "https://github.com/jejjohnson/functax.git?rev=v0.0.10#625e4f045d3971255f3a21ac458d58314e093ad8" }
 dependencies = [
     { name = "numpy" },
 ]
@@ -639,7 +639,7 @@ requires-dist = [
     { name = "einops", specifier = ">=0.8.2" },
     { name = "einx", specifier = ">=0.4.3" },
     { name = "equinox", specifier = ">=0.13.8" },
-    { name = "functax", extras = ["jax"], git = "https://github.com/jejjohnson/functax.git?rev=v0.0.6" },
+    { name = "functax", extras = ["jax"], git = "https://github.com/jejjohnson/functax.git?rev=v0.0.10" },
     { name = "jax", specifier = ">=0.10" },
     { name = "jaxtyping", specifier = ">=0.2" },
 ]

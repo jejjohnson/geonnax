@@ -44,8 +44,8 @@ here.
 | Family | Modules | Owns |
 |---|---|---|
 | Feature helpers | `basis.py` | `interaction_features`, `standardize` / `unstandardize`; the bases themselves are in `functax.basis` |
-| Geography | `geo.py`, `encoders.py`, `slepian.py` | lon/lat helpers (`deg2rad`, `lonlat_scale`, `lonlat_to_cartesian3d`, `cyclic_encode`, `spherical_harmonic_encode`); parameter-free encoder modules, plus `GaussianFourierEncoder` (a frozen random frequency matrix drawn in `init`); `GeoContextEncoder`; Slepian encoders |
-| Building blocks | `layers/` | `StandardizedConv`, `Downsample` / `Upsample`, `band_limited_resize` / `AntiAliasedActivation`, `Block`, `ResnetBlock`, `ConvNeXtBlock`, `SqueezeExcitation`, `GlobalResponseNorm`, attention (`Attention`, `LinearAttention`, `WindowedAttention`, `WaveletAttention`), `SpectralConv` + factorized weights (`DenseTensor`, `CPTensor`, `TuckerTensor`, `TTTensor`), the spherical spectral conv, spherical wavelet transforms and convs, `dwt` / `idwt`, `WaveletConv` |
+| Geography | `geo.py`, `encoders.py`, `slepian.py` | lon/lat helpers (`deg2rad`, `lonlat_scale`, `cyclic_encode`, `spherical_harmonic_encode`; lon/lat → unit sphere is `functax.geometry.lonlat_to_unit`); parameter-free encoder modules, plus `GaussianFourierEncoder` (a frozen random frequency matrix drawn in `init`); `GeoContextEncoder`; Slepian encoders |
+| Building blocks | `layers/` | `StandardizedConv`, `Downsample` / `Upsample`, `band_limited_resize` / `AntiAliasedActivation`, `Block`, `ResnetBlock`, `ConvNeXtBlock`, `SqueezeExcitation`, `GlobalResponseNorm`, attention (`Attention`, `LinearAttention`, `WindowedAttention`, `WaveletAttention`), `SpectralConv` + factorized weights (`DenseTensor`, `CPTensor`, `TuckerTensor`, `TTTensor`), the spherical spectral conv, the spherical wavelet conv, `dwt` / `idwt`, `WaveletConv` |
 | Neural operators | `fno.py`, `sfno.py`, `wno.py`, `mswt.py`, `manifold_no.py`, `cno.py`, `lno.py` | `FNO`, `SFNO`, `WNO`, `MSWT`, `ManifoldNO`, `CNO` and their blocks; `LNO`, a local core marched in time |
 | U-Net | `unet.py` | `UNet` (alias `XUNet`), `Stage`, `NestedResidualUNet` |
 | Implicit neural representations | `siren.py`, `multi_scale_siren.py`, `mfn.py`, `neural_field.py`, `separable.py`, `conditioning.py` | `SIREN`, `SirenDense`, the SIREN init rules, `MultiScaleSIREN`, `FourierNet` / `GaborNet`, `NeuralFieldMLP` (the BayesNF network), `SeparableINR` (rank-r per-axis networks, `on_grid`), conditioners (`ConcatConditioner`, `AffineModulation` = `FiLM`, `HyperLinear`), `ConditionedINR`, `HyperSIREN` |
@@ -122,11 +122,11 @@ exists:
 | Pixel-shuffle down / up-sampling, space-to-depth | `geonnax.layers.Downsample` / `Upsample`; the patterns in `layers._utils.shuffle_patterns` |
 | Self-attention over a grid | `geonnax.layers.Attention`, `LinearAttention`, `WindowedAttention`, `WaveletAttention` |
 | An FFT conv keeping the low modes | `geonnax.layers.SpectralConv` (dense / CP / Tucker / TT weights via `init_factorized_tensor`) |
-| A spherical harmonic transform on a lat/lon grid | `functax.transform.SphericalHarmonicTransform`, `SphericalSpectralConv`; for wavelets `SphericalWaveletTransform` |
+| A spherical harmonic transform on a lat/lon grid | `functax.transform.SphericalHarmonicTransform`, `SphericalSpectralConv`; for wavelets `functax.transform.SphericalWaveletTransform`, `SphericalWaveletConv` |
 | A discrete wavelet transform | `geonnax.layers.dwt` / `idwt`, `WaveletConv`; as matrices `functax.basis.local.wavelet_basis_1d` / `_2d` |
 | Real spherical harmonics, Laplacian eigenfunctions, RBF / Gabor / Slepian columns, EOFs | `functax.basis` (`sphere.real_spherical_harmonics`, `fourier.fourier_basis`, `local.rbf_basis`, `local.gabor_frame_grid`, `slepian.slepian_cap_basis`, `eigen.eof_basis`, …) |
 | Fourier / seasonal / interaction features | `functax.basis.features.fourier_features`, `seasonal_features`, `gaussian_window_features`; `geonnax.basis.interaction_features` |
-| Degrees → radians, lon/lat → unit sphere, cyclic sin/cos | `geonnax.geo` functions; as modules `geonnax.Deg2Rad`, `Cartesian3DEncoder`, `CyclicEncoder`, `SphericalHarmonicEncoder`, `GeoContextEncoder` |
+| Degrees → radians, lon/lat → unit sphere, cyclic sin/cos | `geonnax.geo` functions and `functax.geometry.lonlat_to_unit`; as modules `geonnax.Deg2Rad`, `Cartesian3DEncoder`, `CyclicEncoder`, `SphericalHarmonicEncoder`, `GeoContextEncoder` |
 | `cos(xW/ℓ)`, `sin(xW/ℓ)` random features, orthogonal frequency blocks | `functax.basis.features.rff_forward`, `rff_cosine_forward`; `geonnax.orthogonal_blocks`, `OrthogonalRandomFeatures` |
 | A SIREN layer or its `U(-a, a)` init | `geonnax.SirenDense`, `SIREN`, `siren_W_limit`, `build_siren_specs` |
 | FiLM / concat / hypernetwork conditioning | `geonnax.AffineModulation` (`FiLM`), `ConcatConditioner`, `HyperLinear`, `ConditionedINR`, `HyperSIREN` |
@@ -257,7 +257,7 @@ geonnax's networks consume them.
 | `tests/test_docstrings.py`, `tests/test_docstrings_render.py` | No Sphinx / RST markup in source; `Examples:` (plural) with a `>>>` or fenced body |
 | `make doctest` (`--doctest-modules src/geonnax`; not run in CI) | Every docstring example runs |
 | `tests/test_spectral.py` | Factorized tensors, `SpectralConv` (shapes, 1–3-D, resolution invariance), `FNO`, the SHT round trip, `SFNO` |
-| `tests/test_wavelet.py`, `test_wavelet_attention.py`, `test_mswt.py`, `test_spherical_wavelet.py` | `dwt` / `idwt` exact reconstruction, `WaveletConv`, `WNO`, wavelet attention, `MSWT`, the spherical wavelet transform |
+| `tests/test_wavelet.py`, `test_wavelet_attention.py`, `test_mswt.py`, `test_spherical_wavelet.py` | `dwt` / `idwt` exact reconstruction, `WaveletConv`, `WNO`, wavelet attention, `MSWT`, the spherical wavelet conv |
 | `tests/test_unet.py`, `test_unet_dropout.py` | U-Net shapes, batching, gradients; dropout key threading and `inference_mode` |
 | `tests/test_spectral_norm.py` | Power-iteration state, the realised Lipschitz constant, the all-zero weight |
 | `tests/test_heads.py` | Mixture-density head; CRF forward / Viterbi against brute-force enumeration |

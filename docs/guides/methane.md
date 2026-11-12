@@ -18,6 +18,7 @@ import jax.random as jr
 import optax
 from functax.basis.slepian import slepian_cap_basis
 from functax.basis.sphere import real_spherical_harmonics
+from functax.geometry import lonlat_to_unit
 from jaxtyping import Array, Bool, Float
 
 
@@ -26,12 +27,12 @@ from jaxtyping import Array, Bool, Float
 lon, lat = jnp.meshgrid(jnp.linspace(-179.0, 179.0, 180), jnp.linspace(-89.0, 89.0, 90))
 lonlat: Float[Array, "N 2"] = jnp.deg2rad(einx.id("h w, h w -> (h w) (1 + 1)", lon, lat))
 # u(λ, φ) = (cos φ cos λ, cos φ sin λ, sin φ), the point on the unit sphere
-u: Float[Array, "N 3"] = gnx.geo.lonlat_to_cartesian3d(lonlat)  # (N, 2) → (N, 3)  geonnax
+u: Float[Array, "N 3"] = lonlat_to_unit(lonlat)  # (N, 2) → (N, 3)  functax
 
 # Sources: centre (λ, φ in °), width wₛ (°), amplitude aₛ (ppb)
 src = jnp.array([[78, 25, 8, 45], [112, 32, 7, 40], [-95, 32, 5, 30],
                  [25, 5, 10, 30], [-60, -5, 9, 25], [45, 60, 6, 20]], dtype=float)
-c_s: Float[Array, "S 3"] = gnx.geo.lonlat_to_cartesian3d(jnp.deg2rad(src[:, :2]))  # (S, 3)
+c_s: Float[Array, "S 3"] = lonlat_to_unit(jnp.deg2rad(src[:, :2]))  # (S, 3)
 # ξ = Σ_{8 ≤ l ≤ 28} Σₘ βₗₘ Yₗᵐ,  βₗₘ ~ 𝒩(0, (40 / l)²): synoptic variability
 deg = jnp.concatenate([jnp.full(2 * l + 1, l) for l in range(29)])  # (M,)  l of each Yₗᵐ
 beta = jnp.where(deg >= 8, 40.0 / jnp.maximum(deg, 1), 0.0) * jr.normal(jr.key(0), deg.shape)
@@ -98,7 +99,7 @@ rmse_sh = {l_max: float(sh_fit(l_max)) for l_max in (8, 16, 28)}
 c_R = jnp.deg2rad(jnp.array([78.0, 25.0]))                 # cap centre (λ, φ), rad
 cap = slepian_cap_basis(28, jnp.deg2rad(20.0), n_modes=60, lonlat_centre=c_R)
 G: Float[Array, "N K"] = jax.vmap(gnx.SlepianEncoder(cap))(lonlat)  # (N, 2) → (N, K)  geonnax
-u_R = gnx.geo.lonlat_to_cartesian3d(einx.id("d -> 1 d", c_R))[0]  # (3,)
+u_R = lonlat_to_unit(c_R)  # (3,)
 in_R: Bool[Array, " N"] = jnp.arccos(u @ u_R) < jnp.deg2rad(20.0)  # (N,)  inside the cap
 # a = x − x̄_R inside R, fitted with K = 60 functions instead of M = 841
 a_R = x[in_R] - jnp.mean(x[in_R])                          # (N,) → (R,)
@@ -169,7 +170,7 @@ fits = {name: fit(m, lonlat, (x - 1880.0) / 25.0) for name, m in models.items()}
 # Score between the training cells: Q = 180 × 360 cell centres of a 1° grid
 lon1, lat1 = jnp.meshgrid(jnp.linspace(-179.5, 179.5, 360), jnp.linspace(-89.5, 89.5, 180))
 lonlat1: Float[Array, "Q 2"] = jnp.deg2rad(einx.id("h w, h w -> (h w) (1 + 1)", lon1, lat1))
-x1: Float[Array, " Q"] = xch4(gnx.geo.lonlat_to_cartesian3d(lonlat1))  # (Q,)  ppb
+x1: Float[Array, " Q"] = xch4(lonlat_to_unit(lonlat1))  # (Q,)  ppb
 rmse_net = {name: float(jnp.sqrt(jnp.mean((1880.0 + 25.0 * jax.vmap(f)(lonlat1) - x1) ** 2)))
             for name, f in fits.items()}                   # ppb, off the training grid
 ```
