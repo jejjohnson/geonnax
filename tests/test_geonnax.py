@@ -17,7 +17,6 @@ def test_geo_module_imports():
 
     assert hasattr(geo, "deg2rad")
     assert hasattr(geo, "lonlat_scale")
-    assert hasattr(geo, "lonlat_to_cartesian3d")
     assert hasattr(geo, "cyclic_encode")
     assert hasattr(geo, "spherical_harmonic_encode")
 

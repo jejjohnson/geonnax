@@ -8,10 +8,12 @@ compose inside `equinox.nn.Sequential`.
 
 The Earth frames (``lonlat_to_ecef``, ``ecef_to_lonlat``, ``enu_basis``,
 ``tangent_to_cartesian``, ``cartesian_to_tangent``, ``local_tangent_plane``,
-``rotation_to_pole``) moved to `functax.geometry` (jejjohnson/geonnax#153).
-Their names still resolve here for one release, with geonnax's defaults and a
-`DeprecationWarning`. functax takes ``unit=`` with no default, and
-``semi_major`` / ``flattening`` in place of the ellipsoid name.
+``rotation_to_pole``) moved to `functax.geometry` (jejjohnson/geonnax#153),
+and ``lonlat_to_cartesian3d`` moved there as ``lonlat_to_unit``
+(jejjohnson/geonnax#158). Their names still resolve here for one release, with
+geonnax's defaults and a `DeprecationWarning`. functax takes ``unit=`` in place
+of ``input_unit=`` (with no default for the frames), and ``semi_major`` /
+``flattening`` in place of the ellipsoid name.
 """
 
 from __future__ import annotations
@@ -21,6 +23,7 @@ from typing import Literal
 import einx
 import jax.numpy as jnp
 from functax.basis.sphere import real_spherical_harmonics
+from functax.geometry import lonlat_to_unit
 from jaxtyping import Array, Float, Num
 
 from geonnax import _compat
@@ -125,69 +128,6 @@ def lonlat_scale(
     return 2.0 * (lonlat - lower) / (upper - lower) - 1.0
 
 
-def lonlat_to_cartesian3d(
-    lonlat: Float[Array, "N 2"],
-    *,
-    input_unit: Literal["degrees", "radians"] = "radians",
-) -> Float[Array, "N 3"]:
-    r"""Lift lon/lat coordinates onto the unit sphere.
-
-    Uses the standard parameterization
-
-    $$
-    x = \cos(\phi)\cos(\lambda), \quad
-    y = \cos(\phi)\sin(\lambda), \quad
-    z = \sin(\phi),
-    $$
-
-
-    where ``lon = λ`` and ``lat = ϕ``. This matches the axis
-    convention expected by
-    the analogous GP-side inducing features, so the NN and
-    GP spherical paths line up.
-
-    Args:
-        lonlat: Longitude/latitude matrix of shape ``(N, 2)``.
-        input_unit: Whether ``lonlat`` is in ``"degrees"`` or
-            ``"radians"``.
-
-    Returns:
-        Unit Cartesian coordinates of shape ``(N, 3)``.
-
-    Examples:
-        >>> import jax.numpy as jnp
-        >>> from geonnax.geo import lonlat_to_cartesian3d
-        >>> # Prime meridian / equator → +x; output is one row of unit norm.
-        >>> lonlat_to_cartesian3d(jnp.array([[0.0, 0.0]])).shape
-        (1, 3)
-        >>> # North pole (lat = π/2) → +z, so the z-column equals 1.
-        >>> bool(
-        ...     jnp.allclose(
-        ...         lonlat_to_cartesian3d(jnp.array([[0.0, 0.5 * jnp.pi]]))[:, 2],
-        ...         1.0,
-        ...     )
-        ... )
-        True
-    """
-    _validate_lonlat_shape(lonlat)
-    _validate_input_unit(input_unit)
-
-    # (N,2) in deg/rad → radians; columns are λ (lon) and ϕ (lat).
-    angles = deg2rad(lonlat) if input_unit == "degrees" else lonlat
-    lon = angles[:, 0]  # λ, shape (N,)
-    lat = angles[:, 1]  # ϕ, shape (N,)
-    cos_lat = jnp.cos(lat)  # (N,)
-    # x = cosϕ·cosλ, y = cosϕ·sinλ, z = sinϕ. Stack to (N,3) on the unit sphere.
-    return jnp.stack(
-        [
-            cos_lat * jnp.cos(lon),
-            cos_lat * jnp.sin(lon),
-            jnp.sin(lat),
-        ],
-        axis=-1,
-    )
-
-
 def cyclic_encode(
     angles: Float[Array, " N"] | Float[Array, "N D"],
 ) -> Float[Array, "N F"]:
@@ -248,8 +188,10 @@ def spherical_harmonic_encode(
         >>> spherical_harmonic_encode(lonlat, l_max=0).shape
         (2, 1)
     """
+    _validate_lonlat_shape(lonlat)
+    _validate_input_unit(input_unit)
     # (N, 2) -> (N, 3) unit sphere, then evaluate Y_l^m up to l_max.
-    unit_xyz = lonlat_to_cartesian3d(lonlat, input_unit=input_unit)
+    unit_xyz = lonlat_to_unit(_promote_to_floating(lonlat), unit=input_unit)
     return real_spherical_harmonics(unit_xyz, l_max=l_max)  # (N, (l_max+1)^2)
 
 
@@ -269,6 +211,11 @@ _MOVED: dict[str, Moved] = {
         "functax.geometry.enu_basis",
         _compat.enu_basis,
         "Note that it takes unit= in place of input_unit=, with no default.",
+    ),
+    "lonlat_to_cartesian3d": Moved(
+        "functax.geometry.lonlat_to_unit",
+        _compat.lonlat_to_cartesian3d,
+        "Note that it takes unit= in place of input_unit=.",
     ),
     "local_tangent_plane": Moved(
         "functax.geometry.local_tangent_plane",
@@ -299,7 +246,6 @@ __all__ = [
     "cyclic_encode",
     "deg2rad",
     "lonlat_scale",
-    "lonlat_to_cartesian3d",
     "spherical_harmonic_encode",
 ]
 

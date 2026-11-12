@@ -12,7 +12,7 @@ argument conventions are its API.
 ## 1. Make sure it does not exist yet
 
 - Search `docs/api/capabilities.md` (`geonnax.geo`, `geonnax.encoders`,
-  `geonnax.slepian`): `deg2rad`, `lonlat_scale`, `lonlat_to_cartesian3d`,
+  `geonnax.slepian`): `deg2rad`, `lonlat_scale`,
   `cyclic_encode`, `spherical_harmonic_encode`; the modules `Deg2Rad`,
   `LonLatScale`, `Cartesian3DEncoder`, `CyclicEncoder`,
   `SphericalHarmonicEncoder`, `GeoContextEncoder` (lon/lat + day of year +

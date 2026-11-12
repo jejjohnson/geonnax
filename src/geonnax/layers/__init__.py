@@ -24,16 +24,16 @@ leading channel axis and ``num_spatial_dims`` trailing spatial axes — shape
 - `geonnax.layers._basis_conv` — `BasisTransform`,
   `BasisSpectralConv` (spectral convolution in any precomputed basis).
 - `geonnax.layers._spherical_conv` — `SphericalSpectralConv`.
-- `geonnax.layers._spherical_wavelet` —
-  `SphericalWaveletTransform`, `SphericalWaveletConv`.
+- `geonnax.layers._spherical_wavelet` — `SphericalWaveletConv`.
 - `geonnax.layers._wavelet` — `WaveletConv` plus the `dwt` / `idwt`
   discrete wavelet transforms.
 - `geonnax.layers._wavelet_attention` — `WaveletAttention`
   (self-attention in the wavelet domain).
 
 `SphericalHarmonicTransform`, `nonuniform_rfft` and `nonuniform_irfft` moved
-to `functax.transform` (jejjohnson/geonnax#153); their names still resolve
-here for one release, with a `DeprecationWarning`.
+to `functax.transform` (jejjohnson/geonnax#153), and so did
+`SphericalWaveletTransform` (jejjohnson/geonnax#158); their names still
+resolve here for one release, with a `DeprecationWarning`.
 """
 
 import functax.transform as _transform
@@ -64,10 +64,7 @@ from geonnax.layers._factorized import (
 from geonnax.layers._norm import GlobalResponseNorm
 from geonnax.layers._spectral import SpectralConv
 from geonnax.layers._spherical_conv import SphericalSpectralConv
-from geonnax.layers._spherical_wavelet import (
-    SphericalWaveletConv,
-    SphericalWaveletTransform,
-)
+from geonnax.layers._spherical_wavelet import SphericalWaveletConv
 from geonnax.layers._wavelet import Wavelet, WaveletConv, dwt, idwt
 from geonnax.layers._wavelet_attention import WaveletAttention
 
@@ -89,7 +86,6 @@ __all__ = [
     "SpectralConv",
     "SphericalSpectralConv",
     "SphericalWaveletConv",
-    "SphericalWaveletTransform",
     "SqueezeExcitation",
     "StandardizedConv",
     "TTTensor",
@@ -110,6 +106,10 @@ _MOVED: dict[str, Moved] = {
     "SphericalHarmonicTransform": Moved(
         "functax.transform.SphericalHarmonicTransform",
         _transform.SphericalHarmonicTransform,
+    ),
+    "SphericalWaveletTransform": Moved(
+        "functax.transform.SphericalWaveletTransform",
+        _transform.SphericalWaveletTransform,
     ),
     "nonuniform_irfft": Moved(
         "functax.transform.nonuniform_irfft", _transform.nonuniform_irfft

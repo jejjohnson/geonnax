@@ -13,10 +13,11 @@ from typing import Literal
 import equinox as eqx
 import jax.numpy as jnp
 from functax.basis.slepian import SlepianCapBasis, slepian_cap_basis
+from functax.geometry import lonlat_to_unit
 from jaxtyping import Array, Float
 
 from geonnax.encoders import SphericalHarmonicEncoder
-from geonnax.geo import lonlat_to_cartesian3d
+from geonnax.geo import _promote_to_floating
 
 
 def _unit_xyz(
@@ -31,7 +32,7 @@ def _unit_xyz(
         return x
     if x.ndim != 1 or x.shape[-1] != 2:
         raise ValueError(f"x must be (2,) when input_mode='lonlat'; got {x.shape}.")
-    return lonlat_to_cartesian3d(x[None, :], input_unit="radians")[0]
+    return lonlat_to_unit(_promote_to_floating(x), unit="radians")
 
 
 class SlepianEncoder(eqx.Module):

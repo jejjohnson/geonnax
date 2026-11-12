@@ -120,6 +120,44 @@ def test_frame_shims_keep_degrees_and_wgs84_defaults():
     )
 
 
+def test_lonlat_shim_keeps_input_unit_and_promotes_integers():
+    # jejjohnson/geonnax#158: functax's lonlat_to_unit takes unit= and raises on
+    # integers, so the shim maps input_unit= and promotes integers to float32
+    radians = jnp.deg2rad(LONLAT)
+    _equal(_compat.lonlat_to_cartesian3d(radians), fg.lonlat_to_unit(radians))
+    _equal(_compat.lonlat_to_cartesian3d(LONLAT, input_unit="degrees"), XYZ)
+    integers = jnp.array([[0, 0], [90, 45]])
+    out = _compat.lonlat_to_cartesian3d(integers, input_unit="degrees")
+    assert out.dtype == jnp.float32
+    _equal(out, fg.lonlat_to_unit(integers.astype(jnp.float32), unit="degrees"))
+
+
+def test_lonlat_shim_keeps_the_old_checks():
+    with pytest.raises(ValueError, match=r"lonlat must be \(N, 2\)"):
+        _compat.lonlat_to_cartesian3d(jnp.zeros((2, 2, 2)))
+    with pytest.raises(ValueError, match="input_unit must be"):
+        _compat.lonlat_to_cartesian3d(LONLAT, input_unit="grads")
+
+
+def test_cartesian_encoder_still_rejects_a_batch():
+    from geonnax.encoders import Cartesian3DEncoder
+
+    with pytest.raises(ValueError, match=r"lonlat must be \(2,\)"):
+        Cartesian3DEncoder()(jnp.zeros((2, 2)))
+
+
+def test_callers_of_lonlat_to_unit_still_take_integers():
+    from geonnax.encoders import Cartesian3DEncoder
+    from geonnax.geo import spherical_harmonic_encode
+
+    expected = fg.lonlat_to_unit(jnp.array([90.0, 0.0]), unit="degrees")
+    out = Cartesian3DEncoder(input_unit="degrees")(jnp.array([90, 0]))
+    np.testing.assert_allclose(out, expected, atol=1e-7)
+    features = spherical_harmonic_encode(jnp.array([[0, 1]]), l_max=2)
+    assert features.dtype == jnp.float32
+    assert features.shape == (1, 9)
+
+
 def test_unknown_ellipsoid_is_rejected():
     with pytest.raises(ValueError, match="ellipsoid"):
         _compat.lonlat_to_ecef(LONLAT, ellipsoid="mars")

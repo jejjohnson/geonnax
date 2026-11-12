@@ -167,9 +167,10 @@ spherical harmonic transform above. Each scale is a smooth harmonic band-pass
 window; the squared windows partition unity ($\sum_j g_j(\ell)^2 = 1$), so
 analysis followed by synthesis is exact. These axisymmetric needlets give
 *localised* multi-scale analysis of global fields — the spherical counterpart
-to the planar wavelet transform.
-
-::: geonnax.layers.SphericalWaveletTransform
+to the planar wavelet transform. The transform is
+`functax.transform.SphericalWaveletTransform`, which moved there from
+`geonnax.layers` (jejjohnson/geonnax#158); `SphericalWaveletConv` mixes
+channels with one matrix per scale on top of it.
 
 ::: geonnax.layers.SphericalWaveletConv
 
