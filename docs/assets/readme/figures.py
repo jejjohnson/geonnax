@@ -1,9 +1,9 @@
-"""Render the example and gallery figures from the docs' own code.
+"""Render the example's figures from the docs' own code.
 
-The example's figures run the Python blocks of docs/guides/methane.md,
-verbatim and in order, then plot what they computed, so the numbers quoted in
-the page and the pictures come from the same run. The gallery figures call
-the basis functions directly.
+The figures run the Python blocks of docs/guides/methane.md, verbatim and in
+order, then plot what they computed, so the numbers quoted in the page and the
+pictures come from the same run. The basis gallery moved to functax's README
+(jejjohnson/geonnax#160).
 
 Run from the repo root (about 15 minutes on a laptop CPU; optax is needed by
 the example only):
@@ -123,70 +123,6 @@ def example_figures() -> dict:
     return ns
 
 
-# ---------------------------------------------------------------- gallery
-
-
-def gallery_figures() -> None:
-    ll = jnp.deg2rad(jnp.stack([LON.ravel(), LAT.ravel()], -1))
-    xyz = gnx.geo.lonlat_to_cartesian3d(ll)
-
-    def sym(ax, f, title):
-        v = float(np.nanmax(np.abs(f)))
-        moll(ax, f, title=title, cmap="RdBu_r", vmin=-v, vmax=v)
-
-    # Spherical harmonics: global features.
-    Y = np.asarray(gnx.basis.real_spherical_harmonics(xyz, 4))
-    fig, axes = plt.subplots(
-        2, 3, figsize=(9, 3.6), subplot_kw={"projection": "mollweide"}
-    )
-    for ax, (l, m) in zip(
-        axes.flat, [(1, 0), (2, 1), (2, -2), (3, 2), (4, 0), (4, 3)], strict=True
-    ):
-        sym(ax, Y[:, l * l + l + m], f"$Y_{{{l}}}^{{{m}}}$")
-    fig.suptitle(
-        "SphericalHarmonicEncoder(l_max=4): 25 features per point", fontsize=10
-    )
-    save(fig, "sh_basis.png")
-
-    # Slepian functions: regional features, ranked by energy inside the cap.
-    centre, radius = jnp.deg2rad(jnp.array([-40.0, 25.0])), np.deg2rad(40.0)
-    basis = gnx.basis.slepian_cap_basis(20, radius, lonlat_centre=centre)
-    enc = gnx.SlepianEncoder(basis, weight_by_eigenvalue=False)
-    S = np.asarray(jax.vmap(enc)(ll))
-    lam = np.asarray(basis.eigenvalues)
-    c = np.asarray(gnx.geo.lonlat_to_cartesian3d(centre[None]))[0]
-    ang = np.arccos(np.clip(np.asarray(xyz) @ c, -1, 1)).reshape(LAT.shape)
-    fig, axes = plt.subplots(
-        2, 3, figsize=(9, 3.6), subplot_kw={"projection": "mollweide"}
-    )
-    for ax, k in zip(axes.flat, [0, 3, 15, 40, 52, 70], strict=True):
-        sym(ax, S[:, k], f"mode {k + 1},  λ = {lam[k]:.2f}")
-        ax.contour(
-            np.deg2rad(LON),
-            np.deg2rad(LAT),
-            ang,
-            levels=[radius],
-            colors="k",
-            linewidths=0.7,
-            linestyles="--",
-        )
-    fig.suptitle(
-        "SlepianEncoder (l_max = 20, 40° cap): λ = energy inside the cap", fontsize=10
-    )
-    save(fig, "slepian.png")
-
-    # Needlets: one centre, four scales.
-    N, j, centres = map(np.asarray, gnx.basis.needlet_basis(xyz, B=2.0, j_max=3))
-    p = np.asarray(
-        gnx.geo.lonlat_to_cartesian3d(jnp.deg2rad(jnp.array([[20.0, 10.0]])))
-    )[0]
-    fig, axes = row(4)
-    for ax, scale in zip(axes, range(4), strict=True):
-        cols = np.where(j == scale)[0]
-        sym(ax, N[:, cols[np.argmax(centres[cols] @ p)]], f"needlet, scale j = {scale}")
-    save(fig, "needlets.png")
-
-
 def report(ns: dict) -> None:
     """Print the numbers the methane example quotes."""
     for key in ("rmse_sh", "rmse_cap", "rmse_net", "rmse_gp", "sigma_ratio"):
@@ -195,5 +131,4 @@ def report(ns: dict) -> None:
 
 
 if __name__ == "__main__":
-    gallery_figures()
     report(example_figures())
