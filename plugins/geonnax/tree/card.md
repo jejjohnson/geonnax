@@ -1,0 +1,5 @@
+- **Provides.** Deterministic neural-network building blocks and bases for geoscience: neural operators, U-Nets, implicit representations, lon/lat encoders and random features.
+- **Start from.** `geonnax.FNO`, `geonnax.UNet`, `geonnax.SIREN`, `geonnax.layers`, `geonnax.basis.fourier_basis`, `geonnax.rff_forward`, `geonnax.geo.lonlat_to_cartesian3d`.
+- **Keep.** A module acts on one example, so batch with `jax.vmap`; build it with `Model.init(..., key=key)`; modules are immutable.
+- **Never.** Put a prior or a sample site inside a geonnax module; it stays deterministic and the caller wraps it.
+- **Open the skill when.** You choose between operator families, compose your own model from `geonnax.layers`, or need a basis together with its eigenvalues.
