@@ -213,6 +213,6 @@ Load a skill only when its card's last line applies.
 - **Never.** Import a functax module other than `functax`, `functax.geometry` and `functax.geometry.affine` on a NumPy-only path; the rest need the `functax[jax]` extra and raise `MissingExtraError` without it.
 - **Open the repository when.** You write a new scheme, basis or rule, or need more than these names: it has no skill yet, so read its `AGENTS.md` and its section of GeoStack's capability index.
 
-Used by (pointers, not skills to load): pyrox, radtrax, sesmax, vardax.
+Used by (pointers, not skills to load): kernellib, pyrox, radtrax, sesmax, vardax.
 
 <!-- skill-tree:end -->
