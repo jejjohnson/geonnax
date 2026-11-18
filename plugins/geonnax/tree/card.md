@@ -1,0 +1,5 @@
+- **Provides.** Deterministic neural-network building blocks for geoscience: neural operators on grids, spheres and point clouds, U-Nets, implicit representations, and lon/lat encoders.
+- **Start from.** `geonnax.FNO`, `geonnax.SFNO`, `geonnax.UNet`, `geonnax.SIREN`, `geonnax.NeuralFieldMLP`, `geonnax.SphericalHarmonicEncoder`, `geonnax.GaussianFourierEncoder`, `geonnax.layers`.
+- **Keep.** A module acts on one example, so batch with `jax.vmap`; build it with `Model.init(..., key=key)`; modules are immutable.
+- **Never.** Put a prior or a sample site inside a geonnax module, which stays deterministic so the caller wraps it; and take bases, sphere grids and transforms from functax, not from the deprecated `geonnax` aliases.
+- **Open the skill when.** You choose between operator families, compose your own model from `geonnax.layers`, or condition a network on context.
