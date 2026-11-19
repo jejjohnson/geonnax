@@ -205,13 +205,46 @@ Each card below says what a library under this skill guarantees.
 A card is enough to call it.
 Load a skill only when its card's last line applies.
 
-### functax · base dependency · no skill yet
+### functax · base dependency · 4 of 8 units
 
-- **Provides.** Function approximation for JAX: CRS-free axes and grids, interpolation plans, quadrature rules, bases, differential operators, projection and gap filling.
-- **Start from.** `functax.geometry.Axis`, `functax.geometry.Points`, `functax.geometry.RectilinearGrid`, `functax.interp.Linear`, `functax.interp.Plan`, `functax.quad.gauss_legendre`, `functax.quad.Rule`, `functax.project.fill_gaps`.
-- **Keep.** Build a plan once with `scheme.plan(source, target)` and call it on many fields; every error is a `functax.FunctaxError` that is also the closest standard exception, so `except ValueError` still works.
-- **Never.** Import a functax module other than `functax`, `functax.geometry` and `functax.geometry.affine` on a NumPy-only path; the rest need the `functax[jax]` extra and raise `MissingExtraError` without it.
-- **Open the repository when.** You write a new scheme, basis or rule, or need more than these names: it has no skill yet, so read its `AGENTS.md` and its section of GeoStack's capability index.
+#### Geometry · ⓪ · skill `functax:function-approximation-with-functax`
+
+- **Provides.** CRS-free geometry: one axis, three kinds of grid, scattered points, and the sphere's coordinates, frames and point sets.
+- **Nouns.** `functax.geometry.Axis`, `functax.geometry.AffineGrid`, `functax.geometry.RectilinearGrid`, `functax.geometry.CurvilinearGrid`, `functax.geometry.Points`.
+- **Verbs.** `functax.geometry.lonlat_to_unit`, `functax.geometry.geodesic_distance`, `functax.geometry.pairwise_distance`; `functax.geometry.fibonacci_sphere` and `functax.geometry.gauss_legendre_grid` return points with quadrature weights; `functax.geometry.to_pixel`, `functax.geometry.from_pixel` and `functax.geometry.window` for a raster.
+- **Adverbs.** `period=` and `edges=` on an axis; `metric=` on points (`"euclidean"`, `"chord"`, `"geodesic"`); `unit=` (`"radians"` or `"degrees"`) wherever a longitude and latitude go in.
+- **Keep.** A grid is flattened row-major, so a field on it has shape `(..., N)`; an axis is strictly monotone; coordinates carry no CRS, so reproject before you build one.
+- **Never.** Import `functax.geometry` on a NumPy-only path: only `functax.geometry.affine` runs without the `functax[jax]` extra.
+- **One rung down.** Open `functax:function-approximation-with-functax` to choose between the grids, to work in a local tangent frame or to build a sphere point set.
+
+#### Bases · ① · skill `functax:bases-quadrature-and-transforms`
+
+- **Provides.** Basis functions evaluated at points, as a design matrix Φ of shape `(N, D)`: f̂(x) = ∑ⱼ cⱼ φⱼ(x).
+- **Nouns.** On a box: `functax.basis.fourier.fourier_basis`, `functax.basis.local.rbf_basis`, `functax.basis.local.wavelet_basis_1d`, `functax.basis.features.fourier_features`. On the sphere: `functax.basis.sphere.real_spherical_harmonics`, `functax.basis.sphere.needlet_basis`, `functax.basis.slepian.slepian_cap_basis`. From data: `functax.basis.eigen.eof_basis`.
+- **Verbs.** Call the function with the points to get Φ; fit with `functax.project.least_squares(Φ, y)`; evaluate with `Φ @ c`.
+- **Adverbs.** `boundary=` on the box eigenfunctions (`"dirichlet"` by default); `l_max=` sets the degree on the sphere, and `(l_max + 1)²` columns.
+- **Keep.** Points on the sphere go in as unit vectors `(N, 3)`, from `functax.geometry.lonlat_to_unit`; several constructors return the eigenvalues or the degrees with Φ, so unpack the tuple.
+- **Never.** Import a family from `functax.basis` itself: each lives in its submodule, `functax.basis.fourier`, `functax.basis.sphere` and so on.
+- **One rung down.** Open `functax:bases-quadrature-and-transforms` to choose a family or to build a Slepian basis for a region.
+
+#### Differential operators · ① · skill `functax:bases-quadrature-and-transforms`
+
+- **Provides.** Derivatives of a field given as a function of one point, by automatic differentiation.
+- **Verbs.** `functax.diffops.gradient`, `functax.diffops.divergence`, `functax.diffops.curl2d`, `functax.diffops.laplacian`, `functax.diffops.jacobian_field`; on the unit sphere `functax.diffops.surface_grad`, `functax.diffops.surface_grad_enu` and `functax.diffops.laplace_beltrami`.
+- **Keep.** Each takes a callable `f(x)` of one point of shape `(D,)` and returns a callable of one point: wrap it in `jax.vmap` for many points.
+- **Keep.** The sphere operators take `f` as a function of a 3-vector and differentiate along the surface only.
+- **Never.** Use these on gridded samples: a field on a grid is differentiated with `plan.derivative(axis)` from `functax.interp`, or with a finite-volume or spectral library.
+- **One rung down.** Open `functax:bases-quadrature-and-transforms` for the east and north components of a surface gradient.
+
+#### Transforms · setup · skill `functax:bases-quadrature-and-transforms`
+
+- **Provides.** Transforms between nodal values and spectral coefficients, built once and applied many times.
+- **Nouns.** `functax.transform.ChebyshevTransform1D`, `functax.transform.ChebyshevTransform2D`, `functax.transform.SphericalHarmonicTransform`, `functax.transform.SphericalWaveletTransform`.
+- **Verbs.** `to_spectral` and `from_spectral` on the Chebyshev transforms; `forward` and `inverse` on the spherical ones; `functax.transform.nonuniform_rfft` and `functax.transform.nonuniform_irfft` between scattered points and a truncated spectrum.
+- **Adverbs.** `kind="lobatto"` or `"gauss"` chooses the Chebyshev nodes, which must match `functax.geometry.chebyshev_nodes`.
+- **Keep.** Build the spherical transforms with their `init` constructor, not with the dataclass fields; the nodal values live on the grid the transform was built for.
+- **Never.** Hand-roll a DCT for Chebyshev coefficients or a quadrature loop for spherical-harmonic analysis.
+- **One rung down.** Open `functax:bases-quadrature-and-transforms` for the grids each transform expects and for the non-uniform transforms.
 
 Used by (pointers, not skills to load): pyrox, radtrax, sesmax, vardax.
 
