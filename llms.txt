@@ -1,0 +1,34 @@
+# geonnax
+
+> Deterministic neural-network building blocks for geoscientific machine learning in JAX. Every model is a plain Equinox module built by an `init(..., *, key)` classmethod and acting on one example (batch with `jax.vmap`): Fourier, spherical and wavelet neural operators (FNO, SFNO, WNO, MSWT), dimension-flexible U-Nets, SIREN and multiplicative filter networks with FiLM / hypernetwork conditioning, lon/lat and spherical-harmonic encoders, and the deterministic cores of uncertainty-aware models (random Fourier features, spectral normalisation, SNGP and VSSGP heads, BatchEnsemble, heteroscedastic, mixture-density and CRF heads). Its basis zoo (`geonnax.basis`) returns basis matrices with their eigenvalues or per-atom geometry: Dirichlet / Fourier eigenfunctions, spherical harmonics, Slepian caps, graph-Laplacian eigenpairs, RBF / Wendland, Gabor frames, wavelets and EOFs. Use these instead of hand-writing FFT convolutions, spherical harmonic transforms, SIREN inits, random features or lon/lat encoders.
+
+One package, `geonnax`, installed from GitHub (it is not on PyPI): `uv add "geonnax @ git+https://github.com/jejjohnson/geonnax.git"`. It has no probabilistic dependency: pyrox wraps its cores into Bayesian layers, and kernellib builds on its random features and bases. Before writing a layer or a basis, search the capability index — every public name with a one-line summary. Code you add should keep three rules:
+
+- **One example per call:** dense / INR modules take `(D,)`, layers and operators take channel-first `(C, *spatial)`; batch with `jax.vmap`. Bases take the `N` evaluation points and return `(N, M)`.
+- **Explicit keys, immutable modules:** build with `Model.init(..., key=k)` from split keys; updates return a new module (`sn, y = sn(x)`, `gp = gp.update_precision(features)`); Monte-Carlo heads and dropout take a `key` per call.
+- **Units and grids:** lon/lat arrays are `[lon, lat]`; the spherical-harmonic encoder takes radians; spherical grids need `n_lat > l_max` and `n_lon > 2·l_max`.
+
+Claude Code users can install the `geonnax` plugin: `/plugin marketplace add jejjohnson/geonnax`, then `/plugin install geonnax@geonnax`.
+
+## Start here
+
+- [Home](https://jejjohnson.github.io/geonnax/): what geonnax is, installation and a quickstart
+- [API overview](https://jejjohnson.github.io/geonnax/api/): the conventions every module follows and a map of the reference
+- [Capability index](https://jejjohnson.github.io/geonnax/api/capabilities/): every public name, grouped by defining module, with a summary; then the shared private helpers
+- [Building with agents](https://jejjohnson.github.io/geonnax/agents/): the Claude Code plugin, this file, and rules to paste into your project's AGENTS.md
+
+## API reference
+
+- [Operators (FNO / SFNO)](https://jejjohnson.github.io/geonnax/api/operators/): Fourier, spherical and wavelet neural operators, spectral convolutions, factorized weights, MSWT
+- [U-Net](https://jejjohnson.github.io/geonnax/api/unet/): the dimension-flexible U-Net and its nested residual stages
+- [Building blocks](https://jejjohnson.github.io/geonnax/api/layers/): convolutions, resampling, residual and ConvNeXt blocks, normalisation, attention
+- [Representation networks](https://jejjohnson.github.io/geonnax/api/representation/): SIREN, multi-scale SIREN, multiplicative filter networks
+- [Encoders & geometry](https://jejjohnson.github.io/geonnax/api/encoders/): coordinate encoders, the geo context encoder, Slepian encoders, lon/lat helpers
+- [Uncertainty & Bayesian](https://jejjohnson.github.io/geonnax/api/uncertainty/): random features, SNGP, VSSGP, spectral normalisation, ensembles, heteroscedastic, mixture and CRF heads, NCP, conditioning
+- [Spectral bases](https://jejjohnson.github.io/geonnax/api/bases/): the basis contract, feature transforms, eigenfunction, localized, overcomplete and data-driven bases
+
+## Optional
+
+- [Contributing](https://jejjohnson.github.io/geonnax/contributing/)
+- [Changelog](https://jejjohnson.github.io/geonnax/CHANGELOG/)
+- [Source code](https://github.com/jejjohnson/geonnax)
