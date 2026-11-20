@@ -308,6 +308,8 @@ def verify_links(root: Path, base_url: str = "") -> list[str]:
 #: prose folders whose files mystmd never renders as pages
 UNBUILT_DIRS = ("api", "templates")
 _SOURCE_LINK = re.compile(r"\]\(([^)\s]+)")
+# fenced blocks and inline code, whose links are examples rather than links
+_CODE = re.compile(r"```.*?```|`[^`\n]*`", re.DOTALL)
 
 
 def _prose_texts(root: Path) -> list[tuple[Path, str]]:
@@ -315,7 +317,7 @@ def _prose_texts(root: Path) -> list[tuple[Path, str]]:
     texts = []
     for page in sorted(root.rglob("*")):
         rel = page.relative_to(root)
-        skipped = rel.parts[0] in ("_build", *UNBUILT_DIRS)
+        skipped = rel.parts[0] in ("_build", *UNBUILT_DIRS) or rel == Path("README.md")
         if skipped or page.suffix not in (".md", ".ipynb"):
             continue
         if page.suffix == ".md":
@@ -346,7 +348,7 @@ def source_link_problems(root: Path) -> list[str]:
     """
     problems = []
     for page, text in _prose_texts(root):
-        for target in _SOURCE_LINK.findall(text):
+        for target in _SOURCE_LINK.findall(_CODE.sub("", text)):
             path = target.split("#", 1)[0]
             if not path or ":" in path.split("/", 1)[0]:
                 continue
