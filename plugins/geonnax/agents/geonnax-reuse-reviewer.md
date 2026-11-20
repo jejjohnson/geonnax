@@ -33,7 +33,7 @@ PY
 ```
 
 The capability index
-(<https://jejjohnson.github.io/geonnax/api/capabilities/>) has the same list
+(<https://jejjohnson.github.io/geonnax/reference/capabilities/>) has the same list
 grouped by module.
 
 ## Procedure

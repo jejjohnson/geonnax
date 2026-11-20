@@ -1,6 +1,6 @@
 ---
 name: pre-pr-check
-description: Run geonnax's full pre-PR verification — ruff lint and format on the whole repo, ty on src/geonnax, the fast test tier as CI runs it, the slow and integration tiers and doctests of what changed (no workflow runs them), the capability index, the lockfile and the strict MkDocs build. Use before committing, pushing or opening a pull request, and after any change to public API, dependencies, docstrings or docs.
+description: Run geonnax's full pre-PR verification — ruff lint and format on the whole repo, ty on src/geonnax, the fast test tier as CI runs it, the slow and integration tiers and doctests of what changed (no workflow runs them), the capability index, the lockfile and the link-clean two-tool docs build. Use before committing, pushing or opening a pull request, and after any change to public API, dependencies, docstrings or docs.
 ---
 
 # Pre-PR check
@@ -63,15 +63,9 @@ discussion, and never numpyro (`test_no_numpyro_import_in_package`).
 - `uv run pytest -o addopts= tests/test_docstrings.py tests/test_docstrings_render.py`
   (no RST markup; plural `Examples:` with a `>>>` or fenced body) and the
   doctests of the modules you touched.
-- `uv run --group docs mkdocs build --strict` (no workflow builds the docs on
-  a PR; `pages.yml` deploys from `main`). If the build stalls at
-  mkdocs-jupyter's `files` step, a system `pandoc` is converting every
-  Markdown page through jupytext (very slow); hide it for the build:
-
-  ```bash
-  mkdir -p /tmp/nopandoc && printf '#!/bin/sh\nexit 1\n' > /tmp/nopandoc/pandoc && chmod +x /tmp/nopandoc/pandoc
-  PATH=/tmp/nopandoc:$PATH uv run --group docs mkdocs build --strict
-  ```
+- `make docs` (mystmd needs `npm install -g mystmd`): both halves must build
+  and the assembled site must be link-clean. `docs.yml` runs the same build on
+  the pull request, and `pages.yml` deploys from `main`.
 
 ## Before pushing
 

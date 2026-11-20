@@ -5,7 +5,7 @@ Many geoscience fields live on a **structured curvilinear grid**: a satellite sw
 C-grid around an airfoil. The array is a regular tensor, but the *physical* position of
 entry $(i, j)$ is not a regular lattice. You do not need to regrid, and you do not need
 to wait for a dedicated irregular-geometry operator. Run the existing
-[`FNO`](../api/operators.md#geonnax.fno.FNO) on the **index grid** and give it the
+[`FNO`](xref:api#geonnax.fno.FNO) on the **index grid** and give it the
 physical coordinates as extra **input channels**.
 
 ## Which route for which geometry

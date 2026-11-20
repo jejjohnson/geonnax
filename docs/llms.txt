@@ -13,22 +13,22 @@ Claude Code users can install the `geonnax` plugin: `/plugin marketplace add jej
 ## Start here
 
 - [Home](https://jejjohnson.github.io/geonnax/): what geonnax is, installation and a quickstart
-- [API overview](https://jejjohnson.github.io/geonnax/api/): the conventions every module follows and a map of the reference
-- [Capability index](https://jejjohnson.github.io/geonnax/api/capabilities/): every public name, grouped by defining module, with a summary; then the shared private helpers
+- [API overview](https://jejjohnson.github.io/geonnax/reference/): the conventions every module follows and a map of the reference
+- [Capability index](https://jejjohnson.github.io/geonnax/reference/capabilities/): every public name, grouped by defining module, with a summary; then the shared private helpers
 - [Building with agents](https://jejjohnson.github.io/geonnax/agents/): the Claude Code plugin, this file, and rules to paste into your project's AGENTS.md
 
 ## API reference
 
-- [Operators (FNO / SFNO)](https://jejjohnson.github.io/geonnax/api/operators/): Fourier, spherical and wavelet neural operators, spectral convolutions, factorized weights, MSWT
-- [U-Net](https://jejjohnson.github.io/geonnax/api/unet/): the dimension-flexible U-Net and its nested residual stages
-- [Building blocks](https://jejjohnson.github.io/geonnax/api/layers/): convolutions, resampling, residual and ConvNeXt blocks, normalisation, attention
-- [Representation networks](https://jejjohnson.github.io/geonnax/api/representation/): SIREN, multi-scale SIREN, multiplicative filter networks
-- [Encoders & geometry](https://jejjohnson.github.io/geonnax/api/encoders/): coordinate encoders, the geo context encoder, Slepian encoders, lon/lat helpers
-- [Uncertainty & Bayesian](https://jejjohnson.github.io/geonnax/api/uncertainty/): random features, SNGP, VSSGP, spectral normalisation, ensembles, heteroscedastic, mixture and CRF heads, NCP, conditioning
-- [Spectral bases](https://jejjohnson.github.io/geonnax/api/bases/): the basis contract, feature transforms, eigenfunction, localized, overcomplete and data-driven bases
+- [Operators (FNO / SFNO)](https://jejjohnson.github.io/geonnax/reference/operators/): Fourier, spherical and wavelet neural operators, spectral convolutions, factorized weights, MSWT
+- [U-Net](https://jejjohnson.github.io/geonnax/reference/unet/): the dimension-flexible U-Net and its nested residual stages
+- [Building blocks](https://jejjohnson.github.io/geonnax/reference/layers/): convolutions, resampling, residual and ConvNeXt blocks, normalisation, attention
+- [Representation networks](https://jejjohnson.github.io/geonnax/reference/representation/): SIREN, multi-scale SIREN, multiplicative filter networks
+- [Encoders & geometry](https://jejjohnson.github.io/geonnax/reference/encoders/): coordinate encoders, the geo context encoder, Slepian encoders, lon/lat helpers
+- [Uncertainty & Bayesian](https://jejjohnson.github.io/geonnax/reference/uncertainty/): random features, SNGP, VSSGP, spectral normalisation, ensembles, heteroscedastic, mixture and CRF heads, NCP, conditioning
+- [Spectral bases](https://jejjohnson.github.io/geonnax/reference/bases/): the basis contract, feature transforms, eigenfunction, localized, overcomplete and data-driven bases
 
 ## Optional
 
 - [Contributing](https://jejjohnson.github.io/geonnax/contributing/)
-- [Changelog](https://jejjohnson.github.io/geonnax/CHANGELOG/)
+- [Changelog](https://jejjohnson.github.io/geonnax/changelog/)
 - [Source code](https://github.com/jejjohnson/geonnax)

@@ -1,6 +1,6 @@
 ---
 name: add-notebook
-description: Add or update an executed example notebook in geonnax's MkDocs docs — jupytext percent .py while drafting, an executed .ipynb as the committed source rendered by mkdocs-jupyter with execute false, a Colab badge and install cell, an entry in the mkdocs.yml nav, ruff on the notebook cells, and a strict docs build. Use when asked to write, extend, re-run or fix a tutorial / example / demo notebook under docs/notebooks.
+description: Add or update an executed example notebook in geonnax's docs — jupytext percent .py while drafting, an executed .ipynb as the committed source that mystmd renders without running it, a Colab badge and install cell, an entry in the toc of docs/myst.yml, ruff on the notebook cells, and a link-clean docs build. Use when asked to write, extend, re-run or fix a tutorial / example / demo notebook under docs/notebooks.
 ---
 
 # Add or update a notebook
@@ -12,9 +12,8 @@ read it first. This is the checklist.
 
 - One question per notebook (train an FNO on a toy PDE, fit a SIREN to a
   field, encode lon/lat for a downstream model, compare bases); check
-  `docs/notebooks/` and the `Examples` section of the `nav` in `mkdocs.yml`
-  so you extend rather than duplicate. (`docs/notebooks/example_demo.ipynb`
-  is the template's placeholder demo.)
+  `docs/notebooks/` and the `Examples` section of the `toc` in
+  `docs/myst.yml` so you extend rather than duplicate.
 - Use the public API the way a user would (`import geonnax`,
   `from geonnax.basis import ...`); no private names. A training loop may use
   plain `jax.grad` + `eqx.apply_updates`; optax is not a dependency of any
@@ -56,11 +55,11 @@ read it first. This is the checklist.
 
 ## 4. Wire it in and verify
 
-- Add `- <Title>: notebooks/<name>.ipynb` under `Examples` in the `nav` of
-  `mkdocs.yml`.
+- Add `- file: notebooks/<name>.ipynb` with a short `title:` under
+  `Examples` in the `toc` of `docs/myst.yml`. Its file name must be unique
+  across the prose tree, because mystmd serves each page at a flat URL built
+  from the file name.
 - `uv run --group lint ruff format docs/notebooks/` and
   `uv run --group lint ruff check .`
-- `uv run --group docs mkdocs build --strict` — the committed outputs are
-  rendered as they are (`execute: false`). If the build stalls at
-  mkdocs-jupyter's `files` step, a system `pandoc` is converting every
-  Markdown page through jupytext; see the `pre-pr-check` skill.
+- `make docs` must build and be link-clean; mystmd renders the committed
+  outputs as they are, without running the notebook.

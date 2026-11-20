@@ -309,7 +309,8 @@ make lint                 # ruff check .   (entire repo, notebooks included)
 make format               # ruff format . && ruff check --fix .
 make typecheck            # ty check src/geonnax (what CI runs)
 make capabilities         # regenerate docs/api/capabilities.md
-make docs                 # mkdocs build;  make docs-serve for a local preview
+make docs                 # build the docs site into public/ and check its links
+make docs-serve           # build, then serve it at http://127.0.0.1:8000
 make precommit            # pre-commit run --all-files
 ```
 
@@ -363,9 +364,9 @@ All of these must pass, from the repo root:
 3. `uv run --group lint ruff format --check .`
 4. `make typecheck` (`uv run --group typecheck ty check src/geonnax`).
 5. After changing a public API: `make capabilities` (and the `docs/api` entry).
-6. After changing docs, docstrings or `mkdocs.yml`:
-   `uv run --group docs mkdocs build --strict` (no workflow builds the docs on
-   a PR; `pages.yml` deploys from `main`).
+6. After changing docs, docstrings, `docs/myst.yml` or `mkdocs.yml`:
+   `make docs` (it must build and be link-clean; `docs.yml` checks it on the
+   pull request and `pages.yml` deploys from `main`).
 7. After changing a dependency: `uv lock`, and commit `uv.lock`.
 
 ## Coding principles
@@ -442,19 +443,21 @@ operations.
 
 ## Documentation
 
-MkDocs + Material + mkdocstrings + mkdocs-jupyter (`mkdocs.yml`, sources in
-`docs/`); `pages.yml` deploys to GitHub Pages on every push to `main`
-(`mkdocs gh-deploy --force`).
+Two tools, one site (`docs/README.md` explains the split): mystmd builds the home page, guides, design records and the executed notebooks from `docs/myst.yml`, and Zensical + mkdocstrings builds the API reference from `mkdocs.yml` into `/reference/`. `scripts/build_docs.py` (`make docs`) builds both, assembles them into `public/` and fails on any broken link, including links between the halves; `docs.yml` runs it on every pull request and `pages.yml` deploys `public/` on every push to `main`. mystmd is a Node CLI (`npm install -g mystmd`).
+
+- **The table of contents** is the `toc` in `docs/myst.yml`; a page missing from it is not built, and each entry's `title` is its nav label. Page URLs are flat (from the file name), so keep file names unique.
+- **Prose is MyST Markdown**: `:::{note}` directives rather than `!!! note`, `(label)=` before a heading to link to it, and API links as ``[`FNO`](xref:api#geonnax.fno.FNO)`` (checked by `myst build --strict`) or by the deployed `/reference/` URL. Never link to a file under `docs/api/`: mystmd would publish it as a raw download, and `build_docs.py` fails on it.
 
 - **API pages** (`docs/api/*.md`) are organised by theme (operators, U-Net,
   building blocks, representation networks, encoders, uncertainty, bases),
   with hand-written prose and `:::` entries; the capability index is
   `docs/api/capabilities.md` (generated).
-- **Math** renders through MathJax (`pymdownx.arithmatex`,
-  `docs/javascripts/mathjax.js`): `$…$` and `$$…$$` in docstrings and pages.
+- **Math**: `$…$` and `$$…$$` in docstrings and pages. The API half renders
+  it with MathJax (`docs/api/javascripts/mathjax.js`) and the prose half with
+  KaTeX, which is stricter: escape `_` inside `\text{…}` and `\texttt{…}`.
 - **Notebooks** live in `docs/notebooks/` as executed `.ipynb` files
-  (rendered with `execute: false`, so the committed outputs are what readers
-  see) and are listed in the `nav` of `mkdocs.yml`. Author in jupytext
+  (rendered as committed, without running them, so the committed outputs are
+  what readers see) and are listed in the `toc` of `docs/myst.yml`. Author in jupytext
   percent format, convert, execute, delete the `.py`; figures inline with
   `plt.show()`, never `savefig` or committed PNGs. Full standards:
   `.github/instructions/docs-examples.instructions.md`.
