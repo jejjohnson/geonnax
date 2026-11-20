@@ -15,7 +15,7 @@ spherical harmonic, a SIREN init, random features or a lon/lat encoder, look
 it up:
 
 1. **The capability index** lists every public name with a one-line
-   summary: <https://jejjohnson.github.io/geonnax/api/capabilities/>. Or list
+   summary: <https://jejjohnson.github.io/geonnax/reference/capabilities/>. Or list
    the installed version:
 
    ```python

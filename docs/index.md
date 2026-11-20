@@ -58,17 +58,17 @@ phi: Float[Array, "N K"] = jax.vmap(gnx.SlepianEncoder(cap))(lonlat)  # (N, 2) �
 
 ## What's inside
 
-- **[Operators](api/operators.md)** — Fourier (`FNO`) and Spherical (`SFNO`) neural
+- **[Operators](https://jejjohnson.github.io/geonnax/reference/operators/)** — Fourier (`FNO`) and Spherical (`SFNO`) neural
   operators with dense/CP/Tucker/TT spectral weights.
-- **[U-Net](api/unet.md)** — dimension-flexible U-Net with nested residual stages.
-- **[Building Blocks](api/layers.md)** — reusable conv/attention/spectral primitives.
-- **[Representation Networks](api/representation.md)** — SIREN, multiplicative filter
+- **[U-Net](https://jejjohnson.github.io/geonnax/reference/unet/)** — dimension-flexible U-Net with nested residual stages.
+- **[Building Blocks](https://jejjohnson.github.io/geonnax/reference/layers/)** — reusable conv/attention/spectral primitives.
+- **[Representation Networks](https://jejjohnson.github.io/geonnax/reference/representation/)** — SIREN, multiplicative filter
   networks.
-- **[Encoders & Geometry](api/encoders.md)**, **[Uncertainty & Bayesian](api/uncertainty.md)**,
-  and **[Spectral Bases](api/bases.md)**.
+- **[Encoders & Geometry](https://jejjohnson.github.io/geonnax/reference/encoders/)**, **[Uncertainty & Bayesian](https://jejjohnson.github.io/geonnax/reference/uncertainty/)**,
+  and **[Spectral Bases](https://jejjohnson.github.io/geonnax/reference/bases/)**.
 
 ## Links
 
-- [API Reference](api/index.md)
+- [API Reference](https://jejjohnson.github.io/geonnax/reference/)
 - [Changelog](CHANGELOG.md)
 - [GitHub](https://github.com/jejjohnson/geonnax)

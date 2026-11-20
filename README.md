@@ -16,9 +16,9 @@
 
 <p align="center">
   <a href="https://jejjohnson.github.io/geonnax/"><b>Docs</b></a> ·
-  <a href="https://jejjohnson.github.io/geonnax/api/"><b>API</b></a> ·
+  <a href="https://jejjohnson.github.io/geonnax/reference/"><b>API</b></a> ·
   <a href="https://jejjohnson.github.io/geonnax/#quickstart"><b>Quickstart</b></a> ·
-  <a href="https://jejjohnson.github.io/geonnax/guides/methane/"><b>Example</b></a> ·
+  <a href="https://jejjohnson.github.io/geonnax/methane/"><b>Example</b></a> ·
   <a href="#gallery"><b>Gallery</b></a>
 </p>
 
@@ -48,7 +48,7 @@ uv add "geonnax @ git+https://github.com/jejjohnson/geonnax.git"
 ```
 
 It depends on jax, equinox, jaxtyping, einx, einops and [functax](https://github.com/jejjohnson/functax), which holds the bases, sphere grids, field derivatives and transforms that geonnax's networks are built on.
-Training loops are yours to write; the [methane example](https://jejjohnson.github.io/geonnax/guides/methane/) uses [optax](https://github.com/google-deepmind/optax) (`uv add optax`).
+Training loops are yours to write; the [methane example](https://jejjohnson.github.io/geonnax/methane/) uses [optax](https://github.com/google-deepmind/optax) (`uv add optax`).
 
 ## What's inside
 
@@ -56,14 +56,14 @@ Each family links to its API page; [`docs/api/capabilities.md`](docs/api/capabil
 
 | Family | Module | Names |
 |---|---|---|
-| [Coordinate encoders](https://jejjohnson.github.io/geonnax/api/encoders/) | `encoders`, `slepian`, `geo` | `Cartesian3DEncoder`, `CyclicEncoder`, `SphericalHarmonicEncoder`, `SlepianEncoder`, `HybridSphericalSlepianEncoder`, `GeoContextEncoder`, `LonLatScale`, `Deg2Rad`; lon/lat helpers in `geo` |
-| [Representation networks](https://jejjohnson.github.io/geonnax/api/representation/) | `siren`, `multi_scale_siren`, `mfn` | `SIREN`, `SirenDense`, `MultiScaleSIREN`, `FourierNet`, `GaborNet` |
-| [Conditioning](https://jejjohnson.github.io/geonnax/api/uncertainty/#conditioning-hypernetworks) | `conditioning` | `FiLM`, `ConcatConditioner`, `AffineModulation`, `HyperLinear`, `HyperSIREN`, `GeneratedSiren`, `ConditionedINR` |
-| [Uncertainty heads](https://jejjohnson.github.io/geonnax/api/uncertainty/) | `randfeat`, `sngp`, `vssgp`, `spectral_norm`, `ensemble`, `heteroscedastic`, `mixture`, `crf`, `ncp` | `OrthogonalRandomFeatures`, `RandomFeatureGaussianProcess`, `DeepVSSGPCore`, `SpectralNormalization`, `LayerNormEnsemble`, `MultiHeadAttentionBE`, `HeteroscedasticHead`, `MixtureOfGaussiansDenseHead`, `LinearChainCRF`, `NCPContinuousPerturb` |
-| [Neural operators](https://jejjohnson.github.io/geonnax/api/operators/) | `fno`, `sfno`, `wno`, `mswt`, `manifold_no` | `FNO` (dense, CP, Tucker or TT spectral weights), `SFNO`, `WNO`, `MSWT`, `ManifoldNO` |
-| [U-Nets](https://jejjohnson.github.io/geonnax/api/unet/) | `unet` | `UNet`, `XUNet`, `NestedResidualUNet` (U²-Net stages), 1-D, 2-D or 3-D |
-| [Building blocks](https://jejjohnson.github.io/geonnax/api/layers/) | `layers` | `StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `SpectralConv`, `SphericalSpectralConv`, `WaveletConv`, `SphericalWaveletConv`, `WaveletAttention`, `Downsample`, `Upsample`, … |
-| [Bases](https://jejjohnson.github.io/geonnax/api/bases/) | `basis` | `interaction_features`, `standardize`; the bases and sphere grids moved to `functax.basis` and `functax.geometry` |
+| [Coordinate encoders](https://jejjohnson.github.io/geonnax/reference/encoders/) | `encoders`, `slepian`, `geo` | `Cartesian3DEncoder`, `CyclicEncoder`, `SphericalHarmonicEncoder`, `SlepianEncoder`, `HybridSphericalSlepianEncoder`, `GeoContextEncoder`, `LonLatScale`, `Deg2Rad`; lon/lat helpers in `geo` |
+| [Representation networks](https://jejjohnson.github.io/geonnax/reference/representation/) | `siren`, `multi_scale_siren`, `mfn` | `SIREN`, `SirenDense`, `MultiScaleSIREN`, `FourierNet`, `GaborNet` |
+| [Conditioning](https://jejjohnson.github.io/geonnax/reference/uncertainty/#conditioning-hypernetworks) | `conditioning` | `FiLM`, `ConcatConditioner`, `AffineModulation`, `HyperLinear`, `HyperSIREN`, `GeneratedSiren`, `ConditionedINR` |
+| [Uncertainty heads](https://jejjohnson.github.io/geonnax/reference/uncertainty/) | `randfeat`, `sngp`, `vssgp`, `spectral_norm`, `ensemble`, `heteroscedastic`, `mixture`, `crf`, `ncp` | `OrthogonalRandomFeatures`, `RandomFeatureGaussianProcess`, `DeepVSSGPCore`, `SpectralNormalization`, `LayerNormEnsemble`, `MultiHeadAttentionBE`, `HeteroscedasticHead`, `MixtureOfGaussiansDenseHead`, `LinearChainCRF`, `NCPContinuousPerturb` |
+| [Neural operators](https://jejjohnson.github.io/geonnax/reference/operators/) | `fno`, `sfno`, `wno`, `mswt`, `manifold_no` | `FNO` (dense, CP, Tucker or TT spectral weights), `SFNO`, `WNO`, `MSWT`, `ManifoldNO` |
+| [U-Nets](https://jejjohnson.github.io/geonnax/reference/unet/) | `unet` | `UNet`, `XUNet`, `NestedResidualUNet` (U²-Net stages), 1-D, 2-D or 3-D |
+| [Building blocks](https://jejjohnson.github.io/geonnax/reference/layers/) | `layers` | `StandardizedConv`, `ResnetBlock`, `ConvNeXtBlock`, `Attention`, `SpectralConv`, `SphericalSpectralConv`, `WaveletConv`, `SphericalWaveletConv`, `WaveletAttention`, `Downsample`, `Upsample`, … |
+| [Bases](https://jejjohnson.github.io/geonnax/reference/bases/) | `basis` | `interaction_features`, `standardize`; the bases and sphere grids moved to `functax.basis` and `functax.geometry` |
 
 Every module acts on one example, channels first: a 2-D field is `(channels, height, width)` and a coordinate is `(2,)`.
 Use `jax.vmap` for a batch.
@@ -83,7 +83,7 @@ That is why parameter names here are stable: pyrox addresses them by name.
 
 ## Gallery
 
-The three stages of a coordinate network on the [methane example](https://jejjohnson.github.io/geonnax/guides/methane/), drawn by [`docs/assets/readme/figures.py`](docs/assets/readme/figures.py) from the example's own code.
+The three stages of a coordinate network on the [methane example](https://jejjohnson.github.io/geonnax/methane/), drawn by [`docs/assets/readme/figures.py`](docs/assets/readme/figures.py) from the example's own code.
 The basis gallery (spherical harmonics, Slepian functions, needlets) is in [functax's README](https://github.com/jejjohnson/functax#gallery).
 
 Encode: least-squares fits with spherical harmonics up to degree 8, 16 and 28, and a Slepian fit inside a 20° cap.
@@ -121,7 +121,7 @@ make docs-serve   # preview the docs locally
 
 Before committing, all four gates must pass: tests, `ruff check .`, `ruff format --check .` and `ty check src/geonnax`.
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`AGENTS.md`](AGENTS.md) for the workflow, coding conventions and the issue and epic model.
-The icon and diagrams are generated by [`docs/assets/render.py`](docs/assets/render.py) (`uv run --no-project python docs/assets/render.py`), and the figures by [`docs/assets/readme/figures.py`](docs/assets/readme/figures.py), which runs the code blocks of the [methane example](https://jejjohnson.github.io/geonnax/guides/methane/) as written.
+The icon and diagrams are generated by [`docs/assets/render.py`](docs/assets/render.py) (`uv run --no-project python docs/assets/render.py`), and the figures by [`docs/assets/readme/figures.py`](docs/assets/readme/figures.py), which runs the code blocks of the [methane example](https://jejjohnson.github.io/geonnax/methane/) as written.
 
 ## License
 

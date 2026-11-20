@@ -57,7 +57,7 @@ Read "1. Modules", "3. Numerics and initialisation" and "The public API" in
   `docs/api/operators.md` (operators), `unet.md` (U-Nets) or a
   `::: geonnax.<name>` block in `representation.md` (INRs). A new page also
   needs a row in `docs/api/index.md` and an entry in the `nav` of
-  `mkdocs.yml`.
+  `mkdocs.yml` (the API half of the docs).
 - `make capabilities`.
 
 ## 4. Tests (`tests/test_<name>.py`)

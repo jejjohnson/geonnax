@@ -12,7 +12,7 @@ singular point). geonnax ships three things that let agents find it.
 
 ## The capability index
 
-The [capability index](api/capabilities.md) lists every public name in
+The [capability index](https://jejjohnson.github.io/geonnax/reference/capabilities/) lists every public name in
 `geonnax` and its submodules (`geonnax.basis`, `geonnax.geo`,
 `geonnax.layers`, …), grouped by the module that defines it, with a
 one-line summary; then the shared private helpers contributors reuse. It is
@@ -57,7 +57,7 @@ This project uses geonnax (Equinox neural operators, U-Nets, SIREN / MFN,
 coordinate encoders, bases, random features and uncertainty-aware cores).
 Before writing a layer, a network, an encoder, a basis or random features,
 search the capability index
-(https://jejjohnson.github.io/geonnax/api/capabilities/) or
+(https://jejjohnson.github.io/geonnax/reference/capabilities/) or
 `geonnax.__all__` / `geonnax.basis.__all__`, and compose what exists:
 
 - Build models with `Model.init(..., key=k)` from freshly split keys; they

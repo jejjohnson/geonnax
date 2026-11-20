@@ -1,19 +1,41 @@
-site_name: geonnax
-site_description: Pure-Equinox neural-network zoo for geoscientific machine learning.
+# ---------------------------------------------------------------------------
+# Zensical builds ONLY the API reference from this file (it reads mkdocs.yml
+# as is), and it is deployed as the `/reference/` subtree of the MyST site.
+# Prose, guides, design records and notebooks are built by mystmd from
+# `docs/myst.yml`. See `docs/README.md` for the split and the rationale.
+#
+# mkdocstrings publishes a Sphinx-compatible `objects.inv` into `site/`, and
+# that inventory is what lets the MyST prose cross-reference into these pages.
+# ---------------------------------------------------------------------------
+site_name: geonnax API reference
+site_description: API reference for geonnax, the pure-Equinox neural-network zoo for geoscientific machine learning, generated from Google-style docstrings.
 site_author: J. Emmanuel Johnson
 repo_url: https://github.com/jejjohnson/geonnax
 repo_name: jejjohnson/geonnax
 
+docs_dir: docs/api
+site_dir: site
+
+# The guide pages live in the MyST half of the site, so links to them point
+# outside `docs_dir` by design. The assembled-site link checker in
+# `scripts/build_docs.py` validates them instead, across both halves, which
+# neither tool can do on its own.
+validation:
+  links:
+    unrecognized_links: ignore
+    absolute_links: ignore
+
 theme:
   name: material
+  # Zensical's Material-compatible look; `modern` is its newer default.
+  variant: classic
   logo: assets/icon.svg
   favicon: assets/icon.svg
   features:
-    - navigation.tabs
     - navigation.sections
     - navigation.top
     - content.code.copy
-    - content.code.annotate
+    - toc.follow
   palette:
     - scheme: default
       primary: indigo
@@ -48,37 +70,17 @@ plugins:
             signature_crossrefs: true
             merge_init_into_class: false
             filters: ["!^_"]
-  - mkdocs-jupyter:
-      # Notebooks are committed as .ipynb; without this the plugin also tries
-      # to read the asset scripts under docs/assets/ as jupytext notebooks.
-      include: ["*.ipynb"]
-      execute: false
-      ignore_h1_titles: true
 
 nav:
-  - Home: index.md
-  - Examples:
-      - Map methane around the globe: guides/methane.md
-      - Demo: notebooks/example_demo.ipynb
-      - Western Mediterranean SSH three ways: notebooks/irregular_geometry.ipynb
-  - Guides:
-      - FNO on curvilinear grids: guides/irregular-geometry.md
-  - API Reference:
-      - Overview: api/index.md
-      - Capability index: api/capabilities.md
-      - Operators (FNO / SFNO): api/operators.md
-      - U-Net: api/unet.md
-      - Building Blocks: api/layers.md
-      - Representation Networks: api/representation.md
-      - Encoders & Geometry: api/encoders.md
-      - Uncertainty & Bayesian: api/uncertainty.md
-      - Spectral Bases: api/bases.md
-  - Decision records:
-      - Irregular-geometry operators: decisions/irregular-geometry-operators.md
-      - Geo-FNO latent measure: decisions/geofno-latent-measure.md
-  - Building with agents: agents.md
-  - Contributing: contributing.md
-  - Changelog: CHANGELOG.md
+  - Overview: index.md
+  - Capability index: capabilities.md
+  - Operators (FNO / SFNO): operators.md
+  - U-Net: unet.md
+  - Building blocks: layers.md
+  - Representation networks: representation.md
+  - Encoders and geometry: encoders.md
+  - Uncertainty and Bayesian: uncertainty.md
+  - Spectral bases: bases.md
 
 markdown_extensions:
   - admonition
