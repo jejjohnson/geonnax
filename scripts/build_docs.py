@@ -318,7 +318,7 @@ def _prose_texts(root: Path) -> list[tuple[Path, str]]:
     for page in sorted(root.rglob("*")):
         rel = page.relative_to(root)
         skipped = rel.parts[0] in ("_build", *UNBUILT_DIRS) or rel == Path("README.md")
-        if skipped or page.suffix not in (".md", ".ipynb"):
+        if skipped or page.suffix not in (".md", ".ipynb") or not page.is_file():
             continue
         if page.suffix == ".md":
             texts.append((page, page.read_text(encoding="utf-8")))
