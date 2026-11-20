@@ -185,7 +185,7 @@ def local_tangent_plane(
     origin: Float[Array, " 2"],
     *,
     projection: Literal["azimuthal_equidistant", "gnomonic"] = "azimuthal_equidistant",
-    radius: float = 6371.0088,
+    radius: float = EARTH_MEAN_RADIUS_M / 1000.0,
     input_unit: Unit = "degrees",
 ) -> Float[Array, "N 2"]:
     """`functax.geometry.local_tangent_plane` with geonnax's km Earth radius."""

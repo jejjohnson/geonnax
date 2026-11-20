@@ -112,7 +112,9 @@ def test_frame_shims_keep_degrees_and_wgs84_defaults():
     )
     _equal(
         _compat.local_tangent_plane(LONLAT, LONLAT[0]),
-        fg.local_tangent_plane(LONLAT, LONLAT[0], radius=6371.0088, unit="degrees"),
+        fg.local_tangent_plane(
+            LONLAT, LONLAT[0], radius=EARTH_MEAN_RADIUS_M / 1000.0, unit="degrees"
+        ),
     )
     _equal(
         _compat.rotation_to_pole(LONLAT[0]),

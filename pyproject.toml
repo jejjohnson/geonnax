@@ -37,6 +37,10 @@ dev = [
     "pytest-cov>=7.1.0",
     "pytest-xdist>=3.5.0",
     "pre-commit>=4.6.0",
+    # Test-only: tests/test_geophysix_constants.py compares geonnax's Earth
+    # constants with geophysix's. geonnax sits below geophysix and never imports
+    # it at run time.
+    "geophysix @ git+https://github.com/jejjohnson/geophysix.git@v0.0.3",
 ]
 lint = [
     "ruff>=0.15.11",
