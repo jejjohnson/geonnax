@@ -321,7 +321,7 @@ almost here, extend it where it lives. Regenerate with
 
 | Name | Kind | What it does |
 |---|---|---|
-| `EARTH_MEAN_RADIUS_M` | constant | `6371008.8` |
+| `EARTH_MEAN_RADIUS_M` | constant | `6371008.771415059` |
 | `WGS84_A` | constant | `6378137.0` |
 | `WGS84_F` | constant | `0.0033528106647474805` |
 

@@ -507,6 +507,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "geophysix" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -542,6 +543,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "geophysix", git = "https://github.com/jejjohnson/geophysix.git?rev=v0.0.3" },
     { name = "pre-commit", specifier = ">=4.6.0" },
     { name = "pytest", specifier = ">=9.0.3" },
     { name = "pytest-cov", specifier = ">=7.1.0" },
@@ -560,6 +562,14 @@ docs = [
 ]
 lint = [{ name = "ruff", specifier = ">=0.15.11" }]
 typecheck = [{ name = "ty", specifier = ">=0.0.37" }]
+
+[[package]]
+name = "geophysix"
+version = "0.0.3"
+source = { git = "https://github.com/jejjohnson/geophysix.git?rev=v0.0.3#65b1faab906a4b2abfc743eacac4f21745c00d67" }
+dependencies = [
+    { name = "numpy" },
+]
 
 [[package]]
 name = "ghp-import"
