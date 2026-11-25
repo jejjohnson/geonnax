@@ -212,7 +212,7 @@ Load a skill only when its card's last line applies.
 - **Provides.** CRS-free geometry: one axis, three kinds of grid, scattered points, and the sphere's coordinates, frames and point sets.
 - **Nouns.** `functax.geometry.Axis`, `functax.geometry.AffineGrid`, `functax.geometry.RectilinearGrid`, `functax.geometry.CurvilinearGrid`, `functax.geometry.Points`.
 - **Verbs.** `functax.geometry.lonlat_to_unit`, `functax.geometry.geodesic_distance`, `functax.geometry.pairwise_distance`; `functax.geometry.fibonacci_sphere` and `functax.geometry.gauss_legendre_grid` return points with quadrature weights; `functax.geometry.to_pixel`, `functax.geometry.from_pixel` and `functax.geometry.window` for a raster.
-- **Adverbs.** `period=` and `edges=` on an axis; `metric=` on points (`"euclidean"`, `"chord"`, `"geodesic"`); `unit=` (`"radians"` or `"degrees"`) wherever a longitude and latitude go in.
+- **Adverbs.** `period=`, `closed=` and `edges=` on an axis; `metric=` on points (`"euclidean"`, `"chord"`, `"geodesic"`); `unit=` (`"radians"` or `"degrees"`) wherever a longitude and latitude go in.
 - **Keep.** A grid is flattened row-major, so a field on it has shape `(..., N)`; an axis is strictly monotone; coordinates carry no CRS, so reproject before you build one.
 - **Never.** Import `functax.geometry` on a NumPy-only path: only `functax.geometry.affine` runs without the `functax[jax]` extra.
 - **One rung down.** Open `functax:function-approximation-with-functax` to choose between the grids, to work in a local tangent frame or to build a sphere point set.
